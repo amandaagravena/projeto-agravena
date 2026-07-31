@@ -1,0 +1,112 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# INTEGRAÇÃO DE MODELOS DE APRENDIZADO DE MÁQUINA PARA ANÁLISE DE ANOMALIAS DE XCO<sub>2</sub> e XCH<sub>4</sub> NA ZONA COSTEIRA BRASILEIRA
+
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+## 👨‍🔬 Autores
+
+- **Amanda de Oliveira Gravena**  
+  Mestranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
+  Email: <amanda.gravena@unesp.br>
+
+- **Prof. Dr. Alan Rodrigo Panosso**  
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
+  Email: <alan.panosso@unesp.br>
+
+## Carregando os pacotes
+
+``` r
+library(tidyverse)
+library(geobr)
+library(sf)
+```
+
+## Extrair os shapes da costa brasileira
+
+``` r
+country <- geobr::read_country(showProgress = FALSE)
+biomes <- geobr::read_biomes(showProgress = FALSE)
+```
+
+## Visualização dos mapas, Brasil e Biomas
+
+``` r
+country <- read_country(showProgress = FALSE)
+biomes  <- read_biomes(showProgress = FALSE)
+
+# Mapa 1 — Contorno do Brasil
+map_country <- ggplot(country) +
+  geom_sf(fill = "#2d6a4f", color = "#95d5b2", linewidth = 0.8) +
+  labs(
+    title    = "Brasil",
+    subtitle = "Território Nacional",
+    caption  = "Fonte: IBGE via geobr"
+  ) +
+  theme_void(base_family = "serif") +
+  theme(
+    plot.background  = element_rect(fill = "#0d1b2a", color = NA),
+    panel.background = element_rect(fill = "#0d1b2a", color = NA),
+    plot.title       = element_text(color = "#95d5b2", size = 22, face = "bold",
+                                    hjust = 0.5, margin = margin(t = 16, b = 4)),
+    plot.subtitle    = element_text(color = "#74c69d", size = 13,
+                                    hjust = 0.5, margin = margin(b = 8)),
+    plot.caption     = element_text(color = "#52b788", size = 8,
+                                    hjust = 1, margin = margin(b = 10, r = 12)),
+    plot.margin      = margin(20, 20, 10, 20)
+  )
+
+# Paleta para os biomas
+biome_colors <- c(
+  "Amazônia"              = "#1b4332",
+  "Cerrado"               = "#d4a017",
+  "Mata Atlântica"        = "#40916c",
+  "Caatinga"              = "#e76f51",
+  "Pampa"                 = "#a7c957",
+  "Pantanal"              = "#4895ef",
+  "Sistema Costeiro"      = "#90e0ef",
+  "Sistema Costeiro-Marinho" = "#90e0ef"
+)
+
+# Mapa 2 — Biomas
+map_biomes <- ggplot(biomes) +
+  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
+  scale_fill_manual(
+    values = biome_colors,
+    name   = "Bioma",
+    na.value = "#555555"
+  ) +
+  labs(
+    title    = "Biomas do Brasil",
+    subtitle = "Distribuição dos biomas continentais e costeiros",
+    caption  = "Fonte: IBGE via geobr"
+  ) +
+  theme_void(base_family = "serif") +
+  theme(
+    plot.background  = element_rect(fill = "#0d1b2a", color = NA),
+    panel.background = element_rect(fill = "#0d1b2a", color = NA),
+    plot.title       = element_text(color = "#f4d35e", size = 22, face = "bold",
+                                    hjust = 0.5, margin = margin(t = 16, b = 4)),
+    plot.subtitle    = element_text(color = "#f4a261", size = 11,
+                                    hjust = 0.5, margin = margin(b = 8)),
+    plot.caption     = element_text(color = "#e9c46a", size = 8,
+                                    hjust = 1, margin = margin(b = 10, r = 12)),
+    legend.title     = element_text(color = "#ffffff", size = 10, face = "bold"),
+    legend.text      = element_text(color = "#cccccc", size = 9),
+    legend.position  = "right",
+    plot.margin      = margin(20, 20, 10, 20)
+  )
+
+print(map_country)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+print(map_biomes)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->

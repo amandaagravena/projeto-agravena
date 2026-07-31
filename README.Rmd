@@ -10,6 +10,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
+  eval=FALSE,
   comment = "#>"
 )
 ```
@@ -24,7 +25,10 @@ knitr::opts_chunk$set(
 -   **Amanda de Oliveira Gravena**\
     Mestranda em Agronomia (Ciência do Solo) - FCAV/Unesp\
     Email: [amanda.gravena\@unesp.br](mailto:amanda.gravena@unesp.br)
-
+    
+-   **Ms. Witória de Oliveira Araújo**\
+    Doutoranda em Agronomia (Ciência do Solo) - FCAV/Unesp\
+    Email: [witoria.araujo\@unesp.br](mailto:witoria.araujo@unesp.br)
 
 -   **Prof. Dr. Alan Rodrigo Panosso**\
     Coorientador — Departamento de Ciências Exatas - FCAV/Unesp\

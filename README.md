@@ -13,6 +13,10 @@
   Mestranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
   Email: <amanda.gravena@unesp.br>
 
+- **Ms. Witória de Oliveira Araújo**  
+  Doutoranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
+  Email: <witoria.araujo@unesp.br>
+
 - **Prof. Dr. Alan Rodrigo Panosso**  
   Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
   Email: <alan.panosso@unesp.br>
@@ -101,12 +105,5 @@ map_biomes <- ggplot(biomes) +
   )
 
 print(map_country)
-```
-
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
-``` r
 print(map_biomes)
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->

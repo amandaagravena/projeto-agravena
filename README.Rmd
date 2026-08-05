@@ -1,6 +1,9 @@
 ---
 output: github_document
 ---
+## Legenda: Esse output indica que o arquivo .Rmd será renderizado (convertido) para .md para ir para  o Github, através do knitr (pacote do R que serve para executar o código e gerar o documento final). 
+
+Assim, conseguimos misturar: texto, código R, resultados, figuras e tabelas, o que é ótimo para projetos científicos.
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -14,6 +17,15 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
+##Legenda: 
+
+- collapse = true = aparecer o código e o resultado juntos (bom para organização). 
+- warning = false = não mostre avisos quando o este bloco de código for executado.
+- message = false = não mostrar mensagens dos pacotes carregados que não fazem parte da análise de dados.  
+- eval = false = não execute o código deste bloco, apenas mostre o código no documento. 
+
+
 
 # INTEGRAÇÃO DE MODELOS DE APRENDIZADO DE MÁQUINA PARA ANÁLISE DE ANOMALIAS DE XCO~2~ e XCH~4~ NA ZONA COSTEIRA BRASILEIRA
 
@@ -40,6 +52,17 @@ library(tidyverse)
 library(geobr)
 library(sf)
 ```
+##Legenda: 
+Ao carregar pacotes, carregamos as funções das diferentes bibliotecas. 
+
+- tidyverse: coleção de pacotes para ciências de dados. Inclui: dplyr, ggplot2, readr, tibble, string etc. 
+- geobr: Baixa mapas oficiais do IBGE, não precisando baixar shapefiles manualmente. 
+- sf: Pacote mais importante para os dados espaciais. Permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos. 
+- ggpubr: Facilita gráficos científicos. 
+- dplyr: Manipulação de tabelas. Exemplos: filter(), mutate(), select(), summarise(). 
+- ggplot2: Construção de gráficos. 
+
+OBS: não é preciso carregar os que já estão dentro de tidyverse, mas carregamos.
 
 ## Extrair os shapes da costa brasileira
 
@@ -47,6 +70,13 @@ library(sf)
 brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
 biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 ```
+
+##Legenda: 
+
+- O geobr baixa automaticamente o limite político do Brasil através do read country. Temos que colocar o ano a partir de agora, devido a uma atualização do R. 
+
+- através do read biomes, baixamos todos os biomas brasileiros.Eles possuem:nome; geometria;projeção.
+
 ## Resumo do objeto  `biomes`
 
 ```{r}
@@ -54,13 +84,19 @@ biomes
 
 ```
 
+##Legenda: 
+
+Esse comando serve para mostrar o resumo do objeto biomes. Assim, podemos conferir se os dados foram carregados corretamente antes de seguir a análise. Nele, podemos ver a classe do objeto (sf), número de linhas (polígonos), número de colunas, nomes das variáveis e sistema de referência das coodenadas (CRS), por exemplo. 
+
 
 ## Listando os biomas individuais (distintos)
 ```{r}
 biomes |> distinct(name_biome)
 ```
 
+##Legenda: 
 
+Esse comando lista apenas os nomes distindos dos biomas, sem repetições. Ele serve para verificar quais biomas existem na base de dados do geobr. 
 
 ## Visualização dos mapas, Brasil e Biomas
 
@@ -86,6 +122,20 @@ biomes |> distinct(name_biome)
 #     plot.margin      = margin(20, 20, 10, 20)
 #   )
 
+## Tiramos os itens do Mapa 1, pois não eram úteis para o momento, mas o que ele fazia: Esse bloco possui a finalidade de criar um mapa do contorno do Brasil para visualização, sem alterar nenhum dado. Não analisa nem faz recortes espaciais. Apenas constrói uma figura. 
+
+#Esse bloco possui a finalidade de criar um mapa do contorno do Brasil para visualização, sem alterar nenhum dado. Não analisa nem faz recortes espaciais. Apenas constrói uma figura. 
+
+#map_country <- ggplot(brasil) + aqui, o ggplot() inicia a construção do gráfico utilizando o objeto brasil, que contém o limite territorial do país, armazenando no objeto map_country. 
+
+#A função geom_sf() desenha a geometria do objeto espacial, definindo cores e espessuras de bordas. 
+
+#O theme_void() remove elementos que não são necessários em um mapa, como: eixos; linhas de grade; marcações.
+
+#A função theme() altera o aspecto visual do gráfico.
+
+#Ou seja, esse bloco de código construía uma figura do contorno do Brasil, aplicando uma série de personalizações visuais, como cores, títulos, fonte, fundo e margens.
+
 # Paleta para os biomas
 biome_colors <- c(
   "Amazônia"              = "#1b4332",
@@ -98,19 +148,36 @@ biome_colors <- c(
   # "Sistema Costeiro-Marinho" = "#90e0ef"
 )
 
-# Mapa 2 — Biomas
-map_biomes <- ggplot(biomes) +
+## Legenda: definindo as cores dos biomas.
+
+#A função 'c()' significa combine.Neste caso, ela reúne vários pares de informações:nome do bioma;código da cor.
+#O símbolo '<-' significa atribuir.
+#Ou seja, o R está criando um objeto chamado biome_colors.
+#Esse objeto armazenará a relação entre o nome de cada bioma e sua respectiva cor.
+
+# Mapa 2 — Biomas: 
+
+##Legenda: O bloco constrói o mapa dos biomas brasileiros. A lógica é sempre a mesma: inicia um gráfico, desenha os biomas, define as cores, adiciona título e legenda, ajusta a aparência e exibe o mapa. 
+
+map_biomes <- ggplot(biomes) + ##Legenda: A função ggplot() inicia a construção do gráfico com o objeto biomes, que contém os limites espaciais dos biomas brasileiros, armazenando o gráfico em map_biomes. No momento, o gráfico ainda está vazio, pois apenas foi definido o conjunto de dados que será utilizado. 
+  
   geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
   scale_fill_manual(
     values = biome_colors,
     name   = "Bioma",
     # na.value = "#555555"
-  ) +
+  ) + ##Legenda: A função geom_sf() desenha as geometrias presentes dentro do objeto biomes. Como biomes é um objeto espacial (sf), cada bioma é representado por um polígono no mapa. 
+  
+#Já a função aes(), de estética, informa as características visuais do gráfico associadas aos dados. Nesse caso, fill=name_biome, ou seja, cada bioma será preenchido por uma cor diferente, de acordo com a variável name_biome. 
+  
+#Já os itens: scale_fill_manual = permite definir manualmente as cores utilizadas, o values = biomes_colors utiliza a paleta criada anteriormente. Os demais itens são intuitivos. 
+  
   labs(
     title    = "Biomas do Brasil",
     subtitle = "Distribuição dos biomas continentais e costeiros",
     caption  = "Fonte: IBGE via geobr"
-  ) +
+  ) + ##Legenda: A função labs() adiciona informações descritivas do gráfico, nesse caso título da figura, subtítulo e fonte dos dados. Essas informações ajudam a identificar o conteúdo do mapa. 
+  
   theme_void(base_family = "serif") +
   theme(
     # plot.background  = element_rect(fill = "#0d1b2a", color = NA),
@@ -127,14 +194,28 @@ map_biomes <- ggplot(biomes) +
     plot.margin      = margin(20, 20, 10, 20)
   )
 
+##Legenda: O theme_void() remove os elementos gráficos que não são úteis para mapas, como eixos, grades e marcações. Já o base_family = "serif" define que os textos utilizarão uma fonte do tipo serifada.Os demais itens definem a estética do gráfico. 
+
+#As linhas de "plot." alteravam o fundo do gráfico e a aparência do título e do subtítulo, porém, não achamos mais necessário. 
+
 # print(map_country)
 print(map_biomes)
+
+##Legenda: Depois de todas as etapas de construção, o comando print() exibe o mapa os biomas na tela, pois já construímos o objeto "map_biomes". 
+
 ```
+
 ## Ler e interpretar os dados em "data-raw"
 
 ```{r}
-df <- read_rds("data-raw/data-set-xco2-br-002.rds") |> 
+df <- read_rds("data-raw/data-set-xco2-br.rds") |> 
   mutate(year = year - 20)
+
+##Legenda: A função read_rds() lê o arquivo que contém os dados de XCO₂. O conteúdo do arquivo será armazenado em df (dataframe), que será utilizado nas etapas seguintes. 
+
+# Como estamos apenas lendo e corrigindo os dados raw, por enquanto, chamaremos de df. 
+
+#Já a função mutate() é utilizada para modificar colunas de um conjunto de dados. Nesse, ela altera a coluna year, retirando 20 anos, pois notamos pelo nome dos arquivos que esse dado está com esse erro. 
 ```
 
 ## Resumo do data-set
@@ -143,14 +224,22 @@ glimpse(df |>
           filter(xco2_quality_flag == 0))
 
 ```
+##Legenda: Aqui ocorre a inspeção da estrutura do conjunto ed dados antes de continuar a análise (glimpse: olhadela). 
+
+#O operador |> envia o objeto df para a próxima função, tipo "pegue a tabela df e aplique a função seguinte". 
+
+O df é a tabela de dados que foi lida anteriormente. Pegamos ela e filtramos xco2_quality_flag = 0 apenas. 0 → dado considerado válido ou recomendado para uso. 
 
 ## Listando os anos individuais (distintos)
 ```{r}
 df |> distinct(year)
 ```
 
+## "Utilize a tabela df na função seguinte." → distinct() seleciona apenas os valores únicos de uma variável, removendo as repetições. Ou seja, cada ano aparece apenas uma vez. Esse comando é uma forma rápida de verificar quais anos estão presentes na base de dados depois da correção anterior. 
+
 ## Plotar o shape do brasil e as coordenadas de pontos amostrados dentro do objeto df
 ```{r}
+
 biomes |> 
   ggplot() +
   geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
@@ -163,15 +252,48 @@ biomes |>
           filter(xco2_quality_flag == 0) |> 
             sample_n(1000)
               , aes(longitude, latitude), color="gray")
-
 ```
+
+## Legenda:
+
+Esse trecho responde à pergunta: Os pontos amostrados de XCO₂ realmente estão localizados sobre o território brasileiro e nos biomas esperados?
+
+-------
+
+Como? O código cria um mapa dos biomas brasileiros e, sobre esse mapa, desenha uma amostra de pontos do conjunto de dados df.
+
+- O objeto biomes contém os limites espaciais dos biomas brasileiros. Ele será utilizado como base para construir o mapa.
+
+- A função ggplot() inicia a construção do gráfico. Como o objeto biomes já foi enviado pelo operador |>, ele será a base do mapa. 
+
+- A função geom_sf() desenha os polígonos dos biomas. fill = name_biome faz com que cada bioma seja preenchido com uma cor diferente, de acordo com a variável name_biome. Aqui o ggplot2 utiliza a paleta de cores criada anteriormente, definida em biome_colors.
+
+- Agora, utilizamos o conjunto de dados df novamente, mantemos o filtro de quality flag  e sorteamos uma amostra de 1000 dados. 
+
+- Depois, a função geom_point() adiciona os pontos no mapa.
+
+* Esse tipo de inspeção é uma etapa de controle de qualidade espacial antes de realizar recortes, integrações ou modelagens.O objetivo principal é verificar visualmente se as coordenadas geográficas dos dados estão corretamente posicionadas sobre a área de estudo. 
+
+
 ## Transformar o df de XCO2 em objeto espacial (sf)
 
 ```{r}
 df_sf <- df |> 
   filter(xco2_quality_flag == 0) |> 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+
 ```
+
+##Legenda: 
+Até aqui, estávamos trabalhando com uma tabela comum.A partir desse ponto, passamos a trabalhar com um objeto espacial, que permite realizar operações geográficas, como recortar pela costa brasileira.
+
+#Por que transformar em um objeto espacial?
+- Antes desse código, o df é apenas uma tabela.
+- Para o leitor, imaginamos esses números como locais no mapa (latitude e longitude). Já para o R, são apenas colunas numéricas. É justamente isso que st_as_sf() faz.A função st_as_sf() converte uma tabela comum em um objeto espacial. É ela que permite utilizar todas as funções do pacote sf.
+- Depois dele, cada linha da tabela passa a possuir uma geometria. Para isso, a coluna geometry é criada automaticamente.
+- Aqui, será criado um novo objeto, chamado df_sf. O final sf significa simple features. Filtramos de novo os dados de boa qualidade para não repetir dados já descartados. 
+- crs = 4326 corresponde ao sistema geográfico WGS 84, que é o padrão utilizado por GPS e pela maioria dos satélites.
+- Quando a geometria é criada, o sf poderia remover as colunas longitude e latitude, pois elas já estariam representadas na coluna geometry., por isso, remove = false. Elas permanecem ali para análises posteriores. 
 
 ## Join espacial: associa cada ponto ao bioma em que ele cai (pontos fora do Brasil recebem NA em name_biome)
 
@@ -183,19 +305,26 @@ df_biomas <- st_join(df_sf, biomes  |>
                        select(name_biome, geometry))
 ```
 
+##Legenda: 
+Aqui, fazemos a junção espacial. Até aqui, sabemos a localização de cada ponto df_sf (lat e long), e o objeto biomes são os polígonos. O st_join() juntará as duas informações. O objetivo desse código é associar cada observação de XCO₂ ao bioma em que ela está localizada.
+
+Como? 
+
+- Primeiro, o st_transform() altera o sistema crs do bioma e do brasil. 
+- Depois, fazemos a junção. O objeto biomes possui várias colunas, mas queremos apenas name_biome e geometry. 
+- Já o df_sf são os pontos. 
+- Com o join, mesclamos, dando para cada ponto um name_biome e uma localização no polígono. 
+
 
 ##Filtrar apenas pontos do Brasil
 
-```{r, eval=FALSE}
-df_brasil <- df_biomas |> 
-  filter(!is.na(name_biome))
-glimpse(df_brasil)
-```
-## Salvar os dados na pasta data
-```{r, eval=FALSE}
-write_rds(df_brasil, "data/xco2-brasil-biomas.rds")
-```
+##Legenda: 
 
+- df_biomas: conjunto de dados após a junção espacial.
+- filter(): seleciona apenas as linhas que atendem a uma condição.
+- !is.na(name_biome): mantém apenas os registros cujo name_biome não é NA.
+- A função glimpse() exibe um resumo da estrutura do novo conjunto de dados, permitindo conferir se a filtragem foi realizada corretamente.
+- A função write_rds() salva o objeto df_brasil em um arquivo no formato .rds, armazenando a versão já filtrada e pronta para ser utilizada nas próximas etapas da análise.
 
 ## Lendo o arquivo salvo até aqui
 
@@ -210,6 +339,12 @@ df_brasil |>
   st_drop_geometry() |> 
   count(name_biome, sort = TRUE)
 ```
+
+## Legenda: st_drop_geometry() temporariamente remove a coluna geometry, transformando o objeto espacial (sf) em uma tabela comum, pois queremos contar observações. Para contar, usamos a função count(), que contabilizará quantos linhas possuem para cada valor da coluna name_biome.O sort = TRUE faz com que o resultado seja ordenado do maior para o menor.
+
+## A partir daqui, a ideia surgiu da conversa: como vamos ver apenas os locais de possíveis manguezais, sem entrarmos nas 12 milhas de área marítima do Sistema Costeiro? 
+
+#Aqui, surgiram duas ideias: Cruzamento com o shape do Brasil (Terra firme) com o shape do Sistema Costeiro ou pegamos os dados do MapBiomas focado em Manguezais e cruzamos com os dados de Sistema costeiro. 
 
 ## Cruzamento com o shape de terra firme do Brasil
 
@@ -230,6 +365,22 @@ ggplot() +
     panel.grid = element_blank()
   )
 ```
+
+## Legenda:
+Primeiro, criou-se o objeto "costeiro", que é o biomes, filtrando apenas o Sistema Costeiro. 
+
+Em ggplot(), começamos a construção do mapa. 
+
+Depois disso, fazemos o desenho do Brasil. A função geom_sf() desenha o shapefile do Brasil. 
+
+Depois, na segunda camada, preenchemos o sistema costeiro com uma cor, também colocamos NA cor em contorno dos polígonos e aplicamos transparência com o alpha = 0.6, podendo visualizar o mapa do Brasil por baixo. 
+
+OBS: 
+- axis.text = element_blank() → remove os números dos eixos.
+- axis.ticks = element_blank() → remove as marcas dos eixos.
+- panel.grid = element_blank() → remove a grade de fundo.
+*Como se trata de um mapa ilustrativo, esses elementos não são necessários.
+
 ## Calcular a interseção geométrica: só a parte do Sistema Costeiro que também é terra (contorno do Brasil) -> remove a faixa marítima
 
 ```{r}
@@ -238,6 +389,8 @@ costeiro_terrestre <- st_intersection(costeiro, brasil)
 st_crs(costeiro)
 st_crs(brasil)
 ```
+
+##Legenda: A função st_crs() mostra o CRS (Coordinate Reference System) do objeto. 
 
 ## Conferir se a geometria resultante faz sentido (plot rápido)
 
@@ -256,6 +409,8 @@ pontos_brasil <- st_as_sf(
 )
 ```
 
+##Esse código cria um novo objeto espacial (sf), denominado pontos_brasil, a partir do conjunto de dados df_brasil, utilizando as colunas de longitude e latitude para representar cada observação como um ponto geográfico.
+
 ## Filtrar apenas os pontos que caem dentro da faixa costeira terrestre
 
 ```{r}
@@ -267,11 +422,19 @@ pontos_costeiro_terra <- st_join(pontos_brasil, costeiro_terrestre  |>
 
 ```
 
+## Legenda: Essa etapa: Quais pontos de XCO₂ estão dentro da faixa costeira terrestre?
+
+- Criou-se um novo objeto, pontos_costeiro_terra, através de uma junção st_join(), que relaciona os pontos_brasil com o polígono costeiro_terrestre, que vem da intersecção st_intersection(costeiro, brasil). 
+
+Depois, passou a função mutate() para adicionar o name_biome "Costeiro Terrestre" e selecionou com select apenas a coluna name_biome e geometry. 
+
 
 ## Voltar para data.frame puro, se precisar
 ```{r}
 df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
 ```
+
+##Legenda: Essa etapa serve para obter apenas os pontos que pertencem à faixa costeira terrestre e transformá-los novamente em uma tabela comum.
 
 ## Verificar se eles formam a linha literânea
 

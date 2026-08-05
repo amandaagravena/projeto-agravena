@@ -108,25 +108,25 @@ Ele serve para verificar quais biomas existem na base de dados do geobr.
 
 ``` r
 # Mapa 1 — Contorno do Brasil
-# map_country <- ggplot(brasil) +
-#   geom_sf(fill = "#2d6a4f", color = "#95d5b2", linewidth = 0.8) +
-#   labs(
-#     title    = "Brasil",
-#     subtitle = "Território Nacional",
-#     caption  = "Fonte: IBGE via geobr"
-#   ) +
-#   theme_void(base_family = "serif") +
-#   theme(
-#     plot.background  = element_rect(fill = "#0d1b2a", color = NA),
-#     panel.background = element_rect(fill = "#0d1b2a", color = NA),
-#     plot.title       = element_text(color = "#95d5b2", size = 22, face = "bold",
-#                                     hjust = 0.5, margin = margin(t = 16, b = 4)),
-#     plot.subtitle    = element_text(color = "#74c69d", size = 13,
-#                                     hjust = 0.5, margin = margin(b = 8)),
-#     plot.caption     = element_text(color = "#52b788", size = 8,
-#                                     hjust = 1, margin = margin(b = 10, r = 12)),
-#     plot.margin      = margin(20, 20, 10, 20)
-#   )
+map_country <- ggplot(brasil) +
+  geom_sf(fill = "#2d6a4f", color = "#95d5b2", linewidth = 0.8) +
+  labs(
+    title    = "Brasil",
+    subtitle = "Território Nacional",
+    caption  = "Fonte: IBGE via geobr"
+  ) +
+  theme_void(base_family = "serif") +
+  theme(
+    plot.background  = element_rect(fill = "#0d1b2a", color = NA),
+    panel.background = element_rect(fill = "#0d1b2a", color = NA),
+    plot.title       = element_text(color = "#95d5b2", size = 22, face = "bold",
+                                    hjust = 0.5, margin = margin(t = 16, b = 4)),
+    plot.subtitle    = element_text(color = "#74c69d", size = 13,
+                                    hjust = 0.5, margin = margin(b = 8)),
+    plot.caption     = element_text(color = "#52b788", size = 8,
+                                    hjust = 1, margin = margin(b = 10, r = 12)),
+    plot.margin      = margin(20, 20, 10, 20)
+  )
 
 ## Tiramos os itens do Mapa 1, pois não eram úteis para o momento, mas o que ele fazia: Esse bloco possui a finalidade de criar um mapa do contorno do Brasil para visualização, sem alterar nenhum dado. Não analisa nem faz recortes espaciais. Apenas constrói uma figura. 
 
@@ -504,4 +504,80 @@ df_costeiro_terra |>
 write_rds(df_costeiro_terra,"data/xco2-costeiro-terrestre.rds")
 ```
 
-## De qualquer forma, quando você chegar na etapa final de recorte pelos manguezais propriamente ditos, esse problema desaparece sozinho — como manguezal é vegetação terrestre/intertidal, a máscara de manguezal (MapBiomas/ICMBio) naturalmente exclui os pontos oceânicos.
+## Volume de dados retido
+
+``` r
+df_costeiro_terra <- read_rds("data/xco2-costeiro-terrestre.rds")
+nrow(df_costeiro_terra)
+```
+
+# Cobertura temporal — quantos pontos por ano/mês
+
+``` r
+df_costeiro_terra |> 
+  st_drop_geometry() |> 
+  count(year) |>   # ajuste nome da coluna de data
+  arrange(year)
+```
+
+``` r
+# Estatística descritiva do XCO2 nessa faixa
+summary(pontos_costeiro_terra$xco2)  # ajuste nome da coluna
+```
+
+``` r
+costeiro <- biomes |> 
+  filter(name_biome == "Sistema Costeiro")
+ggplot() +
+  geom_sf(data = brasil, fill = "grey95", color = "grey50", linewidth = 0.3) +
+  geom_sf(data = costeiro, fill = "#2c7fb8", color = NA, alpha = 0.6) +
+  geom_point(data = df_costeiro_terra |> filter(name_biome.x == "Pantanal") |> 
+  st_drop_geometry(), aes(longitude,latitude), colour = "red") +
+  labs(
+    title = "Brasil e Sistema Costeiro-Marinho (IBGE/geobr)",
+    subtitle = "Faixa costeira usada como recorte para análise de XCO2"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  ) 
+```
+
+``` r
+df_costeiro_terra |> 
+  st_drop_geometry() |> 
+  filter(year == 2023,
+         name_biome.x != "Sistema Costeiro") |> 
+  # group_by(year) |> 
+  ggplot(aes(x=name_biome.x, y=xco2, fill=name_biome.x)) +
+  geom_boxplot() 
+```
+
+``` r
+df_costeiro_terra |> 
+  st_drop_geometry() |> 
+  filter(year == 2015,
+         name_biome.x != "Sistema Costeiro") |> 
+  group_by(name_biome.x, month) |> 
+  summarise(
+    xco2 = mean(xco2)
+  ) |> 
+  ggplot(aes(x=month, y=xco2, color=name_biome.x) ) +
+  geom_point() + geom_line()
+```
+
+``` r
+df_costeiro_terra |> 
+  st_drop_geometry() |> 
+  filter(year == 2015,
+         name_biome.x != "Sistema Costeiro") |> 
+  mutate( class_latitude = cut(latitude, 20)) |> 
+  group_by(class_latitude, month) |> 
+  summarise(
+    xco2 = mean(xco2)
+  ) |> 
+  ggplot(aes(x=month, y=xco2, color=class_latitude) ) +
+  geom_point() + geom_line()
+```

@@ -504,12 +504,26 @@ df_costeiro_terra |>
 write_rds(df_costeiro_terra,"data/xco2-costeiro-terrestre.rds")
 ```
 
+\##A partir daqui, se inicia a parte de análise de dados que iniciamos.
+
+A sequência é bem lógica:
+
+Quantos dados ficaram após o recorte? Como esses dados estão
+distribuídos no tempo? Como estão distribuídos no espaço? Como se
+comporta o XCO₂? Existem diferenças entre biomas? Existe um padrão
+temporal?
+
+Lembrando, ainda não afunilamos para apenas manguezais, e sim para zona
+costeira terrestre.
+
 ## Volume de dados retido
 
 ``` r
 df_costeiro_terra <- read_rds("data/xco2-costeiro-terrestre.rds")
 nrow(df_costeiro_terra)
 ```
+
+## Legenda: Aqui, leu o arquivo e contou o número de fileiras após os recortes. Aqui, respondemos: “Depois de todos os filtros, ainda tenho uma quantidade suficiente de dados?” SIM!
 
 # Cobertura temporal — quantos pontos por ano/mês
 
@@ -520,10 +534,19 @@ df_costeiro_terra |>
   arrange(year)
 ```
 
+## Legenda: Verificar quantas observações existem em cada ano e organiza em ordem crescente, para verificar se algum ano possui poucos dados ou se há anos ausentes.
+
 ``` r
 # Estatística descritiva do XCO2 nessa faixa
 summary(pontos_costeiro_terra$xco2)  # ajuste nome da coluna
 ```
+
+## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
+
+valores muito baixos;possíveis erros.
+
+Nesse ponto, de início, apareceu o bioma Pantanal. O que é estranho,
+pois não há Pantanal na zona costeira.
 
 ``` r
 costeiro <- biomes |> 
@@ -545,6 +568,18 @@ ggplot() +
   ) 
 ```
 
+## Legenda: Nesse ponto, queríamos comparar a distribuição do XCO₂ entre os biomas. Nele, evidenciamos o erro (Pantanal) e o Sistema Costeiro, pois não deve aparecer pontos de Pantanal no Sistema costeiro.
+
+\##Durante a segunda junção espacial (st_join), o objeto pontos_brasil
+já possuía uma coluna chamada “name_biome”, indicando o bioma em que
+cada ponto estava (Amazônia, Cerrado, Mata Atlântica etc.).
+
+Como o objeto costeiro_terrestre também recebeu uma coluna com o mesmo
+nome(“name_biome”), o R renomeou automaticamente as duas colunas para
+evitar conflito: a coluna original passou a se chamar “name_biome.x”,
+enquanto a coluna proveniente da junção passou a se chamar
+“name_biome.y”(Costeiro Terrestre).
+
 ``` r
 df_costeiro_terra |> 
   st_drop_geometry() |> 
@@ -554,6 +589,10 @@ df_costeiro_terra |>
   ggplot(aes(x=name_biome.x, y=xco2, fill=name_biome.x)) +
   geom_boxplot() 
 ```
+
+\##Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre
+os biomas. Podemos visualizar mediana; quartis; dispersão; outliers.
+Excluímos Sistema Costeiro, pois não é um bioma de fato.
 
 ``` r
 df_costeiro_terra |> 
@@ -568,6 +607,11 @@ df_costeiro_terra |>
   geom_point() + geom_line()
 ```
 
+\##Legenda: Média mensal por bioma, agrupando por bioma e por mês, ou
+seja, “Qual foi o XCO₂ médio daquele bioma naquele mês?” - Resulta em um
+gráfico temporal. Buscamos ver se os biomas apresentam comportamento
+sazonal diferente.
+
 ``` r
 df_costeiro_terra |> 
   st_drop_geometry() |> 
@@ -581,3 +625,9 @@ df_costeiro_terra |>
   ggplot(aes(x=month, y=xco2, color=class_latitude) ) +
   geom_point() + geom_line()
 ```
+
+\##Legenda: Média mensal por faixa de latitude (20 faixas). Então,
+calcula a média do XCO₂ para cada faixa de latitude em cada mês. O
+objetivo é verificar se existe um gradiente latitudinal, ou seja, “O
+comportamento do XCO₂ muda conforme se avança do sul para o norte do
+Brasil?”

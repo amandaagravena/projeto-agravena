@@ -662,23 +662,37 @@ Brasil?”
 df_costeiro_terra |>
   st_drop_geometry() |>
   filter(name_biome.x != "Sistema Costeiro") |>
-  mutate(class_latitude = cut(latitude, breaks = seq(-35, 10, by = 2))) |>
-  group_by(year, class_latitude) |>
+  mutate(
+    class_latitude = cut(
+      latitude,
+      breaks = seq(-35, 10, by = 2),
+      include.lowest = TRUE
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year, latitude_media) |>
   summarise(
     xco2 = mean(xco2, na.rm = TRUE),
     .groups = "drop"
   ) |>
-  ggplot(aes(x = xco2,
-             y = year,
-             color = class_latitude,
-             group = class_latitude)) +
+  ggplot(
+    aes(
+      x = xco2,
+      y = latitude_media,
+      color = factor(year),
+      group = year
+    )
+  ) +
   geom_point(size = 2) +
   geom_line(linewidth = 0.8) +
   labs(
-    title = "Evolução da concentração média de XCO₂ por faixa de latitude",
+    title = "Concentração média de XCO₂ por faixa de latitude",
     x = "Concentração média de XCO₂ (ppm)",
-    y = "Ano",
-    color = "Faixa de latitude"
+    y = "Latitude (°)",
+    color = "Ano"
   ) +
   theme_minimal()
 ```

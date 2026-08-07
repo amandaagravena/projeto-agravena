@@ -33,6 +33,10 @@ tabelas, o que é ótimo para projetos científicos.
   Doutoranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
   Email: <witoria.araujo@unesp.br>
 
+- **Mr. Luís Miguel da Costa**  
+  Doutorando em Agronomia (Ciência do Solo) - FCAV/Unesp  
+  Email: <lm.costa@unesp.br>
+
 - **Prof. Dr. Alan Rodrigo Panosso**  
   Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
   Email: <alan.panosso@unesp.br>
@@ -213,7 +217,7 @@ print(map_biomes)
 ## Ler e interpretar os dados em “data-raw”
 
 ``` r
-df <- read_rds("data-raw/data-set-xco2-br.rds") |> 
+df <- read_rds("data-raw/data-set-xco2-br-002.rds") |> 
   mutate(year = year - 20)
 
 ##Legenda: A função read_rds() lê o arquivo que contém os dados de XCO₂. O conteúdo do arquivo será armazenado em df (dataframe), que será utilizado nas etapas seguintes. 
@@ -461,6 +465,8 @@ do objeto.
 
 ``` r
 plot(st_geometry(costeiro_terrestre))
+costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre,0.045)
+plot(st_geometry(costeiro_terrestre_buffer))
 ```
 
 ## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
@@ -557,7 +563,7 @@ df_costeiro_terra |>
 
 ``` r
 # Estatística descritiva do XCO2 nessa faixa
-summary(pontos_costeiro_terra$xco2)  # ajuste nome da coluna
+summary(df_costeiro_terra$xco2)  # ajuste nome da coluna
 ```
 
 ## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
@@ -685,6 +691,7 @@ length(arquivos)
 rasters <- lapply(arquivos, terra::rast)
 
 mangue <- do.call(merge, rasters)
+terra::writeRaster(mangue, "data/mangue-brasil.tif")
 ```
 
 \##Legenda: lapply() → aplica uma função em cada item da lista. arquivos

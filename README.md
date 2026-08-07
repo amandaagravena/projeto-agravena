@@ -47,6 +47,7 @@ tabelas, o que é ótimo para projetos científicos.
 library(tidyverse)
 library(geobr)
 library(sf)
+library(terra)
 ```
 
 \##Legenda: Ao carregar pacotes, carregamos as funções das diferentes
@@ -465,7 +466,7 @@ do objeto.
 
 ``` r
 plot(st_geometry(costeiro_terrestre))
-costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre,0.045)
+costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre,0.04)
 plot(st_geometry(costeiro_terrestre_buffer))
 ```
 
@@ -657,13 +658,43 @@ objetivo é verificar se existe um gradiente latitudinal, ou seja, “O
 comportamento do XCO₂ muda conforme se avança do sul para o norte do
 Brasil?”
 
+``` r
+df_costeiro_terra |>
+  st_drop_geometry() |>
+  filter(name_biome.x != "Sistema Costeiro") |>
+  mutate(class_latitude = cut(latitude, breaks = seq(-35, 10, by = 2))) |>
+  group_by(year, class_latitude) |>
+  summarise(
+    xco2 = mean(xco2, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = xco2,
+             y = year,
+             color = class_latitude,
+             group = class_latitude)) +
+  geom_point(size = 2) +
+  geom_line(linewidth = 0.8) +
+  labs(
+    title = "Evolução da concentração média de XCO₂ por faixa de latitude",
+    x = "Concentração média de XCO₂ (ppm)",
+    y = "Ano",
+    color = "Faixa de latitude"
+  ) +
+  theme_minimal()
+```
+
+\##Legenda: Este código remove a geometria espacial dos dados, filtra os
+pontos pertencentes ao Sistema Costeiro Terrestre e agrupa as
+observações de XCO₂ por ano e faixa de latitude. A função mutate() cria
+classes latitudinais a partir das coordenadas, group_by() organiza os
+dados por ano e latitude e summarise() calcula a média anual de XCO₂
+para cada grupo. Por fim, ggplot() gera a visualização da variação
+temporal do XCO₂, utilizando cores para diferenciar as faixas
+latitudinais.
+
 \##A partir daqui, peguei os dados de Manguezais do MapBiomas.
 
 ## Carregar os rasters de manguezais do MapBiomas
-
-``` r
-library(terra)
-```
 
 ``` r
 arquivos <- list.files(

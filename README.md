@@ -329,11 +329,16 @@ permanecem ali para análises posteriores.
 ## Join espacial: associa cada ponto ao bioma em que ele cai (pontos fora do Brasil recebem NA em name_biome)
 
 ``` r
-# Transforma biomes para o mesmo CRS do df_sf (WGS84)
+# Transforma os biomas para o mesmo sistema de referência (CRS) do objeto df_sf (WGS84)
 biomes <- st_transform(biomes, crs = 4326)
 brasil <- st_transform(brasil, crs = 4326)
-df_biomas <- st_join(df_sf, biomes  |>  
-                       select(name_biome, geometry))
+
+# Realiza a junção espacial entre os pontos de XCO2 e os biomas
+df_biomas <- st_join(
+  df_sf,
+  biomes |>
+    select(name_biome, geometry)
+)
 ```
 
 \##Legenda: Aqui, fazemos a junção espacial. Até aqui, sabemos a
@@ -351,21 +356,35 @@ Como?
 - Com o join, mesclamos, dando para cada ponto um name_biome e uma
   localização no polígono.
 
-\##Filtrar apenas pontos do Brasil
+## Filtrar apenas pontos do Brasil
 
-\##Legenda:
+``` r
+df_brasil <- df_biomas |> 
+  filter(!is.na(name_biome))
 
-- df_biomas: conjunto de dados após a junção espacial.
-- filter(): seleciona apenas as linhas que atendem a uma condição.
-- !is.na(name_biome): mantém apenas os registros cujo name_biome não é
-  NA.
-- A função glimpse() exibe um resumo da estrutura do novo conjunto de
-  dados, permitindo conferir se a filtragem foi realizada corretamente.
-- A função write_rds() salva o objeto df_brasil em um arquivo no formato
-  .rds, armazenando a versão já filtrada e pronta para ser utilizada nas
-  próximas etapas da análise.
+glimpse(df_brasil)
+```
 
-## Lendo o arquivo salvo até aqui
+\##Legenda: - df_brasil \<- cria um novo objeto chamado **df_brasil**,
+onde será armazenado o resultado do filtro. - df_biomas é o conjunto de
+dados que contém os pontos de XCO₂ e o bioma associado a cada ponto. -
+filter(!is.na(name_biome)) mantém apenas as linhas em que a coluna
+name_biome possui um valor, ou seja, apenas os pontos que pertencem a
+algum bioma brasileiro. Os pontos fora do Brasil possuem NA nessa coluna
+e são removidos. - glimpse(df_brasil) mostra um resumo do novo conjunto
+de dados, permitindo conferir as colunas, seus tipos e algumas
+informações gerais.
+
+## Salvar os dados na pasta data
+
+``` r
+write_rds(
+  df_brasil,
+  "data/xco2-brasil-biomas.rds"
+)
+```
+
+\##Lendo o arquivo salvo até aqui
 
 ``` r
 df_brasil <- read_rds("data/xco2-brasil-biomas.rds")
@@ -631,3 +650,66 @@ calcula a média do XCO₂ para cada faixa de latitude em cada mês. O
 objetivo é verificar se existe um gradiente latitudinal, ou seja, “O
 comportamento do XCO₂ muda conforme se avança do sul para o norte do
 Brasil?”
+
+\##A partir daqui, peguei os dados de Manguezais do MapBiomas.
+
+## Carregar os rasters de manguezais do MapBiomas
+
+``` r
+library(terra)
+```
+
+``` r
+arquivos <- list.files(
+  "data/EarthEngine",
+  pattern = "\\.tif$",
+  full.names = TRUE
+)
+```
+
+\##Ver se ele encontra os artigos
+
+``` r
+arquivos
+```
+
+\##Ver quantos rasters ele encontra:
+
+``` r
+length(arquivos)
+```
+
+\##Criar o objeto mangue
+
+``` r
+rasters <- lapply(arquivos, terra::rast)
+
+mangue <- do.call(merge, rasters)
+```
+
+\##Legenda: lapply() → aplica uma função em cada item da lista. arquivos
+→ são os arquivos .tif dos manguezais. terra::rast → lê cada arquivo
+.tif e transforma em um objeto raster. rasters → guarda todos os rasters
+carregados.
+
+do.call() → executa uma função usando os elementos de uma lista como
+argumentos. merge → junta os rasters. rasters → são os vários pedaços do
+mapa. mangue → recebe o raster final unido.
+
+\##Visualização rápida
+
+``` r
+plot(
+  mangue,
+  main = "Manguezais do Brasil (MapBiomas - 2018)",
+  col = c("white", "darkgreen"),
+  legend = TRUE
+)
+
+plot(
+  st_geometry(brasil),
+  add = TRUE,
+  border = "black",
+  lwd = 0.6
+)
+```

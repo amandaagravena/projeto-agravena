@@ -45,9 +45,10 @@ tabelas, o que é ótimo para projetos científicos.
 
 ``` r
 library(tidyverse)
+library(ggpubr)
+library(terra)
 library(geobr)
 library(sf)
-library(terra)
 ```
 
 \##Legenda: Ao carregar pacotes, carregamos as funções das diferentes
@@ -256,7 +257,6 @@ df |> distinct(year)
 ## Plotar o shape do brasil e as coordenadas de pontos amostrados dentro do objeto df
 
 ``` r
-
 biomes |> 
   ggplot() +
   geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
@@ -339,11 +339,11 @@ biomes <- st_transform(biomes, crs = 4326)
 brasil <- st_transform(brasil, crs = 4326)
 
 # Realiza a junção espacial entre os pontos de XCO2 e os biomas
-df_biomas <- st_join(
-  df_sf,
-  biomes |>
-    select(name_biome, geometry)
-)
+# df_biomas <- st_join(
+#   df_sf,
+#   biomes |>
+#     select(name_biome, geometry)
+# )
 ```
 
 \##Legenda: Aqui, fazemos a junção espacial. Até aqui, sabemos a
@@ -364,10 +364,10 @@ Como?
 ## Filtrar apenas pontos do Brasil
 
 ``` r
-df_brasil <- df_biomas |> 
-  filter(!is.na(name_biome))
-
-glimpse(df_brasil)
+# df_brasil <- df_biomas |> 
+#   filter(!is.na(name_biome))
+# 
+# glimpse(df_brasil)
 ```
 
 \##Legenda: - df_brasil \<- cria um novo objeto chamado **df_brasil**,
@@ -383,10 +383,10 @@ informações gerais.
 ## Salvar os dados na pasta data
 
 ``` r
-write_rds(
-  df_brasil,
-  "data/xco2-brasil-biomas.rds"
-)
+# write_rds(
+#   df_brasil,
+#   "data/xco2-brasil-biomas.rds"
+# )
 ```
 
 \##Lendo o arquivo salvo até aqui
@@ -491,7 +491,12 @@ ponto geográfico.
 ``` r
 costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
 
-pontos_costeiro_terra <- st_join(pontos_brasil, costeiro_terrestre  |> 
+pontos_costeiro_terra <- st_join(pontos_brasil, costeiro_terrestre  |>
+                                   mutate(name_biome = "Costeiro Terrestre") |>
+                       select(name_biome, geometry))
+
+pontos_costeiro_terra_buffer <- st_join(pontos_brasil, 
+                                        costeiro_terrestre_buffer  |> 
                                    mutate(name_biome = "Costeiro Terrestre") |> 
                        select(name_biome, geometry))
 ```
@@ -510,6 +515,8 @@ geometry.
 ## Voltar para data.frame puro, se precisar
 
 ``` r
+df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
+
 df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
 ```
 
@@ -522,12 +529,16 @@ faixa costeira terrestre e transformá-los novamente em uma tabela comum.
 df_costeiro_terra |> 
   ggplot(aes(longitude, latitude)) +
   geom_point()
+
+df_costeiro_terra_buffer |> 
+  ggplot(aes(longitude, latitude)) +
+  geom_point()
 ```
 
 ## Salvando na pasta data
 
 ``` r
-write_rds(df_costeiro_terra,"data/xco2-costeiro-terrestre.rds")
+write_rds(df_costeiro_terra_buffer,"data/xco2-costeiro-terrestre-buffer.rds")
 ```
 
 \##A partir daqui, se inicia a parte de análise de dados que iniciamos.
@@ -545,8 +556,8 @@ costeira terrestre.
 ## Volume de dados retido
 
 ``` r
-df_costeiro_terra <- read_rds("data/xco2-costeiro-terrestre.rds")
-nrow(df_costeiro_terra)
+df_costeiro_terra_buffer <- read_rds("data/xco2-costeiro-terrestre-buffer.rds")
+nrow(df_costeiro_terra_buffer)
 ```
 
 ## Legenda: Aqui, leu o arquivo e contou o número de fileiras após os recortes. Aqui, respondemos: “Depois de todos os filtros, ainda tenho uma quantidade suficiente de dados?” SIM!
@@ -554,7 +565,7 @@ nrow(df_costeiro_terra)
 # Cobertura temporal — quantos pontos por ano/mês
 
 ``` r
-df_costeiro_terra |> 
+df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   count(year) |>   # ajuste nome da coluna de data
   arrange(year)
@@ -564,7 +575,7 @@ df_costeiro_terra |>
 
 ``` r
 # Estatística descritiva do XCO2 nessa faixa
-summary(df_costeiro_terra$xco2)  # ajuste nome da coluna
+summary(df_costeiro_terra_buffer$xco2)  # ajuste nome da coluna
 ```
 
 ## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
@@ -607,7 +618,7 @@ enquanto a coluna proveniente da junção passou a se chamar
 “name_biome.y”(Costeiro Terrestre).
 
 ``` r
-df_costeiro_terra |> 
+df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2023,
          name_biome.x != "Sistema Costeiro") |> 
@@ -621,7 +632,7 @@ os biomas. Podemos visualizar mediana; quartis; dispersão; outliers.
 Excluímos Sistema Costeiro, pois não é um bioma de fato.
 
 ``` r
-df_costeiro_terra |> 
+df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2015,
          name_biome.x != "Sistema Costeiro") |> 
@@ -639,7 +650,7 @@ gráfico temporal. Buscamos ver se os biomas apresentam comportamento
 sazonal diferente.
 
 ``` r
-df_costeiro_terra |> 
+df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2015,
          name_biome.x != "Sistema Costeiro") |> 
@@ -658,15 +669,67 @@ objetivo é verificar se existe um gradiente latitudinal, ou seja, “O
 comportamento do XCO₂ muda conforme se avança do sul para o norte do
 Brasil?”
 
+## Existe uma tendência regional nos dados, e ela deve ser retirada para esse trabalho
+
+## Análise de regressão linear simples para caracterização da tendência.
+
 ``` r
-df_costeiro_terra |>
-  st_drop_geometry() |>
-  filter(name_biome.x != "Sistema Costeiro") |>
+mod_trend_xco2 <- lm(xco2 ~ date, 
+          data = df_costeiro_terra_buffer |> 
+            mutate(
+              date = make_date(year, month, day),
+              date = as.numeric(date - min(date))
+              ))
+# mod_trend_xco2
+sm <- summary.lm(mod_trend_xco2)
+```
+
+## Mostrando o gráfico da regressão
+
+``` r
+df_costeiro_terra_buffer |>
+  # sample_n(1000) |>
+  drop_na() |>
+  mutate( date= make_date(year, month, day),
+    year = year - min(year)
+    ) |>
+  ggplot(aes(x=date, y=xco2)) +
+  geom_point(alpha = 0.25, size = 1) +
+  # geom_point(shape=21,color="black",fill="gray") +
+  geom_smooth(method = "lm",
+              color = "red", linetype = "dashed",
+              size=1) +
+  stat_regline_equation(aes(
+  label =  paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~~"))) +
+  theme_minimal() +
+  labs(x="Data",y=expression(paste(X[CO2]," (ppm)"))) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+```
+
+## retirada de tendência Propriamente dita
+
+``` r
+a_co2 <- mod_trend_xco2$coefficients[[1]]
+b_co2 <- mod_trend_xco2$coefficients[[2]]
+
+df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
+  mutate(
+    date= make_date(year, month, day),
+    date_modif = as.numeric(date - min(date)),
+    xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
+    delta = xco2_est-xco2, ## estimado menos o observado real
+    xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
+  ) |> select(-xco2_quality_flag, -path, -name_biome.y) |> 
+  rename(name_biome = name_biome.x)
+```
+
+### PARTE AMANDA
+
+``` r
+df_costeiro_terra_buffer |>
   mutate(
     class_latitude = cut(
-      latitude,
-      breaks = seq(-35, 10, by = 2),
-      include.lowest = TRUE
+      latitude,10
     ),
     latitude_media = (
       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
@@ -675,26 +738,81 @@ df_costeiro_terra |>
   ) |>
   group_by(year, latitude_media) |>
   summarise(
-    xco2 = mean(xco2, na.rm = TRUE),
+    xco2 = mean(xco2_detrend, na.rm = TRUE),
     .groups = "drop"
-  ) |>
-  ggplot(
-    aes(
-      x = xco2,
-      y = latitude_media,
-      color = factor(year),
-      group = year
-    )
-  ) +
-  geom_point(size = 2) +
-  geom_line(linewidth = 0.8) +
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=latitude_media, y = xco2, fill=as_factor(year))) +
+  geom_col(color="black", position = "dodge") +
+  coord_flip(ylim = c(380, 386)) +
   labs(
-    title = "Concentração média de XCO₂ por faixa de latitude",
-    x = "Concentração média de XCO₂ (ppm)",
-    y = "Latitude (°)",
+    x = "Latitude (°)",
+    y = "Concentração média de XCO2 (ppm)",
     color = "Ano"
   ) +
   theme_minimal()
+```
+
+``` r
+df_costeiro_terra_buffer |>
+  mutate(
+    class_latitude = cut(
+      latitude, 10
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year, latitude_media) |>
+  summarise(
+    xco2 = mean(xco2_detrend, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=latitude_media, y = xco2, color=as_factor(year))) +
+  # geom_col(color="black", position = "dodge") +
+  geom_line() +
+  # geom_point() +
+  coord_flip(ylim = c(380, 384)) +
+  labs(
+    x = "Latitude (°)",
+    y = "Concentração média de XCO2 (ppm)",
+    color = "Ano"
+  ) +
+  theme_minimal()
+```
+
+``` r
+df_costeiro_terra_buffer |>
+  mutate(
+    class_latitude = cut(
+      latitude, 35
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year, latitude_media) |>
+  summarise(
+    xco2 = mean(xco2_detrend, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=factor(latitude_media), y = xco2, fill = factor(latitude_media))) +
+  geom_boxplot() + 
+  coord_flip(ylim = c(380, 386)) +
+  labs(
+    x = "Latitude (°)",
+    y = "Concentração média de XCO2 (ppm)",
+    color = "Ano"
+  ) +
+  theme_minimal()+
+  theme(
+    legend.position = "none"
+  ) +
+  scale_fill_viridis_d()
 ```
 
 \##Legenda: Este código remove a geometria espacial dos dados, filtra os

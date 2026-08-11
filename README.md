@@ -684,6 +684,16 @@ mod_trend_xco2 <- lm(xco2 ~ date,
 sm <- summary.lm(mod_trend_xco2)
 ```
 
+#### Legenda:
+
+A função `lm()` realiza uma regressão linear simples entre o XCO₂ e a
+data, permitindo identificar a tendência temporal dos dados. A data é
+convertida para uma escala numérica em dias, facilitando o ajuste da
+regressão. O resultado é armazenado no objeto `mod_trend_xco2`.
+
+A função `summary.lm()` gera o resumo estatístico do modelo de
+regressão.
+
 ## Mostrando o gráfico da regressão
 
 ``` r
@@ -706,6 +716,15 @@ df_costeiro_terra_buffer |>
   scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
 
+## \## Legenda:
+
+Esse bloco mostra graficamente a tendência temporal do XCO₂.
+`geom_point()` apresenta os valores observados, enquanto
+`geom_smooth(method = "lm")` adiciona a reta da regressão linear.
+`stat_regline_equation()` mostra a equação da reta e o R² no gráfico.
+Assim, é possível visualizar a tendência regional dos dados ao longo do
+período analisado.
+
 ## retirada de tendência Propriamente dita
 
 ``` r
@@ -722,6 +741,15 @@ df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
   ) |> select(-xco2_quality_flag, -path, -name_biome.y) |> 
   rename(name_biome = name_biome.x)
 ```
+
+#### Legenda:
+
+Esse bloco realiza a retirada da tendência temporal do XCO₂. Primeiro,
+são obtidos os coeficientes da regressão (`a_co2` e `b_co2`). Em
+seguida, calcula-se o XCO₂ estimado pela reta de regressão para cada
+data (`xco2_est`) e a diferença entre o valor estimado e o observado
+(`delta`). Por fim, é calculado o `xco2_detrend`, que representa o XCO₂
+após a remoção da tendência regional.
 
 ### PARTE AMANDA
 
@@ -753,6 +781,14 @@ df_costeiro_terra_buffer |>
   theme_minimal()
 ```
 
+#### Legenda:
+
+O código divide as latitudes em 10 faixas e calcula a latitude média de
+cada faixa. Em seguida, agrupa os dados por ano e faixa de latitude e
+calcula a média do XCO₂ sem tendência (`xco2_detrend`). O gráfico de
+barras permite comparar a concentração média de XCO₂ entre as diferentes
+latitudes e anos.
+
 ``` r
 df_costeiro_terra_buffer |>
   mutate(
@@ -782,6 +818,13 @@ df_costeiro_terra_buffer |>
   ) +
   theme_minimal()
 ```
+
+#### Legenda:
+
+O código utiliza as mesmas 10 faixas de latitude e calcula a média do
+XCO₂ sem tendência para cada ano e faixa. O gráfico de linhas permite
+visualizar e comparar o comportamento espacial do XCO₂ ao longo das
+diferentes latitudes em cada ano.
 
 ``` r
 df_costeiro_terra_buffer |>
@@ -815,14 +858,7 @@ df_costeiro_terra_buffer |>
   scale_fill_viridis_d()
 ```
 
-\##Legenda: Este código remove a geometria espacial dos dados, filtra os
-pontos pertencentes ao Sistema Costeiro Terrestre e agrupa as
-observações de XCO₂ por ano e faixa de latitude. A função mutate() cria
-classes latitudinais a partir das coordenadas, group_by() organiza os
-dados por ano e latitude e summarise() calcula a média anual de XCO₂
-para cada grupo. Por fim, ggplot() gera a visualização da variação
-temporal do XCO₂, utilizando cores para diferenciar as faixas
-latitudinais.
+#### Legenda: O código divide os dados em 35 faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
 \##A partir daqui, peguei os dados de Manguezais do MapBiomas.
 

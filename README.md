@@ -48,6 +48,7 @@ library(tidyverse)
 library(ggpubr)
 library(terra)
 library(geobr)
+library(vegan)
 library(sf)
 ```
 
@@ -948,7 +949,7 @@ diferentes latitudes em cada ano.
 df_costeiro_terra_buffer |>
   mutate(
     class_latitude = cut(
-      latitude, 35
+      latitude, 115
     ),
     latitude_media = (
       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
@@ -979,6 +980,148 @@ df_costeiro_terra_buffer |>
 ![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 #### Legenda: O código divide os dados em 35 faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
+
+### Análise de cluster da série temporal
+
+``` r
+df_cluster <- df_costeiro_terra_buffer |>
+  filter(year >2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year_month, latitude_media) |>
+  summarise(
+    xco2 = mean(xco2_detrend, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  pivot_wider(names_from = year_month, values_from = xco2) |> 
+  mutate(across(
+    where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
+  ))
+df_cluster
+#> # A tibble: 115 × 120
+#>    latitude_media `2015_1` `2015_10` `2015_11` `2015_12` `2015_2` `2015_3`
+#>             <dbl>    <dbl>     <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
+#>  1          -33.6     380.      383.      383.      383.     381.     381.
+#>  2          -33.2     379.      383.      383.      383.     382.     382.
+#>  3          -32.6     382.      383.      383.      381.     380.     380.
+#>  4          -32.0     379.      383.      384.      383.     381.     381.
+#>  5          -31.6     379.      383.      381.      383.     380.     381.
+#>  6          -31.2     379.      383.      381.      382.     382.     382.
+#>  7          -24.0     382.      383.      383.      383.     382.     382.
+#>  8          -23.0     381.      383.      382.      383.     383.     381.
+#>  9          -22.6     380.      383.      382.      384.     382.     382.
+#> 10          -22.2     382.      382.      386.      383.     382.     382.
+#> # ℹ 105 more rows
+#> # ℹ 113 more variables: `2015_4` <dbl>, `2015_5` <dbl>, `2015_6` <dbl>,
+#> #   `2015_7` <dbl>, `2015_8` <dbl>, `2015_9` <dbl>, `2016_1` <dbl>,
+#> #   `2016_10` <dbl>, `2016_11` <dbl>, `2016_12` <dbl>, `2016_2` <dbl>,
+#> #   `2016_3` <dbl>, `2016_4` <dbl>, `2016_5` <dbl>, `2016_6` <dbl>,
+#> #   `2016_7` <dbl>, `2016_8` <dbl>, `2016_9` <dbl>, `2017_1` <dbl>,
+#> #   `2017_10` <dbl>, `2017_11` <dbl>, `2017_12` <dbl>, `2017_2` <dbl>, …
+```
+
+## Matriz de correlação entre as latitudes
+
+``` r
+mc <- cor(df_cluster |> select(-latitude_media))
+corrplot::corrplot(mc)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+
+``` r
+da_pad<-decostand(df_cluster |> select(-latitude_media), 
+                  method = "standardize",
+                  na.rm=TRUE)
+
+da_pad_euc<-vegdist(da_pad,"euclidean") 
+da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
+da_pad_euc_ward$labels <- df_cluster$latitude_media
+plot(da_pad_euc_ward, 
+     ylab="Distância Euclidiana",
+     xlab="Acessos", hang=-1,
+     col="blue", las=1,
+     cex=.6,lwd=1.5);box()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
+``` r
+grupo<-cutree(da_pad_euc_ward,4)
+colunas <- df_cluster |> add_column(grupo) |> 
+  select(latitude_media,grupo)
+```
+
+``` r
+df_costeiro_terra_buffer |>
+  filter(year >2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
+  geom_point()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+
+``` r
+# Basemap do Brasil (uma vez só, fora do pipe principal)
+brasil <- read_country(year = 2020, showProgress = FALSE)
+
+df_costeiro_terra_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(as.character(year), as.character(month), sep = "_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot() +
+  geom_sf(data = brasil, fill = "grey96", color = "grey70", linewidth = 0.3) +
+  geom_point(
+    aes(x = longitude, y = latitude, color = as_factor(grupo)),
+    size = 1.4, alpha = 0.75
+  ) +
+  coord_sf(
+    xlim = range(df_costeiro_terra_buffer$longitude, na.rm = TRUE),
+    ylim = range(df_costeiro_terra_buffer$latitude, na.rm = TRUE)
+  ) +
+  scale_color_brewer(palette = "Set1", name = "Grupo") +
+  labs(
+    title = "Agrupamento espacial de XCO2 na faixa costeira",
+    subtitle = "Grupos formados a partir da análise de séries temporais (2015\u20132023)",
+    x = "Longitude", y = "Latitude"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40", size = 10),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey92"),
+    axis.text = element_text(color = "grey30")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 \##A partir daqui, peguei os dados de Manguezais do MapBiomas.
 

@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -225,8 +225,8 @@ df <- read_rds("data-raw/data-set-xco2-br-002.rds") |>
 
 ## Resumo do data-set
 ```{r}
-glimpse(df |> 
-          filter(xco2_quality_flag == 0))
+# glimpse(df |> 
+#           filter(xco2_quality_flag == 0))
 
 ```
 ##Legenda: Aqui ocorre a inspeção da estrutura do conjunto ed dados antes de continuar a análise (glimpse: olhadela). 
@@ -237,7 +237,7 @@ O df é a tabela de dados que foi lida anteriormente. Pegamos ela e filtramos xc
 
 ## Listando os anos individuais (distintos)
 ```{r}
-df |> distinct(year)
+# df |> distinct(year)
 ```
 
 ## "Utilize a tabela df na função seguinte." → distinct() seleciona apenas os valores únicos de uma variável, removendo as repetições. Ou seja, cada ano aparece apenas uma vez. Esse comando é uma forma rápida de verificar quais anos estão presentes na base de dados depois da correção anterior. 
@@ -282,9 +282,9 @@ Como? O código cria um mapa dos biomas brasileiros e, sobre esse mapa, desenha 
 ## Transformar o df de XCO2 em objeto espacial (sf)
 
 ```{r}
-df_sf <- df |> 
-  filter(xco2_quality_flag == 0) |> 
-  st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+# df_sf <- df |> 
+#   filter(xco2_quality_flag == 0) |> 
+#   st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
 ```
 
 ##Legenda: 
@@ -438,16 +438,16 @@ pontos_brasil <- st_as_sf(
 ## Filtrar apenas os pontos que caem dentro da faixa costeira terrestre
 
 ```{r}
-costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
-
-pontos_costeiro_terra <- st_join(pontos_brasil, costeiro_terrestre  |>
-                                   mutate(name_biome = "Costeiro Terrestre") |>
-                       select(name_biome, geometry))
-
-pontos_costeiro_terra_buffer <- st_join(pontos_brasil, 
-                                        costeiro_terrestre_buffer  |> 
-                                   mutate(name_biome = "Costeiro Terrestre") |> 
-                       select(name_biome, geometry))
+# costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
+# 
+# pontos_costeiro_terra <- st_join(pontos_brasil, costeiro_terrestre  |>
+#                                    mutate(name_biome = "Costeiro Terrestre") |>
+#                        select(name_biome, geometry))
+# 
+# pontos_costeiro_terra_buffer <- st_join(pontos_brasil, 
+#                                         costeiro_terrestre_buffer  |> 
+#                                    mutate(name_biome = "Costeiro Terrestre") |> 
+#                        select(name_biome, geometry))
 ```
 
 ## Legenda: Essa etapa: Quais pontos de XCO₂ estão dentro da faixa costeira terrestre?
@@ -459,9 +459,9 @@ Depois, passou a função mutate() para adicionar o name_biome "Costeiro Terrest
 
 ## Voltar para data.frame puro, se precisar
 ```{r}
-df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
-
-df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
+# df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
+# 
+# df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
 ```
 
 ##Legenda: Essa etapa serve para obter apenas os pontos que pertencem à faixa costeira terrestre e transformá-los novamente em uma tabela comum.
@@ -469,18 +469,18 @@ df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro 
 ## Verificar se eles formam a linha literânea
 
 ```{r}
-df_costeiro_terra |> 
-  ggplot(aes(longitude, latitude)) +
-  geom_point()
-
-df_costeiro_terra_buffer |> 
-  ggplot(aes(longitude, latitude)) +
-  geom_point()
+# df_costeiro_terra |> 
+#   ggplot(aes(longitude, latitude)) +
+#   geom_point()
+# 
+# df_costeiro_terra_buffer |> 
+#   ggplot(aes(longitude, latitude)) +
+#   geom_point()
 ```
 ## Salvando na pasta data
 
 ```{r}
-write_rds(df_costeiro_terra_buffer,"data/xco2-costeiro-terrestre-buffer.rds")
+# write_rds(df_costeiro_terra_buffer,"data/xco2-costeiro-terrestre-buffer.rds")
 ```
 
 ##A partir daqui, se inicia a parte de análise de dados que iniciamos. 
@@ -527,23 +527,23 @@ valores muito baixos;possíveis erros.
 Nesse ponto, de início, apareceu o bioma Pantanal. O que é estranho, pois não há Pantanal na zona costeira. 
 
 ```{r}
-costeiro <- biomes |> 
-  filter(name_biome == "Sistema Costeiro")
-ggplot() +
-  geom_sf(data = brasil, fill = "grey95", color = "grey50", linewidth = 0.3) +
-  geom_sf(data = costeiro, fill = "#2c7fb8", color = NA, alpha = 0.6) +
-  geom_point(data = df_costeiro_terra |> filter(name_biome.x == "Pantanal") |> 
-  st_drop_geometry(), aes(longitude,latitude), colour = "red") +
-  labs(
-    title = "Brasil e Sistema Costeiro-Marinho (IBGE/geobr)",
-    subtitle = "Faixa costeira usada como recorte para análise de XCO2"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    panel.grid = element_blank()
-  ) 
+# costeiro <- biomes |> 
+#   filter(name_biome == "Sistema Costeiro")
+# ggplot() +
+#   geom_sf(data = brasil, fill = "grey95", color = "grey50", linewidth = 0.3) +
+#   geom_sf(data = costeiro, fill = "#2c7fb8", color = NA, alpha = 0.6) +
+#   geom_point(data = df_costeiro_terra |> filter(name_biome.x == "Pantanal") |> 
+#   st_drop_geometry(), aes(longitude,latitude), colour = "red") +
+#   labs(
+#     title = "Brasil e Sistema Costeiro-Marinho (IBGE/geobr)",
+#     subtitle = "Faixa costeira usada como recorte para análise de XCO2"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     axis.text = element_blank(),
+#     axis.ticks = element_blank(),
+#     panel.grid = element_blank()
+#   ) 
 ```
 
 ## Legenda: Nesse ponto, queríamos comparar a distribuição do XCO₂ entre os biomas. Nele, evidenciamos o erro (Pantanal) e o Sistema Costeiro, pois não deve aparecer pontos de Pantanal no Sistema costeiro.
@@ -746,7 +746,7 @@ O código utiliza as mesmas 10 faixas de latitude e calcula a média do XCO₂ s
 df_costeiro_terra_buffer |>
   mutate(
     class_latitude = cut(
-      latitude, 35
+      latitude, 115
     ),
     latitude_media = (
       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
@@ -824,7 +824,7 @@ mangue → recebe o raster final unido.
 
 ##Visualização rápida
 
-```{r}
+```{r,eval=FALSE}
 plot(
   mangue,
   main = "Manguezais do Brasil (MapBiomas - 2018)",

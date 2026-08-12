@@ -425,22 +425,14 @@ informações gerais.
 \##Lendo o arquivo salvo até aqui
 
 ``` r
-df_brasil <- read_rds("data/xco2-brasil-biomas.rds")
+#df_brasil <- read_rds("data/xco2-brasil-biomas.rds")
 ```
 
 ``` r
 ##Conferir quantos pontos por bioma
-df_brasil |> 
-  st_drop_geometry() |> 
-  count(name_biome, sort = TRUE)
-#>         name_biome       n
-#> 1 Sistema Costeiro 1486215
-#> 2          Cerrado 1428977
-#> 3         Amazônia  764256
-#> 4         Caatinga  724412
-#> 5   Mata Atlântica  519168
-#> 6            Pampa  135236
-#> 7         Pantanal  109170
+# df_brasil |> 
+#   st_drop_geometry() |> 
+#   count(name_biome, sort = TRUE)
 ```
 
 ## Legenda: st_drop_geometry() temporariamente remove a coluna geometry, transformando o objeto espacial (sf) em uma tabela comum, pois queremos contar observações. Para contar, usamos a função count(), que contabilizará quantos linhas possuem para cada valor da coluna name_biome.O sort = TRUE faz com que o resultado seja ordenado do maior para o menor.
@@ -565,12 +557,12 @@ plot(st_geometry(costeiro_terrestre_buffer))
 ## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
 
 ``` r
-pontos_brasil <- st_as_sf(
-  df_brasil,
-  coords = c("longitude", "latitude"),
-  crs = 4326,
-  remove = FALSE
-)
+# pontos_brasil <- st_as_sf(
+#   df_brasil,
+#   coords = c("longitude", "latitude"),
+#   crs = 4326,
+#   remove = FALSE
+# )
 ```
 
 \##Esse código cria um novo objeto espacial (sf), denominado
@@ -1122,6 +1114,124 @@ df_costeiro_terra_buffer |>
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+
+``` r
+df_costeiro_terra_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(as.character(year), as.character(month), sep = "_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  arrange(latitude_media) |> 
+  mutate(
+    grupo = case_when(
+      latitude_media > 0.37 ~ 5,
+      latitude_media <= -28.6 ~2,
+      latitude_media < -20 & latitude_media > -28.6 ~1,
+      latitude_media > -5.5 & latitude_media <0.37 ~3,
+      .default=4
+    )
+  ) |> 
+  #filter(latitude_media < -5 & latitude_media > -10) |> 
+  # group_by(grupo) |> 
+  # summarise(
+  #   lat_max = max(latitude_media),
+  #   lat_min = min(latitude_media)
+  # ) |> 
+  # 
+  ggplot() +
+  geom_sf(data = brasil, fill = "grey96", color = "grey70", linewidth = 0.3) +
+  geom_point(
+    aes(x = longitude, y = latitude, color = as_factor(grupo)),
+    size = 1.4, alpha = 0.75
+  ) +
+  coord_sf(
+    xlim = range(df_costeiro_terra_buffer$longitude, na.rm = TRUE),
+    ylim = range(df_costeiro_terra_buffer$latitude, na.rm = TRUE)
+  ) +
+  scale_color_brewer(palette = "Set1", name = "Grupo") +
+  labs(
+    title = "Agrupamento espacial de XCO2 na faixa costeira",
+    subtitle = "Grupos formados a partir da análise de séries temporais (2015\u20132023)",
+    x = "Longitude", y = "Latitude"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40", size = 10),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey92"),
+    axis.text = element_text(color = "grey30")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+
+``` r
+df_grupos <- df_costeiro_terra_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(as.character(year), as.character(month), sep = "_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  arrange(latitude_media) |> 
+  mutate(
+    grupo = case_when(
+      latitude_media > 0.37 ~ 5,
+      latitude_media <= -28.6 ~2,
+      latitude_media < -20 & latitude_media > -28.6 ~1,
+      latitude_media > -5.5 & latitude_media <0.37 ~3,
+      .default=4
+    )
+  ) 
+```
+
+``` r
+df_grupos |> 
+  group_by(year_month,grupo) |> 
+  nest() |> 
+  mutate(
+    anomalia = map(data, 
+                      \(df) df$xco2 - median(df$xco2, na.rm = TRUE)
+                   )
+  ) |> 
+  unnest() |> 
+  group_by(year,
+           latitude_media) |>
+  summarise(
+    anom = mean(anomalia, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=latitude_media, y = anom, 
+             color=as_factor(year)
+             )) +
+  # geom_col(color="black", position = "dodge") +
+  geom_line() +
+  # geom_point() +
+  coord_flip(#ylim = c(380, 384)
+             ) +
+  labs(
+    x = "Latitude (°)",
+    y = expression(Delta~"XCO2 (ppm)"),
+    color = "Ano"
+  ) +
+  theme_minimal()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
 \##A partir daqui, peguei os dados de Manguezais do MapBiomas.
 

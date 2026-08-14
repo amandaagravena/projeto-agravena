@@ -6,7 +6,7 @@ tabelas, o que é ótimo para projetos científicos.
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-\##Legenda:
+## Legenda:
 
 - collapse = true = aparecer o código e o resultado juntos (bom para
   organização).
@@ -52,8 +52,9 @@ library(vegan)
 library(sf)
 ```
 
-\##Legenda: Ao carregar pacotes, carregamos as funções das diferentes
-bibliotecas.
+## Legenda:
+
+Ao carregar pacotes, carregamos as funções das diferentes bibliotecas.
 
 - tidyverse: coleção de pacotes para ciências de dados. Inclui: dplyr,
   ggplot2, readr, tibble, string etc.
@@ -77,7 +78,7 @@ brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
 biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 ```
 
-\##Legenda:
+## Legenda:
 
 - O geobr baixa automaticamente o limite político do Brasil através do
   read country. Temos que colocar o ano a partir de agora, devido a uma
@@ -107,7 +108,7 @@ biomes
 #> 7         NA Sistema Costeiro  2019 POLYGON ((-44.64799 -2.870376, -44.65249 -2…
 ```
 
-\##Legenda:
+## Legenda:
 
 Esse comando serve para mostrar o resumo do objeto biomes. Assim,
 podemos conferir se os dados foram carregados corretamente antes de
@@ -131,7 +132,7 @@ biomes |> distinct(name_biome)
 #> 7 Sistema Costeiro
 ```
 
-\##Legenda:
+## Legenda:
 
 Esse comando lista apenas os nomes distindos dos biomas, sem repetições.
 Ele serve para verificar quais biomas existem na base de dados do geobr.
@@ -195,16 +196,16 @@ biome_colors <- c(
 
 # Mapa 2 — Biomas: 
 
-##Legenda: O bloco constrói o mapa dos biomas brasileiros. A lógica é sempre a mesma: inicia um gráfico, desenha os biomas, define as cores, adiciona título e legenda, ajusta a aparência e exibe o mapa. 
+## Legenda: O bloco constrói o mapa dos biomas brasileiros. A lógica é sempre a mesma: inicia um gráfico, desenha os biomas, define as cores, adiciona título e legenda, ajusta a aparência e exibe o mapa. 
 
-map_biomes <- ggplot(biomes) + ##Legenda: A função ggplot() inicia a construção do gráfico com o objeto biomes, que contém os limites espaciais dos biomas brasileiros, armazenando o gráfico em map_biomes. No momento, o gráfico ainda está vazio, pois apenas foi definido o conjunto de dados que será utilizado. 
+map_biomes <- ggplot(biomes) + ## Legenda: A função ggplot() inicia a construção do gráfico com o objeto biomes, que contém os limites espaciais dos biomas brasileiros, armazenando o gráfico em map_biomes. No momento, o gráfico ainda está vazio, pois apenas foi definido o conjunto de dados que será utilizado. 
   
   geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
   scale_fill_manual(
     values = biome_colors,
     name   = "Bioma",
     # na.value = "#555555"
-  ) + ##Legenda: A função geom_sf() desenha as geometrias presentes dentro do objeto biomes. Como biomes é um objeto espacial (sf), cada bioma é representado por um polígono no mapa. 
+  ) + ## : A função geom_sf() desenha as geometrias presentes dentro do objeto biomes. Como biomes é um objeto espacial (sf), cada bioma é representado por um polígono no mapa. 
   
 #Já a função aes(), de estética, informa as características visuais do gráfico associadas aos dados. Nesse caso, fill=name_biome, ou seja, cada bioma será preenchido por uma cor diferente, de acordo com a variável name_biome. 
   
@@ -214,7 +215,7 @@ map_biomes <- ggplot(biomes) + ##Legenda: A função ggplot() inicia a construç
     title    = "Biomas do Brasil",
     subtitle = "Distribuição dos biomas continentais e costeiros",
     caption  = "Fonte: IBGE via geobr"
-  ) + ##Legenda: A função labs() adiciona informações descritivas do gráfico, nesse caso título da figura, subtítulo e fonte dos dados. Essas informações ajudam a identificar o conteúdo do mapa. 
+  ) + ## Legenda: A função labs() adiciona informações descritivas do gráfico, nesse caso título da figura, subtítulo e fonte dos dados. Essas informações ajudam a identificar o conteúdo do mapa. 
   
   theme_void(base_family = "serif") +
   theme(
@@ -232,7 +233,7 @@ map_biomes <- ggplot(biomes) + ##Legenda: A função ggplot() inicia a construç
     plot.margin      = margin(20, 20, 10, 20)
   )
 
-##Legenda: O theme_void() remove os elementos gráficos que não são úteis para mapas, como eixos, grades e marcações. Já o base_family = "serif" define que os textos utilizarão uma fonte do tipo serifada.Os demais itens definem a estética do gráfico. 
+## Legenda: O theme_void() remove os elementos gráficos que não são úteis para mapas, como eixos, grades e marcações. Já o base_family = "serif" define que os textos utilizarão uma fonte do tipo serifada.Os demais itens definem a estética do gráfico. 
 
 #As linhas de "plot." alteravam o fundo do gráfico e a aparência do título e do subtítulo, porém, não achamos mais necessário. 
 
@@ -244,7 +245,7 @@ print(map_biomes)
 
 ``` r
 
-##Legenda: Depois de todas as etapas de construção, o comando print() exibe o mapa os biomas na tela, pois já construímos o objeto "map_biomes". 
+## Legenda: Depois de todas as etapas de construção, o comando print() exibe o mapa os biomas na tela, pois já construímos o objeto "map_biomes". 
 ```
 
 ## Ler e interpretar os dados em “data-raw”
@@ -253,11 +254,11 @@ print(map_biomes)
 df <- read_rds("data-raw/data-set-xco2-br-002.rds") |> 
   mutate(year = year - 20)
 
-##Legenda: A função read_rds() lê o arquivo que contém os dados de XCO₂. O conteúdo do arquivo será armazenado em df (dataframe), que será utilizado nas etapas seguintes. 
+## Legenda: A função read_rds() lê o arquivo que contém os dados de XCO₂. O conteúdo do arquivo será armazenado em df (dataframe), que será utilizado nas etapas seguintes. 
 
-# Como estamos apenas lendo e corrigindo os dados raw, por enquanto, chamaremos de df. 
+## Como estamos apenas lendo e corrigindo os dados raw, por enquanto, chamaremos de df. 
 
-#Já a função mutate() é utilizada para modificar colunas de um conjunto de dados. Nesse, ela altera a coluna year, retirando 20 anos, pois notamos pelo nome dos arquivos que esse dado está com esse erro. 
+## Já a função mutate() é utilizada para modificar colunas de um conjunto de dados. Nesse, ela altera a coluna year, retirando 20 anos, pois notamos pelo nome dos arquivos que esse dado está com esse erro. 
 ```
 
 ## Resumo do data-set
@@ -343,26 +344,31 @@ desenha uma amostra de pontos do conjunto de dados df.
 #   st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
 ```
 
-\##Legenda: Até aqui, estávamos trabalhando com uma tabela comum.A
-partir desse ponto, passamos a trabalhar com um objeto espacial, que
-permite realizar operações geográficas, como recortar pela costa
-brasileira.
+## Legenda:
 
-\#Por que transformar em um objeto espacial? - Antes desse código, o df
-é apenas uma tabela. - Para o leitor, imaginamos esses números como
-locais no mapa (latitude e longitude). Já para o R, são apenas colunas
-numéricas. É justamente isso que st_as_sf() faz.A função st_as_sf()
-converte uma tabela comum em um objeto espacial. É ela que permite
-utilizar todas as funções do pacote sf. - Depois dele, cada linha da
-tabela passa a possuir uma geometria. Para isso, a coluna geometry é
-criada automaticamente. - Aqui, será criado um novo objeto, chamado
-df_sf. O final sf significa simple features. Filtramos de novo os dados
-de boa qualidade para não repetir dados já descartados. - crs = 4326
-corresponde ao sistema geográfico WGS 84, que é o padrão utilizado por
-GPS e pela maioria dos satélites. - Quando a geometria é criada, o sf
-poderia remover as colunas longitude e latitude, pois elas já estariam
-representadas na coluna geometry., por isso, remove = false. Elas
-permanecem ali para análises posteriores.
+Até aqui, estávamos trabalhando com uma tabela comum.A partir desse
+ponto, passamos a trabalhar com um objeto espacial, que permite realizar
+operações geográficas, como recortar pela costa brasileira.
+
+## Por que transformar em um objeto espacial?
+
+- Antes desse código, o df é apenas uma tabela.
+- Para o leitor, imaginamos esses números como locais no mapa (latitude
+  e longitude). Já para o R, são apenas colunas numéricas. É justamente
+  isso que st_as_sf() faz.A função st_as_sf() converte uma tabela comum
+  em um objeto espacial. É ela que permite utilizar todas as funções do
+  pacote sf.
+- Depois dele, cada linha da tabela passa a possuir uma geometria. Para
+  isso, a coluna geometry é criada automaticamente.
+- Aqui, será criado um novo objeto, chamado df_sf. O final sf significa
+  simple features. Filtramos de novo os dados de boa qualidade para não
+  repetir dados já descartados.
+- crs = 4326 corresponde ao sistema geográfico WGS 84, que é o padrão
+  utilizado por GPS e pela maioria dos satélites.
+- Quando a geometria é criada, o sf poderia remover as colunas longitude
+  e latitude, pois elas já estariam representadas na coluna geometry.,
+  por isso, remove = false. Elas permanecem ali para análises
+  posteriores.
 
 ## Join espacial: associa cada ponto ao bioma em que ele cai (pontos fora do Brasil recebem NA em name_biome)
 
@@ -379,11 +385,12 @@ brasil <- st_transform(brasil, crs = 4326)
 # )
 ```
 
-\##Legenda: Aqui, fazemos a junção espacial. Até aqui, sabemos a
-localização de cada ponto df_sf (lat e long), e o objeto biomes são os
-polígonos. O st_join() juntará as duas informações. O objetivo desse
-código é associar cada observação de XCO₂ ao bioma em que ela está
-localizada.
+## Legenda:
+
+Aqui, fazemos a junção espacial. Até aqui, sabemos a localização de cada
+ponto df_sf (lat e long), e o objeto biomes são os polígonos. O
+st_join() juntará as duas informações. O objetivo desse código é
+associar cada observação de XCO₂ ao bioma em que ela está localizada.
 
 Como?
 
@@ -403,15 +410,19 @@ Como?
 # glimpse(df_brasil)
 ```
 
-\##Legenda: - df_brasil \<- cria um novo objeto chamado **df_brasil**,
-onde será armazenado o resultado do filtro. - df_biomas é o conjunto de
-dados que contém os pontos de XCO₂ e o bioma associado a cada ponto. -
-filter(!is.na(name_biome)) mantém apenas as linhas em que a coluna
-name_biome possui um valor, ou seja, apenas os pontos que pertencem a
-algum bioma brasileiro. Os pontos fora do Brasil possuem NA nessa coluna
-e são removidos. - glimpse(df_brasil) mostra um resumo do novo conjunto
-de dados, permitindo conferir as colunas, seus tipos e algumas
-informações gerais.
+## Legenda:
+
+- df_brasil \<- cria um novo objeto chamado **df_brasil**, onde será
+  armazenado o resultado do filtro.
+- df_biomas é o conjunto de dados que contém os pontos de XCO₂ e o bioma
+  associado a cada ponto.
+- filter(!is.na(name_biome)) mantém apenas as linhas em que a coluna
+  name_biome possui um valor, ou seja, apenas os pontos que pertencem a
+  algum bioma brasileiro. Os pontos fora do Brasil possuem NA nessa
+  coluna e são removidos.
+- glimpse(df_brasil) mostra um resumo do novo conjunto de dados,
+  permitindo conferir as colunas, seus tipos e algumas informações
+  gerais.
 
 ## Salvar os dados na pasta data
 
@@ -439,9 +450,7 @@ informações gerais.
 
 ## A partir daqui, a ideia surgiu da conversa: como vamos ver apenas os locais de possíveis manguezais, sem entrarmos nas 12 milhas de área marítima do Sistema Costeiro?
 
-\#Aqui, surgiram duas ideias: Cruzamento com o shape do Brasil (Terra
-firme) com o shape do Sistema Costeiro ou pegamos os dados do MapBiomas
-focado em Manguezais e cruzamos com os dados de Sistema costeiro.
+## Aqui, surgiram duas ideias: Cruzamento com o shape do Brasil (Terra firme) com o shape do Sistema Costeiro ou pegamos os dados do MapBiomas focado em Manguezais e cruzamos com os dados de Sistema costeiro.
 
 ## Cruzamento com o shape de terra firme do Brasil
 
@@ -536,8 +545,7 @@ st_crs(brasil)
 #>     ID["EPSG",4674]]
 ```
 
-\##Legenda: A função st_crs() mostra o CRS (Coordinate Reference System)
-do objeto.
+## Legenda: A função st_crs() mostra o CRS (Coordinate Reference System) do objeto.
 
 ## Conferir se a geometria resultante faz sentido (plot rápido)
 
@@ -604,8 +612,7 @@ geometry.
 # df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
 ```
 
-\##Legenda: Essa etapa serve para obter apenas os pontos que pertencem à
-faixa costeira terrestre e transformá-los novamente em uma tabela comum.
+## Legenda: Essa etapa serve para obter apenas os pontos que pertencem à faixa costeira terrestre e transformá-los novamente em uma tabela comum.
 
 ## Verificar se eles formam a linha literânea
 
@@ -706,9 +713,10 @@ pois não há Pantanal na zona costeira.
 
 ## Legenda: Nesse ponto, queríamos comparar a distribuição do XCO₂ entre os biomas. Nele, evidenciamos o erro (Pantanal) e o Sistema Costeiro, pois não deve aparecer pontos de Pantanal no Sistema costeiro.
 
-\##Durante a segunda junção espacial (st_join), o objeto pontos_brasil
-já possuía uma coluna chamada “name_biome”, indicando o bioma em que
-cada ponto estava (Amazônia, Cerrado, Mata Atlântica etc.).
+## Durante a segunda junção espacial (st_join), o objeto pontos_brasil já possuía
+
+uma coluna chamada “name_biome”, indicando o bioma em que cada ponto
+estava (Amazônia, Cerrado, Mata Atlântica etc.).
 
 Como o objeto costeiro_terrestre também recebeu uma coluna com o mesmo
 nome(“name_biome”), o R renomeou automaticamente as duas colunas para
@@ -728,9 +736,7 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
-\##Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre
-os biomas. Podemos visualizar mediana; quartis; dispersão; outliers.
-Excluímos Sistema Costeiro, pois não é um bioma de fato.
+## Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre os biomas. Podemos visualizar mediana; quartis; dispersão; outliers. Excluímos Sistema Costeiro, pois não é um bioma de fato.
 
 ``` r
 df_costeiro_terra_buffer |> 
@@ -747,10 +753,7 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
-\##Legenda: Média mensal por bioma, agrupando por bioma e por mês, ou
-seja, “Qual foi o XCO₂ médio daquele bioma naquele mês?” - Resulta em um
-gráfico temporal. Buscamos ver se os biomas apresentam comportamento
-sazonal diferente.
+## Legenda: Média mensal por bioma, agrupando por bioma e por mês, ou seja, “Qual foi o XCO₂ médio daquele bioma naquele mês?” - Resulta em um gráfico temporal. Buscamos ver se os biomas apresentam comportamento sazonal diferente.
 
 ``` r
 df_costeiro_terra_buffer |> 
@@ -768,11 +771,7 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
-\##Legenda: Média mensal por faixa de latitude (20 faixas). Então,
-calcula a média do XCO₂ para cada faixa de latitude em cada mês. O
-objetivo é verificar se existe um gradiente latitudinal, ou seja, “O
-comportamento do XCO₂ muda conforme se avança do sul para o norte do
-Brasil?”
+## Legenda: Média mensal por faixa de latitude (20 faixas). Então, calcula a média do XCO₂ para cada faixa de latitude em cada mês. O objetivo é verificar se existe um gradiente latitudinal, ou seja, “O comportamento do XCO₂ muda conforme se avança do sul para o norte do Brasil?”
 
 ## Existe uma tendência regional nos dados, e ela deve ser retirada para esse trabalho
 
@@ -789,7 +788,7 @@ mod_trend_xco2 <- lm(xco2 ~ date,
 sm <- summary.lm(mod_trend_xco2)
 ```
 
-#### Legenda:
+## Legenda:
 
 A função `lm()` realiza uma regressão linear simples entre o XCO₂ e a
 data, permitindo identificar a tendência temporal dos dados. A data é
@@ -823,7 +822,7 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
-## \## Legenda:
+## Legenda:
 
 Esse bloco mostra graficamente a tendência temporal do XCO₂.
 `geom_point()` apresenta os valores observados, enquanto
@@ -849,7 +848,7 @@ df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
   rename(name_biome = name_biome.x)
 ```
 
-#### Legenda:
+## Legenda:
 
 Esse bloco realiza a retirada da tendência temporal do XCO₂. Primeiro,
 são obtidos os coeficientes da regressão (`a_co2` e `b_co2`). Em
@@ -890,7 +889,7 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
-#### Legenda:
+## Legenda:
 
 O código divide as latitudes em 10 faixas e calcula a latitude média de
 cada faixa. Em seguida, agrupa os dados por ano e faixa de latitude e
@@ -930,7 +929,7 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
-#### Legenda:
+## Legenda:
 
 O código utiliza as mesmas 10 faixas de latitude e calcula a média do
 XCO₂ sem tendência para cada ano e faixa. O gráfico de linhas permite
@@ -971,9 +970,9 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
-#### Legenda: O código divide os dados em 35 faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
+## Legenda: O código divide os dados em 35 faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
-### Análise de cluster da série temporal
+## Análise de cluster da série temporal
 
 ``` r
 df_cluster <- df_costeiro_terra_buffer |>
@@ -1019,6 +1018,8 @@ df_cluster
 #> #   `2017_10` <dbl>, `2017_11` <dbl>, `2017_12` <dbl>, `2017_2` <dbl>, …
 ```
 
+## Legenda: Precisávamos definir grupos de latitude com comportamento temporal semelhante de XCO₂ para, posteriormente, calcular as anomalias dentro desses grupos. Para isso, os dados foram organizados em classes de latitude e agregados mensalmente, considerando o período posterior a 2014. Para cada faixa de latitude e mês, foi calculada a média de XCO₂ com a tendência regional previamente removida (XCO₂ detrend). Em seguida, os dados foram reorganizados em uma matriz, na qual cada linha representava uma faixa de latitude e cada coluna correspondia a um mês da série temporal. Os valores ausentes foram preenchidos pela média da respectiva série para possibilitar a aplicação do agrupamento.
+
 ## Matriz de correlação entre as latitudes
 
 ``` r
@@ -1027,6 +1028,8 @@ corrplot::corrplot(mc)
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+
+## Legenda: Para avaliar a similaridade temporal entre as diferentes faixas de latitude, foi calculada a matriz de correlação entre as séries mensais de XCO₂. Essa etapa permitiu verificar o grau de associação entre o comportamento temporal das diferentes regiões antes da realização do agrupamento.
 
 ``` r
 da_pad<-decostand(df_cluster |> select(-latitude_media), 
@@ -1051,6 +1054,8 @@ colunas <- df_cluster |> add_column(grupo) |>
   select(latitude_media,grupo)
 ```
 
+## Legenda: Após a avaliação da correlação entre as séries, os dados foram padronizados para tornar as diferentes séries temporais comparáveis. Em seguida, foi calculada a distância euclidiana entre as séries e aplicado o agrupamento hierárquico pelo método de Ward. A partir do dendrograma obtido, foram definidos quatro grupos de faixas de latitude com comportamento temporal semelhante.
+
 ``` r
 df_costeiro_terra_buffer |>
   filter(year >2014) |> 
@@ -1069,6 +1074,8 @@ df_costeiro_terra_buffer |>
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+
+## Legenda: Após a definição dos grupos pelo agrupamento hierárquico, a classificação obtida para cada faixa de latitude foi associada às observações originais. A distribuição espacial dos grupos foi então visualizada para verificar como as regiões com comportamento temporal semelhante estavam distribuídas ao longo da faixa costeira.
 
 ``` r
 # Basemap do Brasil (uma vez só, fora do pipe principal)
@@ -1114,6 +1121,8 @@ df_costeiro_terra_buffer |>
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+
+## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
 
 ``` r
 df_costeiro_terra_buffer |>
@@ -1174,6 +1183,8 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
+## Legenda: A partir da distribuição espacial observada no agrupamento, foram estabelecidos limites latitudinais para definir as regiões utilizadas na análise subsequente. Os limites foram ajustados de acordo com a organização espacial dos agrupamentos, resultando em cinco grupos latitudinais. Essa classificação foi utilizada como a divisão regional definitiva para o cálculo das anomalias.
+
 ``` r
 df_grupos <- df_costeiro_terra_buffer |>
   filter(year > 2014) |> 
@@ -1197,6 +1208,8 @@ df_grupos <- df_costeiro_terra_buffer |>
     )
   ) 
 ```
+
+## Legenda: Com os limites dos grupos definidos, a classificação foi incorporada à base de dados original, mantendo as informações espaciais e temporais de cada observação. Dessa forma, foi criada a base que seria utilizada no cálculo das anomalias de XCO₂ dentro de cada grupo.
 
 ``` r
 df_grupos |> 
@@ -1233,7 +1246,9 @@ df_grupos |>
 
 ![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
-\##A partir daqui, peguei os dados de Manguezais do MapBiomas.
+## Legenda: Com os grupos latitudinais definidos, foi possível calcular a anomalia de XCO₂ considerando como referência o comportamento típico de cada grupo. Para cada combinação de mês e grupo, foi calculada a mediana de XCO₂ e, posteriormente, esse valor foi subtraído de cada observação correspondente. As anomalias resultantes foram então agregadas por ano e latitude média, permitindo representar a variação de XCO₂ ao longo da costa em relação ao comportamento de referência de cada região.
+
+## A partir daqui, peguei os dados de Manguezais do MapBiomas.
 
 ## Carregar os rasters de manguezais do MapBiomas
 
@@ -1245,7 +1260,7 @@ arquivos <- list.files(
 )
 ```
 
-\##Ver se ele encontra os artigos
+## Ver se ele encontra os artigos
 
 ``` r
 arquivos
@@ -1260,14 +1275,14 @@ arquivos
 #> [9] "data/EarthEngine/manguezais_2018-0000131072-0000131072.tif"
 ```
 
-\##Ver quantos rasters ele encontra:
+## Ver quantos rasters ele encontra:
 
 ``` r
 length(arquivos)
 #> [1] 9
 ```
 
-\##Criar o objeto mangue
+## Criar o objeto mangue
 
 ``` r
 rasters <- lapply(arquivos, terra::rast)
@@ -1276,16 +1291,18 @@ mangue <- do.call(merge, rasters)
 terra::writeRaster(mangue, "data/mangue-brasil.tif")
 ```
 
-\##Legenda: lapply() → aplica uma função em cada item da lista. arquivos
-→ são os arquivos .tif dos manguezais. terra::rast → lê cada arquivo
-.tif e transforma em um objeto raster. rasters → guarda todos os rasters
+## Legenda:
+
+lapply() → aplica uma função em cada item da lista. arquivos → são os
+arquivos .tif dos manguezais. terra::rast → lê cada arquivo .tif e
+transforma em um objeto raster. rasters → guarda todos os rasters
 carregados.
 
 do.call() → executa uma função usando os elementos de uma lista como
 argumentos. merge → junta os rasters. rasters → são os vários pedaços do
 mapa. mangue → recebe o raster final unido.
 
-\##Visualização rápida
+## Visualização rápida
 
 ``` r
 plot(

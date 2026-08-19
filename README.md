@@ -970,7 +970,7 @@ df_costeiro_terra_buffer |>
 
 ![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
-## Legenda: O código divide os dados em 35 faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
+## Legenda: O código divide os dados em $35$ faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
 ## Análise de cluster da série temporal
 
@@ -1285,10 +1285,10 @@ length(arquivos)
 ## Criar o objeto mangue
 
 ``` r
-rasters <- lapply(arquivos, terra::rast)
-
-mangue <- do.call(merge, rasters)
-terra::writeRaster(mangue, "data/mangue-brasil.tif")
+# rasters <- lapply(arquivos, terra::rast)
+# 
+# mangue <- do.call(merge, rasters)
+# terra::writeRaster(mangue, "data/mangue-brasil.tif")
 ```
 
 ## Legenda:
@@ -1304,18 +1304,74 @@ mapa. mangue → recebe o raster final unido.
 
 ## Visualização rápida
 
-``` r
-plot(
-  mangue,
-  main = "Manguezais do Brasil (MapBiomas - 2018)",
-  col = c("white", "darkgreen"),
-  legend = TRUE
-)
+Carregando os dados processados pelo terra
 
-plot(
-  st_geometry(brasil),
-  add = TRUE,
-  border = "black",
-  lwd = 0.6
-)
+``` r
+mangue <- terra::rast("data/mangue-brasil.tif")
+mangue
+#> class       : SpatRaster
+#> size        : 177978, 166980, 1  (nrow, ncol, nlyr)
+#> resolution  : 0.0002694946, 0.0002694946  (x, y)
+#> extent      : -75.00007, -29.99987, -37.15872, 10.80539  (xmin, xmax, ymin, ymax)
+#> coord. ref. : lon/lat WGS 84 (EPSG:4326)
+#> source      : mangue-brasil.tif
+#> name        : classification
+#> min value   :              0
+#> max value   :              1
+```
+
+demais informações do arquivo
+
+``` r
+dim(mangue)      # nrow, ncol, nlyr
+#> [1] 177978 166980      1
+res(mangue)      # resolução (tamanho do pixel)
+#> [1] 0.0002694946 0.0002694946
+ext(mangue)      # extensão (bounding box)
+#> SpatExtent : -75.000073576553618, -29.99986773387031, -37.158721896075591, 10.805385395031664 (xmin, xmax, ymin, ymax)
+crs(mangue, describe = TRUE)  # sistema de coordenadas
+#>     name authority code  area             extent
+#> 1 WGS 84      EPSG 4326 World -180, 180, -90, 90
+nlyr(mangue)     # número de bandas/camadas
+#> [1] 1
+summary(mangue)  # por padrão já faz um SAMPLE, não lê tudo — geralmente ok
+#>  classification     
+#>  Min.   :0.0000000  
+#>  1st Qu.:0.0000000  
+#>  Median :0.0000000  
+#>  Mean   :0.0003486  
+#>  3rd Qu.:0.0000000  
+#>  Max.   :1.0000000
+```
+
+- converter df_grupos para vetor espacial (terra), já no mesmo CRS do
+  mangue
+
+``` r
+xco2_vect <- vect(df_grupos, geom = c("longitude", "latitude"), crs = "EPSG:4326")
+```
+
+criar buffer em torno de cada ponto (ajuste width conforme a escala que
+faz sentido pra você – ex: 5000 = 5 km. Pegada do OCO-2/3 é ~1.3x2.25
+km, então algo entre 1000-5000 m costuma ser razoável)
+
+``` r
+xco2_buffer <- buffer(xco2_vect, width = 5000)
+```
+
+extrair a fração média de mangue dentro de cada buffer
+
+``` r
+#    (evita o bad_alloc porque terra processa por blocos)
+# frac_mangue <- extract(mangue, xco2_buffer, fun = mean, na.rm = TRUE)
+
+
+# 5. juntar de volta no data.frame original
+df_grupos$frac_mangue <- frac_mangue[, 2]
+
+write_rds(frac_mangue, "data/df_frac_mangue.rds")
+
+# 6. checar rapidamente
+summary(df_grupos$frac_mangue)
+sum(df_grupos$frac_mangue > 0, na.rm = TRUE)  # quantos pontos têm mangue por perto
 ```

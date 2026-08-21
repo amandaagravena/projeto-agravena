@@ -775,7 +775,7 @@ df_costeiro_terra_buffer |>
   scale_fill_viridis_d()
 ```
 
-## Legenda: O código divide os dados em 35 faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
+## Legenda: O código divide os dados em $35$ faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
 ## Análise de cluster da série temporal
 
@@ -1048,10 +1048,10 @@ length(arquivos)
 ## Criar o objeto mangue
 
 ```{r,eval=FALSE}
-rasters <- lapply(arquivos, terra::rast)
-
-mangue <- do.call(merge, rasters)
-terra::writeRaster(mangue, "data/mangue-brasil.tif")
+# rasters <- lapply(arquivos, terra::rast)
+# 
+# mangue <- do.call(merge, rasters)
+# terra::writeRaster(mangue, "data/mangue-brasil.tif")
 ```
 
 ## Legenda: 
@@ -1067,19 +1067,49 @@ mangue → recebe o raster final unido.
 
 ## Visualização rápida
 
-```{r,eval=FALSE}
-plot(
-  mangue,
-  main = "Manguezais do Brasil (MapBiomas - 2018)",
-  col = c("white", "darkgreen"),
-  legend = TRUE
-)
+Carregando os dados processados pelo terra
+```{r}
+mangue <- terra::rast("data/mangue-brasil.tif")
+mangue
+```
 
-plot(
-  st_geometry(brasil),
-  add = TRUE,
-  border = "black",
-  lwd = 0.6
-)
+demais informações do arquivo
+
+```{r}
+dim(mangue)      # nrow, ncol, nlyr
+res(mangue)      # resolução (tamanho do pixel)
+ext(mangue)      # extensão (bounding box)
+crs(mangue, describe = TRUE)  # sistema de coordenadas
+nlyr(mangue)     # número de bandas/camadas
+summary(mangue)  # por padrão já faz um SAMPLE, não lê tudo — geralmente ok
+```
+
+- converter df_grupos para vetor espacial (terra), já no mesmo CRS do mangue
+
+```{r}
+xco2_vect <- vect(df_grupos, geom = c("longitude", "latitude"), crs = "EPSG:4326")
+```
+
+ criar buffer em torno de cada ponto (ajuste width conforme a escala que faz sentido pra você -- ex: 5000 = 5 km. Pegada do OCO-2/3 é ~1.3x2.25 km, então algo entre 1000-5000 m costuma ser razoável)
+
+```{r}
+xco2_buffer <- buffer(xco2_vect, width = 5000)
+```
+
+extrair a fração média de mangue dentro de cada buffer
+
+```{r, eval=FALSE}
+#    (evita o bad_alloc porque terra processa por blocos)
+# frac_mangue <- extract(mangue, xco2_buffer, fun = mean, na.rm = TRUE)
+
+
+# 5. juntar de volta no data.frame original
+df_grupos$frac_mangue <- frac_mangue[, 2]
+
+write_rds(frac_mangue, "data/df_frac_mangue.rds")
+
+# 6. checar rapidamente
+summary(df_grupos$frac_mangue)
+sum(df_grupos$frac_mangue > 0, na.rm = TRUE)  # quantos pontos têm mangue por perto
 ```
 

@@ -1113,3 +1113,568 @@ summary(df_grupos$frac_mangue)
 sum(df_grupos$frac_mangue > 0, na.rm = TRUE)  # quantos pontos têm mangue por perto
 ```
 
+# Iniciando a parte do SIF
+
+```{r}
+df_sif <- read_rds("data-raw/data-set-sif-br.rds")
+glimpse(df_sif)
+```
+
+## Legenda: O que encontramos: 46.098.810 observações
+17 colunas: coordenadas: longitude e latitude; data/hora original: time; variáveis de geometria solar/visada: sza, vza, saz, vaz; SIF: sif740; sif740_uncertainty; daily_sif740; daily_sif757; daily_sif771; quality_flag; path; year; month; day. 
+
+- O SIF já possui year, month e day.
+
+# Entendendo qual SIF vamos usar e como o quality_flag está distribuído:
+
+# Arrange por ano:
+
+```{r}
+df_sif |>
+  distinct(year) |>
+  arrange(year)
+```
+
+# Ver quantas quality flags temos:
+
+```{r}
+df_sif |>
+  count(quality_flag)
+```
+# Distribuição básica do sif: 
+
+```{r}
+summary(df_sif_q0$daily_sif757)
+```
+
+```{r}
+
+summary(df_sif_q0$daily_sif771)
+```
+
+## Legenda: 
+Min. e Max. mostram a amplitude total dos valores observados; 1st Qu., Median e 3rd Qu. descrevem a distribuição central dos dados; Mean representa a média dos valores; e NA's indica o número de observações sem informação para SIF740.
+
+
+# Filtrar a quality flag para pega só zero e conferir:
+
+```{r}
+df_sif_q0 <- df_sif |>
+  filter(quality_flag == 0)
+table(df_sif_q0$quality_flag)
+```
+
+# Fazer o summary dos itens desejados:
+
+```{r}
+summary(df_sif_q0$daily_sif757)
+summary(df_sif_q0$daily_sif771)
+```
+
+## Investigar os valores extremos que sobreviveram ao quality flag.Primeiro, os 10 maiores e os 10 menores. 
+
+```{r}
+df_sif_q0 |>
+  arrange(desc(daily_sif757)) |>
+  slice_head(n = 10)
+```
+
+```{r}
+df_sif_q0 |>
+  arrange(daily_sif757) |>
+  slice_head(n = 10)
+```
+
+```{r}
+df_sif_q0 |>
+  arrange(desc(daily_sif771)) |>
+  slice_head(n = 10)
+```
+
+
+```{r}
+df_sif_q0 |>
+  arrange(daily_sif771) |>
+  slice_head(n = 10)
+```
+
+# Fazendo os Histogramas
+
+```{r}
+ggplot(df_sif_q0, aes(x = daily_sif757)) +
+  geom_histogram() +
+  labs(
+    x = "SIF 757 nm",
+    y = "Frequência"
+  ) +
+  theme_minimal()
+```
+
+ 
+```{r}
+ggplot(df_sif_q0, aes(x = daily_sif771)) +
+  geom_histogram() +
+  labs(
+    x = "SIF 771 nm",
+    y = "Frequência"
+  ) +
+  theme_minimal()
+```
+
+# Entender comportamento dos dados sif757
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    n = n(),
+    min = min(daily_sif757, na.rm = TRUE),
+    q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
+    q05 = quantile(daily_sif757, 0.05, na.rm = TRUE),
+    q25 = quantile(daily_sif757, 0.25, na.rm = TRUE),
+    mediana = median(daily_sif757, na.rm = TRUE),
+    media = mean(daily_sif757, na.rm = TRUE),
+    q75 = quantile(daily_sif757, 0.75, na.rm = TRUE),
+    q95 = quantile(daily_sif757, 0.95, na.rm = TRUE),
+    q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
+    max = max(daily_sif757, na.rm = TRUE)
+  )
+```
+
+## Legenda:
+
+A maior parte dos dados está concentrada em uma faixa relativamente pequena.
+
+Os percentis mostram que:
+
+- 25% dos valores estão abaixo de 0,095;
+- 50% dos valores estão abaixo de 0,232;
+- 75% dos valores estão abaixo de 0,374;
+- 95% dos valores estão abaixo de 0,579;
+- 99% dos valores estão abaixo de 0,740.
+
+O valor mínimo observado foi de aproximadamente -1,39, enquanto o máximo
+foi de 5,67. Assim, embora a maior parte das observações esteja concentrada
+próxima de zero, existem valores extremos positivos e negativos.
+
+Essa distribuição explica o aspecto do histograma, com grande concentração
+das observações próximas de zero e uma cauda formada por valores extremos.
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    negativos = sum(daily_sif757 < 0, na.rm = TRUE),
+    positivos = sum(daily_sif757 >= 0, na.rm = TRUE)
+  )
+```
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    percentual_negativos = mean(daily_sif757 < 0, na.rm = TRUE) * 100
+  )
+```
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    acima_1 = sum(daily_sif757 > 1, na.rm = TRUE),
+    acima_2 = sum(daily_sif757 > 2, na.rm = TRUE),
+    acima_3 = sum(daily_sif757 > 3, na.rm = TRUE),
+    acima_4 = sum(daily_sif757 > 4, na.rm = TRUE),
+    acima_5 = sum(daily_sif757 > 5, na.rm = TRUE)
+  )
+```
+
+# Localizando os extremos
+
+## Menores valores
+```{r}
+df_sif_q0 |> 
+  arrange(daily_sif757) |> 
+  slice_head(n = 20)
+```
+
+## Maiores valores
+
+```{r}
+df_sif_q0 |> 
+  arrange(desc(daily_sif757)) |> 
+  slice_head(n = 20)
+```
+
+## Para sif771
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    n = n(),
+    min = min(daily_sif771, na.rm = TRUE),
+    q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
+    q05 = quantile(daily_sif771, 0.05, na.rm = TRUE),
+    q25 = quantile(daily_sif771, 0.25, na.rm = TRUE),
+    mediana = median(daily_sif771, na.rm = TRUE),
+    media = mean(daily_sif771, na.rm = TRUE),
+    q75 = quantile(daily_sif771, 0.75, na.rm = TRUE),
+    q95 = quantile(daily_sif771, 0.95, na.rm = TRUE),
+    q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
+    max = max(daily_sif771, na.rm = TRUE)
+  )
+```
+
+## Quantidade de negativos
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    negativos = sum(daily_sif771 < 0, na.rm = TRUE),
+    positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
+    percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
+  )
+```
+
+## Extremos positivos
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    acima_1 = sum(daily_sif771 > 1, na.rm = TRUE),
+    acima_2 = sum(daily_sif771 > 2, na.rm = TRUE),
+    acima_3 = sum(daily_sif771 > 3, na.rm = TRUE),
+    acima_4 = sum(daily_sif771 > 4, na.rm = TRUE),
+    acima_5 = sum(daily_sif771 > 5, na.rm = TRUE)
+  )
+```
+## Proporção de negativos: 
+
+```{r}
+df_sif_q0 |> 
+  summarise(
+    negativos = sum(daily_sif771 < 0, na.rm = TRUE),
+    positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
+    percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
+  )
+```
+
+## Legenda: O que podemos concluir neste momento?
+
+Os dois SIFs apresentam uma característica muito semelhante:
+
+a maior parte dos valores está concentrada em valores baixos, com uma pequena quantidade de valores extremos positivos.
+
+E os valores negativos não são raríssimos:
+
+757 → 11,6%
+771 → 15,1%
+
+Portanto, não devemos simplesmente excluir todos os negativos.
+
+Também não devemos cortar, por exemplo, SIF > 1, porque embora sejam poucos, precisamos primeiro saber se existe uma justificativa para considerá-los inválidos.
+
+# Os valores extremos observados nos SIF 757 e 771 representam observações que devemos manter, ou há evidências de que sejam valores problemáticos mesmo após o quality_flag == 0?
+
+## Verificar se os extremos são isolados ou se aparecem também no outro SIF
+
+### Maiores
+
+```{r}
+df_sif_q0 |> 
+  arrange(desc(daily_sif757)) |> 
+  slice_head(n = 20) |> 
+  select(
+    time,
+    longitude,
+    latitude,
+    daily_sif757,
+    daily_sif771
+  )
+```
+
+### Menores
+```{r}
+df_sif_q0 |> 
+  arrange(daily_sif757) |> 
+  slice_head(n = 20) |> 
+  select(
+    time,
+    longitude,
+    latitude,
+    daily_sif757,
+    daily_sif771
+  )
+```
+
+## Legenda: Os valores extremos do SIF 757 não são acompanhados, de forma consistente, por valores igualmente extremos do SIF 771.
+
+## Verificar se os extremos estão espacialmente concentrados
+
+### Maiores
+
+```{r}
+df_sif_q0 |> 
+  arrange(desc(daily_sif757)) |> 
+  slice_head(n = 20) |> 
+  select(
+    time,
+    longitude,
+    latitude,
+    daily_sif757,
+    daily_sif771
+  )
+```
+
+### Menores
+
+```{r}
+df_sif_q0 |> 
+  arrange(daily_sif757) |> 
+  slice_head(n = 20) |> 
+  select(
+    time,
+    longitude,
+    latitude,
+    daily_sif757,
+    daily_sif771
+  )
+```
+
+## Legenda: A análise dos 20 maiores e 20 menores valores de SIF757 mostra que os valores extremos estão espacialmente distribuídos, sem evidência visual de concentração em uma única região. Os extremos ocorrem em diferentes posições geográficas e anos, indicando que não há, neste momento, um padrão espacial simples associado aos valores extremos.
+
+# Existe alguma característica das observações que diferencia os valores extremos dos valores comuns?
+
+```{r}
+glimpse(df_sif_q0)
+```
+
+### Definindo o que é um extremo, apenas para avaliação.
+```{r}
+df_extremos <- df_sif_q0 |> 
+  mutate(
+    q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
+    q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
+    grupo = case_when(
+      daily_sif757 < q01 ~ "extremo_baixo",
+      daily_sif757 > q99 ~ "extremo_alto",
+      TRUE ~ "comum"
+    )
+  )
+```
+
+### Investigando por tempo e espaço
+
+```{r}
+df_extremos |> 
+  group_by(grupo) |> 
+  summarise(
+    n = n(),
+    latitude_media = mean(latitude, na.rm = TRUE),
+    latitude_sd = sd(latitude, na.rm = TRUE),
+    longitude_media = mean(longitude, na.rm = TRUE),
+    longitude_sd = sd(longitude, na.rm = TRUE)
+  )
+```
+```{r}
+df_extremos |> 
+  group_by(grupo, year) |> 
+  summarise(
+    n = n(),
+    .groups = "drop"
+  )
+```
+
+```{r}
+df_extremos |> 
+  group_by(grupo, month) |> 
+  summarise(
+    n = n(),
+    .groups = "drop"
+  )
+```
+
+## Legenda: O que concluímos sobre os valores extremos de sif757?
+
+Após a aplicação do quality_flag == 0, foram investigadas as características
+espaciais e temporais das observações classificadas, de forma exploratória,
+como extremas (1% inferior e superior da distribuição de SIF 757).
+
+Os extremos baixos apresentaram médias de latitude e longitude diferentes
+das observações comuns, enquanto os extremos altos apresentaram médias
+espaciais semelhantes às do grupo comum.
+
+As frequências absolutas por ano e mês não foram utilizadas para inferir
+associações temporais, pois a quantidade de observações varia entre os
+períodos.
+
+Portanto, há indicação de uma diferença espacial para os valores extremos
+baixos, mas essa análise, isoladamente, não fornece evidência suficiente
+para considerar essas observações inválidas ou para justificar sua remoção.
+
+## Extremos exploratórios de 771
+
+```{r}
+df_extremos_771 <- df_sif_q0 |> 
+  mutate(
+    q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
+    q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
+    grupo = case_when(
+      daily_sif771 < q01 ~ "extremo_baixo",
+      daily_sif771 > q99 ~ "extremo_alto",
+      TRUE ~ "comum"
+    )
+  )
+```
+
+### Distribuição espacial:
+
+```{r}
+df_extremos_771 |> 
+  group_by(grupo) |> 
+  summarise(
+    n = n(),
+    latitude_media = mean(latitude, na.rm = TRUE),
+    latitude_sd = sd(latitude, na.rm = TRUE),
+    longitude_media = mean(longitude, na.rm = TRUE),
+    longitude_sd = sd(longitude, na.rm = TRUE)
+  )
+```
+
+### Distr Temporal por ano
+
+```{r}
+df_extremos_771 |> 
+  group_by(grupo, year) |> 
+  summarise(
+    n = n(),
+    .groups = "drop"
+  )
+```
+
+### Distr Temporal por mês
+
+```{r}
+df_extremos_771 |> 
+  group_by(grupo, month) |> 
+  summarise(
+    n = n(),
+    .groups = "drop"
+  )
+```
+
+### Maiores valores 
+
+```{r}
+df_sif_q0 |> 
+  arrange(desc(daily_sif771)) |> 
+  slice_head(n = 20) |> 
+  select(
+    time,
+    longitude,
+    latitude,
+    daily_sif757,
+    daily_sif771
+  )
+```
+
+### Menores valores
+
+```{r}
+df_sif_q0 |> 
+  arrange(daily_sif771) |> 
+  slice_head(n = 20) |> 
+  select(
+    time,
+    longitude,
+    latitude,
+    daily_sif757,
+    daily_sif771
+  )
+```
+
+### Baixar resultados para excel:
+
+```{r}
+
+# Resultados espaciais
+espacial_757 <- df_extremos |> 
+  group_by(grupo) |> 
+  summarise(
+    n = n(),
+    latitude_media = mean(latitude, na.rm = TRUE),
+    latitude_sd = sd(latitude, na.rm = TRUE),
+    longitude_media = mean(longitude, na.rm = TRUE),
+    longitude_sd = sd(longitude, na.rm = TRUE)
+  )
+
+espacial_771 <- df_extremos_771 |> 
+  group_by(grupo) |> 
+  summarise(
+    n = n(),
+    latitude_media = mean(latitude, na.rm = TRUE),
+    latitude_sd = sd(latitude, na.rm = TRUE),
+    longitude_media = mean(longitude, na.rm = TRUE),
+    longitude_sd = sd(longitude, na.rm = TRUE)
+  )
+
+
+# Resultados anuais
+ano_757 <- df_extremos |> 
+  group_by(grupo, year) |> 
+  summarise(n = n(), .groups = "drop")
+
+ano_771 <- df_extremos_771 |> 
+  group_by(grupo, year) |> 
+  summarise(n = n(), .groups = "drop")
+
+
+# Resultados mensais
+mes_757 <- df_extremos |> 
+  group_by(grupo, month) |> 
+  summarise(n = n(), .groups = "drop")
+
+mes_771 <- df_extremos_771 |> 
+  group_by(grupo, month) |> 
+  summarise(n = n(), .groups = "drop")
+
+
+# 20 maiores
+maiores_757 <- df_sif_q0 |> 
+  arrange(desc(daily_sif757)) |> 
+  slice_head(n = 20) |> 
+  select(time, longitude, latitude, daily_sif757, daily_sif771)
+
+maiores_771 <- df_sif_q0 |> 
+  arrange(desc(daily_sif771)) |> 
+  slice_head(n = 20) |> 
+  select(time, longitude, latitude, daily_sif757, daily_sif771)
+
+
+# 20 menores
+menores_757 <- df_sif_q0 |> 
+  arrange(daily_sif757) |> 
+  slice_head(n = 20) |> 
+  select(time, longitude, latitude, daily_sif757, daily_sif771)
+
+menores_771 <- df_sif_q0 |> 
+  arrange(daily_sif771) |> 
+  slice_head(n = 20) |> 
+  select(time, longitude, latitude, daily_sif757, daily_sif771)
+
+
+# Criar Excel
+write.xlsx(
+  list(
+    espacial_757 = espacial_757,
+    ano_757 = ano_757,
+    mes_757 = mes_757,
+    maiores_757 = maiores_757,
+    menores_757 = menores_757,
+    
+    espacial_771 = espacial_771,
+    ano_771 = ano_771,
+    mes_771 = mes_771,
+    maiores_771 = maiores_771,
+    menores_771 = menores_771
+  ),
+  file = "resultados_extremos_SIF.xlsx"
+)
+```
+

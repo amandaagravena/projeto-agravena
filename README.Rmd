@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 )
 ```
 
+
 ## Legenda: 
 
 - collapse = true = aparecer o código e o resultado juntos (bom para organização). 
@@ -58,6 +59,7 @@ library(terra)
 library(geobr)
 library(vegan)
 library(sf)
+library(ggplot2)
 ```
 ## Legenda: 
 Ao carregar pacotes, carregamos as funções das diferentes bibliotecas. 
@@ -1141,6 +1143,15 @@ df_sif |>
 df_sif |>
   count(quality_flag)
 ```
+# FIltrar quality: 
+
+```{r}
+df_sif_q0 <- df_sif |>
+  filter(quality_flag == 0)
+glimpse(df_sif_q0)
+```
+
+
 # Distribuição básica do sif: 
 
 ```{r}
@@ -1676,5 +1687,55 @@ write.xlsx(
   ),
   file = "resultados_extremos_SIF.xlsx"
 )
+```
+
+# Iniciar o recorte de área antes de analisar mais dados extremos
+
+# Precisamos transformar os pontos em sf:
+
+
+```{r}
+df_sif_q0_sf <- df_sif_q0 |>
+  st_as_sf(
+    coords = c("longitude", "latitude"),
+    crs = 4326,
+    remove = FALSE
+  )
+```
+
+#Conferir CRS 
+
+```{r}
+st_crs(df_sif_q0_sf)
+```
+
+```{r}
+st_crs(costeiro_terrestre)
+```
+
+## Legenda: vi que o CRS está igual para os dois! Uhu!
+
+# Fazendo o corte
+
+```{r}
+df_sif_costeiro <- df_sif_q0_sf |>
+  st_filter(costeiro_terrestre)
+```
+
+# Testando: 
+
+```{r}
+df_sif_costeiro
+```
+
+```{r}
+nrow(df_sif_q0)
+nrow(df_sif_costeiro)
+```
+
+# Salvando: 
+
+```{r}
+write_rds(df_sif_costeiro, "data/sif-costeiro-terrestre.rds")
 ```
 

@@ -92,6 +92,21 @@ biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 
 ``` r
 biomes
+#> Simple feature collection with 7 features and 3 fields
+#> Geometry type: GEOMETRY
+#> Dimension:     XY
+#> Bounding box:  xmin: -73.9829 ymin: -34.95942 xmax: -28.84785 ymax: 7.053767
+#> Geodetic CRS:  SIRGAS 2000
+#> # A tibble: 7 × 4
+#>   code_biome name_biome        year                                     geometry
+#> *      <dbl> <chr>            <dbl>                               <GEOMETRY [°]>
+#> 1          1 Amazônia          2019 MULTIPOLYGON (((-58.94533 -16.30136, -58.94…
+#> 2          2 Caatinga          2019 POLYGON ((-41.74424 -2.806644, -41.75632 -2…
+#> 3          3 Cerrado           2019 POLYGON ((-43.38741 -2.342188, -43.393 -2.3…
+#> 4          4 Mata Atlântica    2019 MULTIPOLYGON (((-48.70747 -28.44828, -48.70…
+#> 5          5 Pampa             2019 POLYGON ((-52.82498 -27.46271, -52.82891 -2…
+#> 6          6 Pantanal          2019 POLYGON ((-57.75659 -15.73327, -57.76628 -1…
+#> 7         NA Sistema Costeiro  2019 POLYGON ((-44.64799 -2.870376, -44.65249 -2…
 ```
 
 ## Legenda:
@@ -106,6 +121,16 @@ referência das coodenadas (CRS), por exemplo.
 
 ``` r
 biomes |> distinct(name_biome)
+#> # A tibble: 7 × 1
+#>   name_biome      
+#>   <chr>           
+#> 1 Amazônia        
+#> 2 Caatinga        
+#> 3 Cerrado         
+#> 4 Mata Atlântica  
+#> 5 Pampa           
+#> 6 Pantanal        
+#> 7 Sistema Costeiro
 ```
 
 ## Legenda:
@@ -215,6 +240,11 @@ map_biomes <- ggplot(biomes) + ## Legenda: A função ggplot() inicia a constru�
 
 # print(map_country)
 print(map_biomes)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
 
 ## Legenda: Depois de todas as etapas de construção, o comando print() exibe o mapa os biomas na tela, pois já construímos o objeto "map_biomes". 
 ```
@@ -273,6 +303,8 @@ biomes |>
             sample_n(1000)
               , aes(longitude, latitude), color="gray")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ## Legenda:
 
@@ -441,6 +473,8 @@ ggplot() +
   )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
 ## Legenda:
 
 Primeiro, criou-se o objeto “costeiro”, que é o biomes, filtrando apenas
@@ -467,7 +501,49 @@ ilustrativo, esses elementos não são necessários.
 costeiro_terrestre <- st_intersection(costeiro, brasil)
 
 st_crs(costeiro)
+#> Coordinate Reference System:
+#>   User input: EPSG:4674 
+#>   wkt:
+#> GEOGCRS["SIRGAS 2000",
+#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
+#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
+#>             LENGTHUNIT["metre",1]]],
+#>     PRIMEM["Greenwich",0,
+#>         ANGLEUNIT["degree",0.0174532925199433]],
+#>     CS[ellipsoidal,2],
+#>         AXIS["geodetic latitude (Lat)",north,
+#>             ORDER[1],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>         AXIS["geodetic longitude (Lon)",east,
+#>             ORDER[2],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>     USAGE[
+#>         SCOPE["Horizontal component of 3D system."],
+#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
+#>         BBOX[-59.87,-122.19,32.72,-25.28]],
+#>     ID["EPSG",4674]]
 st_crs(brasil)
+#> Coordinate Reference System:
+#>   User input: EPSG:4674 
+#>   wkt:
+#> GEOGCRS["SIRGAS 2000",
+#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
+#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
+#>             LENGTHUNIT["metre",1]]],
+#>     PRIMEM["Greenwich",0,
+#>         ANGLEUNIT["degree",0.0174532925199433]],
+#>     CS[ellipsoidal,2],
+#>         AXIS["geodetic latitude (Lat)",north,
+#>             ORDER[1],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>         AXIS["geodetic longitude (Lon)",east,
+#>             ORDER[2],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>     USAGE[
+#>         SCOPE["Horizontal component of 3D system."],
+#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
+#>         BBOX[-59.87,-122.19,32.72,-25.28]],
+#>     ID["EPSG",4674]]
 ```
 
 ## Legenda: A função st_crs() mostra o CRS (Coordinate Reference System) do objeto.
@@ -476,9 +552,16 @@ st_crs(brasil)
 
 ``` r
 plot(st_geometry(costeiro_terrestre))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
 costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre,0.04)
 plot(st_geometry(costeiro_terrestre_buffer))
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
 
 ## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
 
@@ -567,6 +650,7 @@ costeira terrestre.
 ``` r
 df_costeiro_terra_buffer <- read_rds("data/xco2-costeiro-terrestre-buffer.rds")
 nrow(df_costeiro_terra_buffer)
+#> [1] 175818
 ```
 
 ## Legenda: Aqui, leu o arquivo e contou o número de fileiras após os recortes. Aqui, respondemos: “Depois de todos os filtros, ainda tenho uma quantidade suficiente de dados?” SIM!
@@ -578,6 +662,18 @@ df_costeiro_terra_buffer |>
   st_drop_geometry() |> 
   count(year) |>   # ajuste nome da coluna de data
   arrange(year)
+#>    year     n
+#> 1  2014  4461
+#> 2  2015 13057
+#> 3  2016 11514
+#> 4  2017  9300
+#> 5  2018 12413
+#> 6  2019 13628
+#> 7  2020 24356
+#> 8  2021 29038
+#> 9  2022 20858
+#> 10 2023 20851
+#> 11 2024 16342
 ```
 
 ## Legenda: Verificar quantas observações existem em cada ano e organiza em ordem crescente, para verificar se algum ano possui poucos dados ou se há anos ausentes.
@@ -585,6 +681,8 @@ df_costeiro_terra_buffer |>
 ``` r
 # Estatística descritiva do XCO2 nessa faixa
 summary(df_costeiro_terra_buffer$xco2)  # ajuste nome da coluna
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>   390.8   406.2   412.1   411.2   416.0   429.4
 ```
 
 ## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
@@ -631,11 +729,13 @@ enquanto a coluna proveniente da junção passou a se chamar
 df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2023,
-         name_biome.x != "Sistema Costeiro") |> 
+         name_biome != "Sistema Costeiro") |> 
   # group_by(year) |> 
-  ggplot(aes(x=name_biome.x, y=xco2, fill=name_biome.x)) +
+  ggplot(aes(x=name_biome, y=xco2, fill=name_biome)) +
   geom_boxplot() 
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
 ## Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre os biomas. Podemos visualizar mediana; quartis; dispersão; outliers. Excluímos Sistema Costeiro, pois não é um bioma de fato.
 
@@ -643,14 +743,16 @@ df_costeiro_terra_buffer |>
 df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2015,
-         name_biome.x != "Sistema Costeiro") |> 
-  group_by(name_biome.x, month) |> 
+         name_biome != "Sistema Costeiro") |> 
+  group_by(name_biome, month) |> 
   summarise(
     xco2 = mean(xco2)
   ) |> 
-  ggplot(aes(x=month, y=xco2, color=name_biome.x) ) +
+  ggplot(aes(x=month, y=xco2, color=name_biome) ) +
   geom_point() + geom_line()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 ## Legenda: Média mensal por bioma, agrupando por bioma e por mês, ou seja, “Qual foi o XCO₂ médio daquele bioma naquele mês?” - Resulta em um gráfico temporal. Buscamos ver se os biomas apresentam comportamento sazonal diferente.
 
@@ -658,7 +760,7 @@ df_costeiro_terra_buffer |>
 df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2015,
-         name_biome.x != "Sistema Costeiro") |> 
+         name_biome != "Sistema Costeiro") |> 
   mutate( class_latitude = cut(latitude, 20)) |> 
   group_by(class_latitude, month) |> 
   summarise(
@@ -667,6 +769,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(x=month, y=xco2, color=class_latitude) ) +
   geom_point() + geom_line()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ## Legenda: Média mensal por faixa de latitude (20 faixas). Então, calcula a média do XCO₂ para cada faixa de latitude em cada mês. O objetivo é verificar se existe um gradiente latitudinal, ou seja, “O comportamento do XCO₂ muda conforme se avança do sul para o norte do Brasil?”
 
@@ -717,6 +821,8 @@ df_costeiro_terra_buffer |>
   scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+
 ## Legenda:
 
 Esse bloco mostra graficamente a tendência temporal do XCO₂.
@@ -729,18 +835,19 @@ período analisado.
 ## retirada de tendência Propriamente dita
 
 ``` r
-a_co2 <- mod_trend_xco2$coefficients[[1]]
-b_co2 <- mod_trend_xco2$coefficients[[2]]
-
-df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
-  mutate(
-    date= make_date(year, month, day),
-    date_modif = as.numeric(date - min(date)),
-    xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
-    delta = xco2_est-xco2, ## estimado menos o observado real
-    xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
-  ) |> select(-xco2_quality_flag, -path, -name_biome.y) |> 
-  rename(name_biome = name_biome.x)
+# a_co2 <- mod_trend_xco2$coefficients[[1]]
+# b_co2 <- mod_trend_xco2$coefficients[[2]]
+# 
+# df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
+#   mutate(
+#     date= make_date(year, month, day),
+#     date_modif = as.numeric(date - min(date)),
+#     xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
+#     delta = xco2_est-xco2, ## estimado menos o observado real
+#     xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
+#   ) |> select(-xco2_quality_flag, -path, -name_biome.y) |> 
+#   rename(name_biome = name_biome.x)
+# write_rds(df_costeiro_terra_buffer, "data/xco2-costeiro-terrestre-buffer.rds")
 ```
 
 ## Legenda:
@@ -755,6 +862,7 @@ após a remoção da tendência regional.
 ### PARTE AMANDA
 
 ``` r
+df_costeiro_terra_buffer <-read_rds("data/xco2-costeiro-terrestre-buffer.rds")
 df_costeiro_terra_buffer |>
   mutate(
     class_latitude = cut(
@@ -781,6 +889,8 @@ df_costeiro_terra_buffer |>
   ) +
   theme_minimal()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 ## Legenda:
 
@@ -819,6 +929,8 @@ df_costeiro_terra_buffer |>
   ) +
   theme_minimal()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ## Legenda:
 
@@ -859,6 +971,8 @@ df_costeiro_terra_buffer |>
   scale_fill_viridis_d()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+
 ## Legenda: O código divide os dados em $35$ faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
 ## Análise de cluster da série temporal
@@ -885,6 +999,26 @@ df_cluster <- df_costeiro_terra_buffer |>
     where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
   ))
 df_cluster
+#> # A tibble: 115 × 120
+#>    latitude_media `2015_1` `2015_10` `2015_11` `2015_12` `2015_2` `2015_3`
+#>             <dbl>    <dbl>     <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
+#>  1          -33.6     380.      383.      383.      383.     381.     381.
+#>  2          -33.2     379.      383.      383.      383.     382.     382.
+#>  3          -32.6     382.      383.      383.      381.     380.     380.
+#>  4          -32.0     379.      383.      384.      383.     381.     381.
+#>  5          -31.6     379.      383.      381.      383.     380.     381.
+#>  6          -31.2     379.      383.      381.      382.     382.     382.
+#>  7          -24.0     382.      383.      383.      383.     382.     382.
+#>  8          -23.0     381.      383.      382.      383.     383.     381.
+#>  9          -22.6     380.      383.      382.      384.     382.     382.
+#> 10          -22.2     382.      382.      386.      383.     382.     382.
+#> # ℹ 105 more rows
+#> # ℹ 113 more variables: `2015_4` <dbl>, `2015_5` <dbl>, `2015_6` <dbl>,
+#> #   `2015_7` <dbl>, `2015_8` <dbl>, `2015_9` <dbl>, `2016_1` <dbl>,
+#> #   `2016_10` <dbl>, `2016_11` <dbl>, `2016_12` <dbl>, `2016_2` <dbl>,
+#> #   `2016_3` <dbl>, `2016_4` <dbl>, `2016_5` <dbl>, `2016_6` <dbl>,
+#> #   `2016_7` <dbl>, `2016_8` <dbl>, `2016_9` <dbl>, `2017_1` <dbl>,
+#> #   `2017_10` <dbl>, `2017_11` <dbl>, `2017_12` <dbl>, `2017_2` <dbl>, …
 ```
 
 ## Legenda: Precisávamos definir grupos de latitude com comportamento temporal semelhante de XCO₂ para, posteriormente, calcular as anomalias dentro desses grupos. Para isso, os dados foram organizados em classes de latitude e agregados mensalmente, considerando o período posterior a 2014. Para cada faixa de latitude e mês, foi calculada a média de XCO₂ com a tendência regional previamente removida (XCO₂ detrend). Em seguida, os dados foram reorganizados em uma matriz, na qual cada linha representava uma faixa de latitude e cada coluna correspondia a um mês da série temporal. Os valores ausentes foram preenchidos pela média da respectiva série para possibilitar a aplicação do agrupamento.
@@ -895,6 +1029,8 @@ df_cluster
 mc <- cor(df_cluster |> select(-latitude_media))
 corrplot::corrplot(mc)
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 ## Legenda: Para avaliar a similaridade temporal entre as diferentes faixas de latitude, foi calculada a matriz de correlação entre as séries mensais de XCO₂. Essa etapa permitiu verificar o grau de associação entre o comportamento temporal das diferentes regiões antes da realização do agrupamento.
 
@@ -911,6 +1047,11 @@ plot(da_pad_euc_ward,
      xlab="Acessos", hang=-1,
      col="blue", las=1,
      cex=.6,lwd=1.5);box()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
+``` r
 grupo<-cutree(da_pad_euc_ward,4)
 colunas <- df_cluster |> add_column(grupo) |> 
   select(latitude_media,grupo)
@@ -934,6 +1075,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
   geom_point()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
 
 ## Legenda: Após a definição dos grupos pelo agrupamento hierárquico, a classificação obtida para cada faixa de latitude foi associada às observações originais. A distribuição espacial dos grupos foi então visualizada para verificar como as regiões com comportamento temporal semelhante estavam distribuídas ao longo da faixa costeira.
 
@@ -979,6 +1122,8 @@ df_costeiro_terra_buffer |>
   ) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 ## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
 
@@ -1038,6 +1183,8 @@ df_costeiro_terra_buffer |>
   ) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
 ## Legenda: A partir da distribuição espacial observada no agrupamento, foram estabelecidos limites latitudinais para definir as regiões utilizadas na análise subsequente. Os limites foram ajustados de acordo com a organização espacial dos agrupamentos, resultando em cinco grupos latitudinais. Essa classificação foi utilizada como a divisão regional definitiva para o cálculo das anomalias.
 
@@ -1100,6 +1247,8 @@ df_grupos |>
   theme_minimal()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+
 ## Legenda: Com os grupos latitudinais definidos, foi possível calcular a anomalia de XCO₂ considerando como referência o comportamento típico de cada grupo. Para cada combinação de mês e grupo, foi calculada a mediana de XCO₂ e, posteriormente, esse valor foi subtraído de cada observação correspondente. As anomalias resultantes foram então agregadas por ano e latitude média, permitindo representar a variação de XCO₂ ao longo da costa em relação ao comportamento de referência de cada região.
 
 ## A partir daqui, peguei os dados de Manguezais do MapBiomas.
@@ -1118,12 +1267,22 @@ arquivos <- list.files(
 
 ``` r
 arquivos
+#> [1] "data/EarthEngine/manguezais_2018-0000000000-0000000000.tif"
+#> [2] "data/EarthEngine/manguezais_2018-0000000000-0000065536.tif"
+#> [3] "data/EarthEngine/manguezais_2018-0000000000-0000131072.tif"
+#> [4] "data/EarthEngine/manguezais_2018-0000065536-0000000000.tif"
+#> [5] "data/EarthEngine/manguezais_2018-0000065536-0000065536.tif"
+#> [6] "data/EarthEngine/manguezais_2018-0000065536-0000131072.tif"
+#> [7] "data/EarthEngine/manguezais_2018-0000131072-0000000000.tif"
+#> [8] "data/EarthEngine/manguezais_2018-0000131072-0000065536.tif"
+#> [9] "data/EarthEngine/manguezais_2018-0000131072-0000131072.tif"
 ```
 
 ## Ver quantos rasters ele encontra:
 
 ``` r
 length(arquivos)
+#> [1] 9
 ```
 
 ## Criar o objeto mangue
@@ -1201,8 +1360,8 @@ sum(df_grupos$frac_mangue > 0, na.rm = TRUE)  # quantos pontos têm mangue por p
 # Iniciando a parte do SIF
 
 ``` r
-df_sif <- read_rds("data-raw/data-set-sif-br.rds")
-glimpse(df_sif)
+# df_sif <- read_rds("data-raw/data-set-sif-br.rds")
+# glimpse(df_sif)
 ```
 
 ## Legenda: O que encontramos: 46.098.810 observações
@@ -1219,35 +1378,35 @@ quality_flag; path; year; month; day.
 # Arrange por ano:
 
 ``` r
-df_sif |>
-  distinct(year) |>
-  arrange(year)
+# df_sif |>
+#   distinct(year) |>
+#   arrange(year)
 ```
 
 # Ver quantas quality flags temos:
 
 ``` r
-df_sif |>
-  count(quality_flag)
+# df_sif |>
+#   count(quality_flag)
 ```
 
 # FIltrar quality:
 
 ``` r
-df_sif_q0 <- df_sif |>
-  filter(quality_flag == 0)
-glimpse(df_sif_q0)
+# df_sif_q0 <- df_sif |>
+#   filter(quality_flag == 0)
+# glimpse(df_sif_q0)
 ```
 
 # Distribuição básica do sif:
 
 ``` r
-summary(df_sif_q0$daily_sif757)
+# summary(df_sif_q0$daily_sif757)
 ```
 
 ``` r
 
-summary(df_sif_q0$daily_sif771)
+# summary(df_sif_q0$daily_sif771)
 ```
 
 ## Legenda:
@@ -1260,83 +1419,83 @@ sem informação para SIF740.
 # Filtrar a quality flag para pega só zero e conferir:
 
 ``` r
-df_sif_q0 <- df_sif |>
-  filter(quality_flag == 0)
-table(df_sif_q0$quality_flag)
+# df_sif_q0 <- df_sif |>
+#   filter(quality_flag == 0)
+# table(df_sif_q0$quality_flag)
 ```
 
 # Fazer o summary dos itens desejados:
 
 ``` r
-summary(df_sif_q0$daily_sif757)
-summary(df_sif_q0$daily_sif771)
+# summary(df_sif_q0$daily_sif757)
+# summary(df_sif_q0$daily_sif771)
 ```
 
 ## Investigar os valores extremos que sobreviveram ao quality flag.Primeiro, os 10 maiores e os 10 menores.
 
 ``` r
-df_sif_q0 |>
-  arrange(desc(daily_sif757)) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(desc(daily_sif757)) |>
+#   slice_head(n = 10)
 ```
 
 ``` r
-df_sif_q0 |>
-  arrange(daily_sif757) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(daily_sif757) |>
+#   slice_head(n = 10)
 ```
 
 ``` r
-df_sif_q0 |>
-  arrange(desc(daily_sif771)) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(desc(daily_sif771)) |>
+#   slice_head(n = 10)
 ```
 
 ``` r
-df_sif_q0 |>
-  arrange(daily_sif771) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(daily_sif771) |>
+#   slice_head(n = 10)
 ```
 
 # Fazendo os Histogramas
 
 ``` r
-ggplot(df_sif_q0, aes(x = daily_sif757)) +
-  geom_histogram() +
-  labs(
-    x = "SIF 757 nm",
-    y = "Frequência"
-  ) +
-  theme_minimal()
+# ggplot(df_sif_q0, aes(x = daily_sif757)) +
+#   geom_histogram() +
+#   labs(
+#     x = "SIF 757 nm",
+#     y = "Frequência"
+#   ) +
+#   theme_minimal()
 ```
 
 ``` r
-ggplot(df_sif_q0, aes(x = daily_sif771)) +
-  geom_histogram() +
-  labs(
-    x = "SIF 771 nm",
-    y = "Frequência"
-  ) +
-  theme_minimal()
+# ggplot(df_sif_q0, aes(x = daily_sif771)) +
+#   geom_histogram() +
+#   labs(
+#     x = "SIF 771 nm",
+#     y = "Frequência"
+#   ) +
+#   theme_minimal()
 ```
 
 # Entender comportamento dos dados sif757
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    n = n(),
-    min = min(daily_sif757, na.rm = TRUE),
-    q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
-    q05 = quantile(daily_sif757, 0.05, na.rm = TRUE),
-    q25 = quantile(daily_sif757, 0.25, na.rm = TRUE),
-    mediana = median(daily_sif757, na.rm = TRUE),
-    media = mean(daily_sif757, na.rm = TRUE),
-    q75 = quantile(daily_sif757, 0.75, na.rm = TRUE),
-    q95 = quantile(daily_sif757, 0.95, na.rm = TRUE),
-    q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
-    max = max(daily_sif757, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     n = n(),
+#     min = min(daily_sif757, na.rm = TRUE),
+#     q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
+#     q05 = quantile(daily_sif757, 0.05, na.rm = TRUE),
+#     q25 = quantile(daily_sif757, 0.25, na.rm = TRUE),
+#     mediana = median(daily_sif757, na.rm = TRUE),
+#     media = mean(daily_sif757, na.rm = TRUE),
+#     q75 = quantile(daily_sif757, 0.75, na.rm = TRUE),
+#     q95 = quantile(daily_sif757, 0.95, na.rm = TRUE),
+#     q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
+#     max = max(daily_sif757, na.rm = TRUE)
+#   )
 ```
 
 ## Legenda:
@@ -1362,29 +1521,29 @@ concentração das observações próximas de zero e uma cauda formada por
 valores extremos.
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    negativos = sum(daily_sif757 < 0, na.rm = TRUE),
-    positivos = sum(daily_sif757 >= 0, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     negativos = sum(daily_sif757 < 0, na.rm = TRUE),
+#     positivos = sum(daily_sif757 >= 0, na.rm = TRUE)
+#   )
 ```
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    percentual_negativos = mean(daily_sif757 < 0, na.rm = TRUE) * 100
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     percentual_negativos = mean(daily_sif757 < 0, na.rm = TRUE) * 100
+#   )
 ```
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    acima_1 = sum(daily_sif757 > 1, na.rm = TRUE),
-    acima_2 = sum(daily_sif757 > 2, na.rm = TRUE),
-    acima_3 = sum(daily_sif757 > 3, na.rm = TRUE),
-    acima_4 = sum(daily_sif757 > 4, na.rm = TRUE),
-    acima_5 = sum(daily_sif757 > 5, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     acima_1 = sum(daily_sif757 > 1, na.rm = TRUE),
+#     acima_2 = sum(daily_sif757 > 2, na.rm = TRUE),
+#     acima_3 = sum(daily_sif757 > 3, na.rm = TRUE),
+#     acima_4 = sum(daily_sif757 > 4, na.rm = TRUE),
+#     acima_5 = sum(daily_sif757 > 5, na.rm = TRUE)
+#   )
 ```
 
 # Localizando os extremos
@@ -1392,71 +1551,71 @@ df_sif_q0 |>
 ## Menores valores
 
 ``` r
-df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20)
+# df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20)
 ```
 
 ## Maiores valores
 
 ``` r
-df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20)
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20)
 ```
 
 ## Para sif771
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    n = n(),
-    min = min(daily_sif771, na.rm = TRUE),
-    q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
-    q05 = quantile(daily_sif771, 0.05, na.rm = TRUE),
-    q25 = quantile(daily_sif771, 0.25, na.rm = TRUE),
-    mediana = median(daily_sif771, na.rm = TRUE),
-    media = mean(daily_sif771, na.rm = TRUE),
-    q75 = quantile(daily_sif771, 0.75, na.rm = TRUE),
-    q95 = quantile(daily_sif771, 0.95, na.rm = TRUE),
-    q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
-    max = max(daily_sif771, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     n = n(),
+#     min = min(daily_sif771, na.rm = TRUE),
+#     q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
+#     q05 = quantile(daily_sif771, 0.05, na.rm = TRUE),
+#     q25 = quantile(daily_sif771, 0.25, na.rm = TRUE),
+#     mediana = median(daily_sif771, na.rm = TRUE),
+#     media = mean(daily_sif771, na.rm = TRUE),
+#     q75 = quantile(daily_sif771, 0.75, na.rm = TRUE),
+#     q95 = quantile(daily_sif771, 0.95, na.rm = TRUE),
+#     q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
+#     max = max(daily_sif771, na.rm = TRUE)
+#   )
 ```
 
 ## Quantidade de negativos
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    negativos = sum(daily_sif771 < 0, na.rm = TRUE),
-    positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
-    percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     negativos = sum(daily_sif771 < 0, na.rm = TRUE),
+#     positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
+#     percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
+#   )
 ```
 
 ## Extremos positivos
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    acima_1 = sum(daily_sif771 > 1, na.rm = TRUE),
-    acima_2 = sum(daily_sif771 > 2, na.rm = TRUE),
-    acima_3 = sum(daily_sif771 > 3, na.rm = TRUE),
-    acima_4 = sum(daily_sif771 > 4, na.rm = TRUE),
-    acima_5 = sum(daily_sif771 > 5, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     acima_1 = sum(daily_sif771 > 1, na.rm = TRUE),
+#     acima_2 = sum(daily_sif771 > 2, na.rm = TRUE),
+#     acima_3 = sum(daily_sif771 > 3, na.rm = TRUE),
+#     acima_4 = sum(daily_sif771 > 4, na.rm = TRUE),
+#     acima_5 = sum(daily_sif771 > 5, na.rm = TRUE)
+#   )
 ```
 
 ## Proporção de negativos:
 
 ``` r
-df_sif_q0 |> 
-  summarise(
-    negativos = sum(daily_sif771 < 0, na.rm = TRUE),
-    positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
-    percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     negativos = sum(daily_sif771 < 0, na.rm = TRUE),
+#     positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
+#     percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
+#   )
 ```
 
 ## Legenda: O que podemos concluir neste momento?
@@ -1483,31 +1642,31 @@ considerá-los inválidos.
 ### Maiores
 
 ``` r
-df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Menores
 
 ``` r
-df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ## Legenda: Os valores extremos do SIF 757 não são acompanhados, de forma consistente, por valores igualmente extremos do SIF 771.
@@ -1517,31 +1676,31 @@ df_sif_q0 |>
 ### Maiores
 
 ``` r
-df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Menores
 
 ``` r
-df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ## Legenda: A análise dos 20 maiores e 20 menores valores de SIF757 mostra que os valores extremos estão espacialmente distribuídos, sem evidência visual de concentração em uma única região. Os extremos ocorrem em diferentes posições geográficas e anos, indicando que não há, neste momento, um padrão espacial simples associado aos valores extremos.
@@ -1549,54 +1708,54 @@ df_sif_q0 |>
 # Existe alguma característica das observações que diferencia os valores extremos dos valores comuns?
 
 ``` r
-glimpse(df_sif_q0)
+# glimpse(df_sif_q0)
 ```
 
 ### Definindo o que é um extremo, apenas para avaliação.
 
 ``` r
-df_extremos <- df_sif_q0 |> 
-  mutate(
-    q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
-    q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
-    grupo = case_when(
-      daily_sif757 < q01 ~ "extremo_baixo",
-      daily_sif757 > q99 ~ "extremo_alto",
-      TRUE ~ "comum"
-    )
-  )
+# df_extremos <- df_sif_q0 |> 
+#   mutate(
+#     q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
+#     q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
+#     grupo = case_when(
+#       daily_sif757 < q01 ~ "extremo_baixo",
+#       daily_sif757 > q99 ~ "extremo_alto",
+#       TRUE ~ "comum"
+#     )
+#   )
 ```
 
 ### Investigando por tempo e espaço
 
 ``` r
-df_extremos |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
+# df_extremos |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
 ```
 
 ``` r
-df_extremos |> 
-  group_by(grupo, year) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos |> 
+#   group_by(grupo, year) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ``` r
-df_extremos |> 
-  group_by(grupo, month) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos |> 
+#   group_by(grupo, month) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ## Legenda: O que concluímos sobre os valores extremos de sif757?
@@ -1622,171 +1781,170 @@ justificar sua remoção.
 ## Extremos exploratórios de 771
 
 ``` r
-df_extremos_771 <- df_sif_q0 |> 
-  mutate(
-    q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
-    q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
-    grupo = case_when(
-      daily_sif771 < q01 ~ "extremo_baixo",
-      daily_sif771 > q99 ~ "extremo_alto",
-      TRUE ~ "comum"
-    )
-  )
+# df_extremos_771 <- df_sif_q0 |> 
+#   mutate(
+#     q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
+#     q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
+#     grupo = case_when(
+#       daily_sif771 < q01 ~ "extremo_baixo",
+#       daily_sif771 > q99 ~ "extremo_alto",
+#       TRUE ~ "comum"
+#     )
+#   )
 ```
 
 ### Distribuição espacial:
 
 ``` r
-df_extremos_771 |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
+# df_extremos_771 |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
 ```
 
 ### Distr Temporal por ano
 
 ``` r
-df_extremos_771 |> 
-  group_by(grupo, year) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos_771 |> 
+#   group_by(grupo, year) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ### Distr Temporal por mês
 
 ``` r
-df_extremos_771 |> 
-  group_by(grupo, month) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos_771 |> 
+#   group_by(grupo, month) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ### Maiores valores
 
 ``` r
-df_sif_q0 |> 
-  arrange(desc(daily_sif771)) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif771)) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Menores valores
 
 ``` r
-df_sif_q0 |> 
-  arrange(daily_sif771) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(daily_sif771) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Baixar resultados para excel:
 
 ``` r
-
 # Resultados espaciais
-espacial_757 <- df_extremos |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
-
-espacial_771 <- df_extremos_771 |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
-
-
-# Resultados anuais
-ano_757 <- df_extremos |> 
-  group_by(grupo, year) |> 
-  summarise(n = n(), .groups = "drop")
-
-ano_771 <- df_extremos_771 |> 
-  group_by(grupo, year) |> 
-  summarise(n = n(), .groups = "drop")
-
-
-# Resultados mensais
-mes_757 <- df_extremos |> 
-  group_by(grupo, month) |> 
-  summarise(n = n(), .groups = "drop")
-
-mes_771 <- df_extremos_771 |> 
-  group_by(grupo, month) |> 
-  summarise(n = n(), .groups = "drop")
-
-
-# 20 maiores
-maiores_757 <- df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-maiores_771 <- df_sif_q0 |> 
-  arrange(desc(daily_sif771)) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-
-# 20 menores
-menores_757 <- df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-menores_771 <- df_sif_q0 |> 
-  arrange(daily_sif771) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-
-# Criar Excel
-write.xlsx(
-  list(
-    espacial_757 = espacial_757,
-    ano_757 = ano_757,
-    mes_757 = mes_757,
-    maiores_757 = maiores_757,
-    menores_757 = menores_757,
-    
-    espacial_771 = espacial_771,
-    ano_771 = ano_771,
-    mes_771 = mes_771,
-    maiores_771 = maiores_771,
-    menores_771 = menores_771
-  ),
-  file = "resultados_extremos_SIF.xlsx"
-)
+# espacial_757 <- df_extremos |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
+# 
+# espacial_771 <- df_extremos_771 |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
+# 
+# 
+# # Resultados anuais
+# ano_757 <- df_extremos |> 
+#   group_by(grupo, year) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# ano_771 <- df_extremos_771 |> 
+#   group_by(grupo, year) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# 
+# # Resultados mensais
+# mes_757 <- df_extremos |> 
+#   group_by(grupo, month) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# mes_771 <- df_extremos_771 |> 
+#   group_by(grupo, month) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# 
+# # 20 maiores
+# maiores_757 <- df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# maiores_771 <- df_sif_q0 |> 
+#   arrange(desc(daily_sif771)) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# 
+# # 20 menores
+# menores_757 <- df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# menores_771 <- df_sif_q0 |> 
+#   arrange(daily_sif771) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# 
+# # Criar Excel
+# write.xlsx(
+#   list(
+#     espacial_757 = espacial_757,
+#     ano_757 = ano_757,
+#     mes_757 = mes_757,
+#     maiores_757 = maiores_757,
+#     menores_757 = menores_757,
+#     
+#     espacial_771 = espacial_771,
+#     ano_771 = ano_771,
+#     mes_771 = mes_771,
+#     maiores_771 = maiores_771,
+#     menores_771 = menores_771
+#   ),
+#   file = "resultados_extremos_SIF.xlsx"
+# )
 ```
 
 # Iniciar o recorte de área antes de analisar mais dados extremos
@@ -1794,22 +1952,22 @@ write.xlsx(
 # Precisamos transformar os pontos em sf:
 
 ``` r
-df_sif_q0_sf <- df_sif_q0 |>
-  st_as_sf(
-    coords = c("longitude", "latitude"),
-    crs = 4326,
-    remove = FALSE
-  )
+# df_sif_q0_sf <- df_sif_q0 |>
+#   st_as_sf(
+#     coords = c("longitude", "latitude"),
+#     crs = 4326,
+#     remove = FALSE
+#   )
 ```
 
 \#Conferir CRS
 
 ``` r
-st_crs(df_sif_q0_sf)
+# st_crs(df_sif_q0_sf)
 ```
 
 ``` r
-st_crs(costeiro_terrestre)
+# st_crs(costeiro_terrestre)
 ```
 
 ## Legenda: vi que o CRS está igual para os dois! Uhu!
@@ -1817,23 +1975,137 @@ st_crs(costeiro_terrestre)
 # Fazendo o corte
 
 ``` r
-df_sif_costeiro <- df_sif_q0_sf |>
-  st_filter(costeiro_terrestre)
+# df_sif_costeiro <- df_sif_q0_sf |>
+#   st_filter(costeiro_terrestre)
 ```
 
 # Testando:
 
 ``` r
-df_sif_costeiro
+# df_sif_costeiro
 ```
 
 ``` r
-nrow(df_sif_q0)
-nrow(df_sif_costeiro)
+# nrow(df_sif_q0)
+# nrow(df_sif_costeiro)
 ```
 
 # Salvando:
 
 ``` r
-write_rds(df_sif_costeiro, "data/sif-costeiro-terrestre.rds")
+# write_rds(df_sif_costeiro, "data/sif-costeiro-terrestre.rds")
 ```
+
+## Lendo a SIF
+
+``` r
+df_sif_costeiro_terra <- read_rds("data/sif-costeiro-terrestre.rds")
+glimpse(df_sif_costeiro_terra)
+#> Rows: 163,967
+#> Columns: 18
+#> $ time               <dttm> 2014-09-06 13:42:03, 2014-09-06 13:42:04, 2014-09-…
+#> $ sza                <dbl> 25.69928, 25.68079, 25.64154, 25.63287, 25.62469, 2…
+#> $ vza                <dbl> 0.28057861, 0.39343262, 0.29290771, 0.29321289, 0.4…
+#> $ saz                <dbl> 287.4136, 287.3581, 287.0425, 287.0042, 286.9449, 2…
+#> $ vaz                <dbl> 11.09241, 13.26691, 202.94403, 202.97070, 201.01111…
+#> $ longitude          <dbl> -46.30048, -46.31305, -46.31201, -46.31622, -46.317…
+#> $ latitude           <dbl> -1.286621, -1.255554, -1.099121, -1.078979, -1.0494…
+#> $ sif740             <dbl> 1.20535183, 2.65169525, 1.69623184, 0.68075562, -0.…
+#> $ sif740_uncertainty <dbl> 0.6383705, 0.5223513, 0.4410057, 0.4028778, 0.47654…
+#> $ daily_sif740       <dbl> 0.42234898, 0.92899704, 0.59440804, 0.23853874, -0.…
+#> $ daily_sif757       <dbl> 0.405223846, 0.433740616, 0.317363739, 0.243231773,…
+#> $ daily_sif771       <dbl> 0.10527229, 0.53661442, 0.31678677, 0.04988003, -0.…
+#> $ quality_flag       <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …
+#> $ path               <chr> "data-raw/OCO-2-Sif/oco2_LtSIF_140906_B11012Ar_2303…
+#> $ year               <dbl> 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014, 201…
+#> $ month              <dbl> 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, …
+#> $ day                <int> 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, …
+#> $ geometry           <POINT [°]> POINT (-46.30048 -1.286621), POINT (-46.31305…
+```
+
+``` r
+df_sif_costeiro_terra |>
+  filter(year == 2023) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot(aes(longitude, latitude)) +
+  geom_point()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-103-1.png)<!-- -->
+
+``` r
+df_sif_costeiro_terra |>
+  mutate(
+    class_latitude = cut(
+      latitude, 115
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year, latitude_media) |>
+  summarise(
+   sif = mean(daily_sif757, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=factor(latitude_media), y = sif, fill = factor(latitude_media))) +
+  geom_boxplot() + 
+  coord_flip(ylim = c(-.3, .6)) +
+  labs(
+    x = "Latitude (°)",
+    y = "Concentração média de SIF757 (...)",
+    color = "Ano"
+  ) +
+  theme_minimal()+
+  theme(
+    legend.position = "none"
+  ) +
+  scale_fill_viridis_d()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-104-1.png)<!-- -->
+
+``` r
+df_sif_costeiro_terra |>
+  mutate(
+    class_latitude = cut(
+      latitude, 115
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year, latitude_media) |>
+  summarise(
+   sif = mean(daily_sif771, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=factor(latitude_media), y = sif, fill = factor(latitude_media))) +
+  geom_boxplot() + 
+  coord_flip(ylim = c(-.3, .6)) +
+  labs(
+    x = "Latitude (°)",
+    y = "Concentração média de SIF771 (...)",
+    color = "Ano"
+  ) +
+  theme_minimal()+
+  theme(
+    legend.position = "none"
+  ) +
+  scale_fill_viridis_d()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-105-1.png)<!-- -->

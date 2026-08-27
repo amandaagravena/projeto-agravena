@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=TRUE,
+  eval=FALSE,
   comment = "#>"
 )
 ```
@@ -1070,14 +1070,14 @@ mangue → recebe o raster final unido.
 ## Visualização rápida
 
 Carregando os dados processados pelo terra
-```{r}
-mangue <- terra::rast("data/mangue-brasil.tif")
-mangue
+```{r, eval=FALSE}
+#mangue <- terra::rast("data/mangue-brasil.tif")
+#mangue
 ```
 
 demais informações do arquivo
 
-```{r}
+```{r, eval=FALSE}
 dim(mangue)      # nrow, ncol, nlyr
 res(mangue)      # resolução (tamanho do pixel)
 ext(mangue)      # extensão (bounding box)
@@ -1088,7 +1088,7 @@ summary(mangue)  # por padrão já faz um SAMPLE, não lê tudo — geralmente o
 
 - converter df_grupos para vetor espacial (terra), já no mesmo CRS do mangue
 
-```{r}
+```{r,eval=FALSE}
 xco2_vect <- vect(df_grupos, geom = c("longitude", "latitude"), crs = "EPSG:4326")
 ```
 

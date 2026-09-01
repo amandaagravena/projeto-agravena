@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -563,9 +563,9 @@ Como o objeto costeiro_terrestre também recebeu uma coluna com o mesmo nome("na
 df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2023,
-         name_biome.x != "Sistema Costeiro") |> 
+         name_biome != "Sistema Costeiro") |> 
   # group_by(year) |> 
-  ggplot(aes(x=name_biome.x, y=xco2, fill=name_biome.x)) +
+  ggplot(aes(x=name_biome, y=xco2, fill=name_biome)) +
   geom_boxplot() 
 ```
 
@@ -575,12 +575,12 @@ df_costeiro_terra_buffer |>
 df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2015,
-         name_biome.x != "Sistema Costeiro") |> 
-  group_by(name_biome.x, month) |> 
+         name_biome != "Sistema Costeiro") |> 
+  group_by(name_biome, month) |> 
   summarise(
     xco2 = mean(xco2)
   ) |> 
-  ggplot(aes(x=month, y=xco2, color=name_biome.x) ) +
+  ggplot(aes(x=month, y=xco2, color=name_biome) ) +
   geom_point() + geom_line()
 ```
 
@@ -590,7 +590,7 @@ df_costeiro_terra_buffer |>
 df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   filter(year == 2015,
-         name_biome.x != "Sistema Costeiro") |> 
+         name_biome != "Sistema Costeiro") |> 
   mutate( class_latitude = cut(latitude, 20)) |> 
   group_by(class_latitude, month) |> 
   summarise(
@@ -653,18 +653,19 @@ Esse bloco mostra graficamente a tendência temporal do XCO₂. `geom_point()` a
 ## retirada de tendência Propriamente dita
 
 ```{r}
-a_co2 <- mod_trend_xco2$coefficients[[1]]
-b_co2 <- mod_trend_xco2$coefficients[[2]]
-
-df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
-  mutate(
-    date= make_date(year, month, day),
-    date_modif = as.numeric(date - min(date)),
-    xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
-    delta = xco2_est-xco2, ## estimado menos o observado real
-    xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
-  ) |> select(-xco2_quality_flag, -path, -name_biome.y) |> 
-  rename(name_biome = name_biome.x)
+# a_co2 <- mod_trend_xco2$coefficients[[1]]
+# b_co2 <- mod_trend_xco2$coefficients[[2]]
+# 
+# df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
+#   mutate(
+#     date= make_date(year, month, day),
+#     date_modif = as.numeric(date - min(date)),
+#     xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
+#     delta = xco2_est-xco2, ## estimado menos o observado real
+#     xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
+#   ) |> select(-xco2_quality_flag, -path, -name_biome.y) |> 
+#   rename(name_biome = name_biome.x)
+# write_rds(df_costeiro_terra_buffer, "data/xco2-costeiro-terrestre-buffer.rds")
 ```
 
 ## Legenda:
@@ -676,6 +677,7 @@ Esse bloco realiza a retirada da tendência temporal do XCO₂. Primeiro, são o
 ### PARTE AMANDA
 
 ```{r}
+df_costeiro_terra_buffer <-read_rds("data/xco2-costeiro-terrestre-buffer.rds")
 df_costeiro_terra_buffer |>
   mutate(
     class_latitude = cut(
@@ -1094,7 +1096,7 @@ xco2_vect <- vect(df_grupos, geom = c("longitude", "latitude"), crs = "EPSG:4326
 
  criar buffer em torno de cada ponto (ajuste width conforme a escala que faz sentido pra você -- ex: 5000 = 5 km. Pegada do OCO-2/3 é ~1.3x2.25 km, então algo entre 1000-5000 m costuma ser razoável)
 
-```{r}
+```{r, eval=FALSE}
 xco2_buffer <- buffer(xco2_vect, width = 5000)
 ```
 
@@ -1118,8 +1120,8 @@ sum(df_grupos$frac_mangue > 0, na.rm = TRUE)  # quantos pontos têm mangue por p
 # Iniciando a parte do SIF
 
 ```{r}
-df_sif <- read_rds("data-raw/data-set-sif-br.rds")
-glimpse(df_sif)
+# df_sif <- read_rds("data-raw/data-set-sif-br.rds")
+# glimpse(df_sif)
 ```
 
 ## Legenda: O que encontramos: 46.098.810 observações
@@ -1132,35 +1134,35 @@ glimpse(df_sif)
 # Arrange por ano:
 
 ```{r}
-df_sif |>
-  distinct(year) |>
-  arrange(year)
+# df_sif |>
+#   distinct(year) |>
+#   arrange(year)
 ```
 
 # Ver quantas quality flags temos:
 
 ```{r}
-df_sif |>
-  count(quality_flag)
+# df_sif |>
+#   count(quality_flag)
 ```
 # FIltrar quality: 
 
 ```{r}
-df_sif_q0 <- df_sif |>
-  filter(quality_flag == 0)
-glimpse(df_sif_q0)
+# df_sif_q0 <- df_sif |>
+#   filter(quality_flag == 0)
+# glimpse(df_sif_q0)
 ```
 
 
 # Distribuição básica do sif: 
 
 ```{r}
-summary(df_sif_q0$daily_sif757)
+# summary(df_sif_q0$daily_sif757)
 ```
 
 ```{r}
 
-summary(df_sif_q0$daily_sif771)
+# summary(df_sif_q0$daily_sif771)
 ```
 
 ## Legenda: 
@@ -1170,85 +1172,85 @@ Min. e Max. mostram a amplitude total dos valores observados; 1st Qu., Median e 
 # Filtrar a quality flag para pega só zero e conferir:
 
 ```{r}
-df_sif_q0 <- df_sif |>
-  filter(quality_flag == 0)
-table(df_sif_q0$quality_flag)
+# df_sif_q0 <- df_sif |>
+#   filter(quality_flag == 0)
+# table(df_sif_q0$quality_flag)
 ```
 
 # Fazer o summary dos itens desejados:
 
 ```{r}
-summary(df_sif_q0$daily_sif757)
-summary(df_sif_q0$daily_sif771)
+# summary(df_sif_q0$daily_sif757)
+# summary(df_sif_q0$daily_sif771)
 ```
 
 ## Investigar os valores extremos que sobreviveram ao quality flag.Primeiro, os 10 maiores e os 10 menores. 
 
 ```{r}
-df_sif_q0 |>
-  arrange(desc(daily_sif757)) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(desc(daily_sif757)) |>
+#   slice_head(n = 10)
 ```
 
 ```{r}
-df_sif_q0 |>
-  arrange(daily_sif757) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(daily_sif757) |>
+#   slice_head(n = 10)
 ```
 
 ```{r}
-df_sif_q0 |>
-  arrange(desc(daily_sif771)) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(desc(daily_sif771)) |>
+#   slice_head(n = 10)
 ```
 
 
 ```{r}
-df_sif_q0 |>
-  arrange(daily_sif771) |>
-  slice_head(n = 10)
+# df_sif_q0 |>
+#   arrange(daily_sif771) |>
+#   slice_head(n = 10)
 ```
 
 # Fazendo os Histogramas
 
 ```{r}
-ggplot(df_sif_q0, aes(x = daily_sif757)) +
-  geom_histogram() +
-  labs(
-    x = "SIF 757 nm",
-    y = "Frequência"
-  ) +
-  theme_minimal()
+# ggplot(df_sif_q0, aes(x = daily_sif757)) +
+#   geom_histogram() +
+#   labs(
+#     x = "SIF 757 nm",
+#     y = "Frequência"
+#   ) +
+#   theme_minimal()
 ```
 
  
 ```{r}
-ggplot(df_sif_q0, aes(x = daily_sif771)) +
-  geom_histogram() +
-  labs(
-    x = "SIF 771 nm",
-    y = "Frequência"
-  ) +
-  theme_minimal()
+# ggplot(df_sif_q0, aes(x = daily_sif771)) +
+#   geom_histogram() +
+#   labs(
+#     x = "SIF 771 nm",
+#     y = "Frequência"
+#   ) +
+#   theme_minimal()
 ```
 
 # Entender comportamento dos dados sif757
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    n = n(),
-    min = min(daily_sif757, na.rm = TRUE),
-    q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
-    q05 = quantile(daily_sif757, 0.05, na.rm = TRUE),
-    q25 = quantile(daily_sif757, 0.25, na.rm = TRUE),
-    mediana = median(daily_sif757, na.rm = TRUE),
-    media = mean(daily_sif757, na.rm = TRUE),
-    q75 = quantile(daily_sif757, 0.75, na.rm = TRUE),
-    q95 = quantile(daily_sif757, 0.95, na.rm = TRUE),
-    q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
-    max = max(daily_sif757, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     n = n(),
+#     min = min(daily_sif757, na.rm = TRUE),
+#     q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
+#     q05 = quantile(daily_sif757, 0.05, na.rm = TRUE),
+#     q25 = quantile(daily_sif757, 0.25, na.rm = TRUE),
+#     mediana = median(daily_sif757, na.rm = TRUE),
+#     media = mean(daily_sif757, na.rm = TRUE),
+#     q75 = quantile(daily_sif757, 0.75, na.rm = TRUE),
+#     q95 = quantile(daily_sif757, 0.95, na.rm = TRUE),
+#     q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
+#     max = max(daily_sif757, na.rm = TRUE)
+#   )
 ```
 
 ## Legenda:
@@ -1271,99 +1273,99 @@ Essa distribuição explica o aspecto do histograma, com grande concentração
 das observações próximas de zero e uma cauda formada por valores extremos.
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    negativos = sum(daily_sif757 < 0, na.rm = TRUE),
-    positivos = sum(daily_sif757 >= 0, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     negativos = sum(daily_sif757 < 0, na.rm = TRUE),
+#     positivos = sum(daily_sif757 >= 0, na.rm = TRUE)
+#   )
 ```
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    percentual_negativos = mean(daily_sif757 < 0, na.rm = TRUE) * 100
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     percentual_negativos = mean(daily_sif757 < 0, na.rm = TRUE) * 100
+#   )
 ```
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    acima_1 = sum(daily_sif757 > 1, na.rm = TRUE),
-    acima_2 = sum(daily_sif757 > 2, na.rm = TRUE),
-    acima_3 = sum(daily_sif757 > 3, na.rm = TRUE),
-    acima_4 = sum(daily_sif757 > 4, na.rm = TRUE),
-    acima_5 = sum(daily_sif757 > 5, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     acima_1 = sum(daily_sif757 > 1, na.rm = TRUE),
+#     acima_2 = sum(daily_sif757 > 2, na.rm = TRUE),
+#     acima_3 = sum(daily_sif757 > 3, na.rm = TRUE),
+#     acima_4 = sum(daily_sif757 > 4, na.rm = TRUE),
+#     acima_5 = sum(daily_sif757 > 5, na.rm = TRUE)
+#   )
 ```
 
 # Localizando os extremos
 
 ## Menores valores
 ```{r}
-df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20)
+# df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20)
 ```
 
 ## Maiores valores
 
 ```{r}
-df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20)
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20)
 ```
 
 ## Para sif771
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    n = n(),
-    min = min(daily_sif771, na.rm = TRUE),
-    q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
-    q05 = quantile(daily_sif771, 0.05, na.rm = TRUE),
-    q25 = quantile(daily_sif771, 0.25, na.rm = TRUE),
-    mediana = median(daily_sif771, na.rm = TRUE),
-    media = mean(daily_sif771, na.rm = TRUE),
-    q75 = quantile(daily_sif771, 0.75, na.rm = TRUE),
-    q95 = quantile(daily_sif771, 0.95, na.rm = TRUE),
-    q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
-    max = max(daily_sif771, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     n = n(),
+#     min = min(daily_sif771, na.rm = TRUE),
+#     q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
+#     q05 = quantile(daily_sif771, 0.05, na.rm = TRUE),
+#     q25 = quantile(daily_sif771, 0.25, na.rm = TRUE),
+#     mediana = median(daily_sif771, na.rm = TRUE),
+#     media = mean(daily_sif771, na.rm = TRUE),
+#     q75 = quantile(daily_sif771, 0.75, na.rm = TRUE),
+#     q95 = quantile(daily_sif771, 0.95, na.rm = TRUE),
+#     q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
+#     max = max(daily_sif771, na.rm = TRUE)
+#   )
 ```
 
 ## Quantidade de negativos
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    negativos = sum(daily_sif771 < 0, na.rm = TRUE),
-    positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
-    percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     negativos = sum(daily_sif771 < 0, na.rm = TRUE),
+#     positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
+#     percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
+#   )
 ```
 
 ## Extremos positivos
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    acima_1 = sum(daily_sif771 > 1, na.rm = TRUE),
-    acima_2 = sum(daily_sif771 > 2, na.rm = TRUE),
-    acima_3 = sum(daily_sif771 > 3, na.rm = TRUE),
-    acima_4 = sum(daily_sif771 > 4, na.rm = TRUE),
-    acima_5 = sum(daily_sif771 > 5, na.rm = TRUE)
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     acima_1 = sum(daily_sif771 > 1, na.rm = TRUE),
+#     acima_2 = sum(daily_sif771 > 2, na.rm = TRUE),
+#     acima_3 = sum(daily_sif771 > 3, na.rm = TRUE),
+#     acima_4 = sum(daily_sif771 > 4, na.rm = TRUE),
+#     acima_5 = sum(daily_sif771 > 5, na.rm = TRUE)
+#   )
 ```
 ## Proporção de negativos: 
 
 ```{r}
-df_sif_q0 |> 
-  summarise(
-    negativos = sum(daily_sif771 < 0, na.rm = TRUE),
-    positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
-    percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
-  )
+# df_sif_q0 |> 
+#   summarise(
+#     negativos = sum(daily_sif771 < 0, na.rm = TRUE),
+#     positivos = sum(daily_sif771 >= 0, na.rm = TRUE),
+#     percentual_negativos = mean(daily_sif771 < 0, na.rm = TRUE) * 100
+#   )
 ```
 
 ## Legenda: O que podemos concluir neste momento?
@@ -1388,30 +1390,30 @@ Também não devemos cortar, por exemplo, SIF > 1, porque embora sejam poucos, p
 ### Maiores
 
 ```{r}
-df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Menores
 ```{r}
-df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ## Legenda: Os valores extremos do SIF 757 não são acompanhados, de forma consistente, por valores igualmente extremos do SIF 771.
@@ -1421,31 +1423,31 @@ df_sif_q0 |>
 ### Maiores
 
 ```{r}
-df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Menores
 
 ```{r}
-df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ## Legenda: A análise dos 20 maiores e 20 menores valores de SIF757 mostra que os valores extremos estão espacialmente distribuídos, sem evidência visual de concentração em uma única região. Os extremos ocorrem em diferentes posições geográficas e anos, indicando que não há, neste momento, um padrão espacial simples associado aos valores extremos.
@@ -1453,52 +1455,52 @@ df_sif_q0 |>
 # Existe alguma característica das observações que diferencia os valores extremos dos valores comuns?
 
 ```{r}
-glimpse(df_sif_q0)
+# glimpse(df_sif_q0)
 ```
 
 ### Definindo o que é um extremo, apenas para avaliação.
 ```{r}
-df_extremos <- df_sif_q0 |> 
-  mutate(
-    q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
-    q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
-    grupo = case_when(
-      daily_sif757 < q01 ~ "extremo_baixo",
-      daily_sif757 > q99 ~ "extremo_alto",
-      TRUE ~ "comum"
-    )
-  )
+# df_extremos <- df_sif_q0 |> 
+#   mutate(
+#     q01 = quantile(daily_sif757, 0.01, na.rm = TRUE),
+#     q99 = quantile(daily_sif757, 0.99, na.rm = TRUE),
+#     grupo = case_when(
+#       daily_sif757 < q01 ~ "extremo_baixo",
+#       daily_sif757 > q99 ~ "extremo_alto",
+#       TRUE ~ "comum"
+#     )
+#   )
 ```
 
 ### Investigando por tempo e espaço
 
 ```{r}
-df_extremos |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
+# df_extremos |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
 ```
 ```{r}
-df_extremos |> 
-  group_by(grupo, year) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos |> 
+#   group_by(grupo, year) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ```{r}
-df_extremos |> 
-  group_by(grupo, month) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos |> 
+#   group_by(grupo, month) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ## Legenda: O que concluímos sobre os valores extremos de sif757?
@@ -1522,171 +1524,170 @@ para considerar essas observações inválidas ou para justificar sua remoção.
 ## Extremos exploratórios de 771
 
 ```{r}
-df_extremos_771 <- df_sif_q0 |> 
-  mutate(
-    q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
-    q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
-    grupo = case_when(
-      daily_sif771 < q01 ~ "extremo_baixo",
-      daily_sif771 > q99 ~ "extremo_alto",
-      TRUE ~ "comum"
-    )
-  )
+# df_extremos_771 <- df_sif_q0 |> 
+#   mutate(
+#     q01 = quantile(daily_sif771, 0.01, na.rm = TRUE),
+#     q99 = quantile(daily_sif771, 0.99, na.rm = TRUE),
+#     grupo = case_when(
+#       daily_sif771 < q01 ~ "extremo_baixo",
+#       daily_sif771 > q99 ~ "extremo_alto",
+#       TRUE ~ "comum"
+#     )
+#   )
 ```
 
 ### Distribuição espacial:
 
 ```{r}
-df_extremos_771 |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
+# df_extremos_771 |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
 ```
 
 ### Distr Temporal por ano
 
 ```{r}
-df_extremos_771 |> 
-  group_by(grupo, year) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos_771 |> 
+#   group_by(grupo, year) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ### Distr Temporal por mês
 
 ```{r}
-df_extremos_771 |> 
-  group_by(grupo, month) |> 
-  summarise(
-    n = n(),
-    .groups = "drop"
-  )
+# df_extremos_771 |> 
+#   group_by(grupo, month) |> 
+#   summarise(
+#     n = n(),
+#     .groups = "drop"
+#   )
 ```
 
 ### Maiores valores 
 
 ```{r}
-df_sif_q0 |> 
-  arrange(desc(daily_sif771)) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(desc(daily_sif771)) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Menores valores
 
 ```{r}
-df_sif_q0 |> 
-  arrange(daily_sif771) |> 
-  slice_head(n = 20) |> 
-  select(
-    time,
-    longitude,
-    latitude,
-    daily_sif757,
-    daily_sif771
-  )
+# df_sif_q0 |> 
+#   arrange(daily_sif771) |> 
+#   slice_head(n = 20) |> 
+#   select(
+#     time,
+#     longitude,
+#     latitude,
+#     daily_sif757,
+#     daily_sif771
+#   )
 ```
 
 ### Baixar resultados para excel:
 
 ```{r}
-
 # Resultados espaciais
-espacial_757 <- df_extremos |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
-
-espacial_771 <- df_extremos_771 |> 
-  group_by(grupo) |> 
-  summarise(
-    n = n(),
-    latitude_media = mean(latitude, na.rm = TRUE),
-    latitude_sd = sd(latitude, na.rm = TRUE),
-    longitude_media = mean(longitude, na.rm = TRUE),
-    longitude_sd = sd(longitude, na.rm = TRUE)
-  )
-
-
-# Resultados anuais
-ano_757 <- df_extremos |> 
-  group_by(grupo, year) |> 
-  summarise(n = n(), .groups = "drop")
-
-ano_771 <- df_extremos_771 |> 
-  group_by(grupo, year) |> 
-  summarise(n = n(), .groups = "drop")
-
-
-# Resultados mensais
-mes_757 <- df_extremos |> 
-  group_by(grupo, month) |> 
-  summarise(n = n(), .groups = "drop")
-
-mes_771 <- df_extremos_771 |> 
-  group_by(grupo, month) |> 
-  summarise(n = n(), .groups = "drop")
-
-
-# 20 maiores
-maiores_757 <- df_sif_q0 |> 
-  arrange(desc(daily_sif757)) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-maiores_771 <- df_sif_q0 |> 
-  arrange(desc(daily_sif771)) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-
-# 20 menores
-menores_757 <- df_sif_q0 |> 
-  arrange(daily_sif757) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-menores_771 <- df_sif_q0 |> 
-  arrange(daily_sif771) |> 
-  slice_head(n = 20) |> 
-  select(time, longitude, latitude, daily_sif757, daily_sif771)
-
-
-# Criar Excel
-write.xlsx(
-  list(
-    espacial_757 = espacial_757,
-    ano_757 = ano_757,
-    mes_757 = mes_757,
-    maiores_757 = maiores_757,
-    menores_757 = menores_757,
-    
-    espacial_771 = espacial_771,
-    ano_771 = ano_771,
-    mes_771 = mes_771,
-    maiores_771 = maiores_771,
-    menores_771 = menores_771
-  ),
-  file = "resultados_extremos_SIF.xlsx"
-)
+# espacial_757 <- df_extremos |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
+# 
+# espacial_771 <- df_extremos_771 |> 
+#   group_by(grupo) |> 
+#   summarise(
+#     n = n(),
+#     latitude_media = mean(latitude, na.rm = TRUE),
+#     latitude_sd = sd(latitude, na.rm = TRUE),
+#     longitude_media = mean(longitude, na.rm = TRUE),
+#     longitude_sd = sd(longitude, na.rm = TRUE)
+#   )
+# 
+# 
+# # Resultados anuais
+# ano_757 <- df_extremos |> 
+#   group_by(grupo, year) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# ano_771 <- df_extremos_771 |> 
+#   group_by(grupo, year) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# 
+# # Resultados mensais
+# mes_757 <- df_extremos |> 
+#   group_by(grupo, month) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# mes_771 <- df_extremos_771 |> 
+#   group_by(grupo, month) |> 
+#   summarise(n = n(), .groups = "drop")
+# 
+# 
+# # 20 maiores
+# maiores_757 <- df_sif_q0 |> 
+#   arrange(desc(daily_sif757)) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# maiores_771 <- df_sif_q0 |> 
+#   arrange(desc(daily_sif771)) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# 
+# # 20 menores
+# menores_757 <- df_sif_q0 |> 
+#   arrange(daily_sif757) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# menores_771 <- df_sif_q0 |> 
+#   arrange(daily_sif771) |> 
+#   slice_head(n = 20) |> 
+#   select(time, longitude, latitude, daily_sif757, daily_sif771)
+# 
+# 
+# # Criar Excel
+# write.xlsx(
+#   list(
+#     espacial_757 = espacial_757,
+#     ano_757 = ano_757,
+#     mes_757 = mes_757,
+#     maiores_757 = maiores_757,
+#     menores_757 = menores_757,
+#     
+#     espacial_771 = espacial_771,
+#     ano_771 = ano_771,
+#     mes_771 = mes_771,
+#     maiores_771 = maiores_771,
+#     menores_771 = menores_771
+#   ),
+#   file = "resultados_extremos_SIF.xlsx"
+# )
 ```
 
 # Iniciar o recorte de área antes de analisar mais dados extremos
@@ -1695,22 +1696,22 @@ write.xlsx(
 
 
 ```{r}
-df_sif_q0_sf <- df_sif_q0 |>
-  st_as_sf(
-    coords = c("longitude", "latitude"),
-    crs = 4326,
-    remove = FALSE
-  )
+# df_sif_q0_sf <- df_sif_q0 |>
+#   st_as_sf(
+#     coords = c("longitude", "latitude"),
+#     crs = 4326,
+#     remove = FALSE
+#   )
 ```
 
 #Conferir CRS 
 
 ```{r}
-st_crs(df_sif_q0_sf)
+# st_crs(df_sif_q0_sf)
 ```
 
 ```{r}
-st_crs(costeiro_terrestre)
+# st_crs(costeiro_terrestre)
 ```
 
 ## Legenda: vi que o CRS está igual para os dois! Uhu!
@@ -1718,24 +1719,113 @@ st_crs(costeiro_terrestre)
 # Fazendo o corte
 
 ```{r}
-df_sif_costeiro <- df_sif_q0_sf |>
-  st_filter(costeiro_terrestre)
+# df_sif_costeiro <- df_sif_q0_sf |>
+#   st_filter(costeiro_terrestre)
 ```
 
 # Testando: 
 
 ```{r}
-df_sif_costeiro
+# df_sif_costeiro
 ```
 
 ```{r}
-nrow(df_sif_q0)
-nrow(df_sif_costeiro)
+# nrow(df_sif_q0)
+# nrow(df_sif_costeiro)
 ```
 
 # Salvando: 
 
 ```{r}
-write_rds(df_sif_costeiro, "data/sif-costeiro-terrestre.rds")
+# write_rds(df_sif_costeiro, "data/sif-costeiro-terrestre.rds")
+```
+
+## Lendo a SIF
+```{r}
+df_sif_costeiro_terra <- read_rds("data/sif-costeiro-terrestre.rds")
+glimpse(df_sif_costeiro_terra)
+```
+
+```{r}
+df_sif_costeiro_terra |>
+  filter(year == 2023) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot(aes(longitude, latitude)) +
+  geom_point()
+```
+
+
+
+
+```{r}
+df_sif_costeiro_terra |>
+  mutate(
+    class_latitude = cut(
+      latitude, 115
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year, latitude_media) |>
+  summarise(
+   sif = mean(daily_sif757, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=factor(latitude_media), y = sif, fill = factor(latitude_media))) +
+  geom_boxplot() + 
+  coord_flip(ylim = c(-.3, .6)) +
+  labs(
+    x = "Latitude (°)",
+    y = "Concentração média de SIF757 (...)",
+    color = "Ano"
+  ) +
+  theme_minimal()+
+  theme(
+    legend.position = "none"
+  ) +
+  scale_fill_viridis_d()
+```
+```{r}
+df_sif_costeiro_terra |>
+  mutate(
+    class_latitude = cut(
+      latitude, 115
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year, latitude_media) |>
+  summarise(
+   sif = mean(daily_sif771, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  # filter(year > 2022) |> 
+  ggplot(aes(x=factor(latitude_media), y = sif, fill = factor(latitude_media))) +
+  geom_boxplot() + 
+  coord_flip(ylim = c(-.3, .6)) +
+  labs(
+    x = "Latitude (°)",
+    y = "Concentração média de SIF771 (...)",
+    color = "Ano"
+  ) +
+  theme_minimal()+
+  theme(
+    legend.position = "none"
+  ) +
+  scale_fill_viridis_d()
 ```
 

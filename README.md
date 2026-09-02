@@ -92,6 +92,21 @@ biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 
 ``` r
 biomes
+#> Simple feature collection with 7 features and 3 fields
+#> Geometry type: GEOMETRY
+#> Dimension:     XY
+#> Bounding box:  xmin: -73.9829 ymin: -34.95942 xmax: -28.84785 ymax: 7.053767
+#> Geodetic CRS:  SIRGAS 2000
+#> # A tibble: 7 × 4
+#>   code_biome name_biome        year                                     geometry
+#> *      <dbl> <chr>            <dbl>                               <GEOMETRY [°]>
+#> 1          1 Amazônia          2019 MULTIPOLYGON (((-58.94533 -16.30136, -58.94…
+#> 2          2 Caatinga          2019 POLYGON ((-41.74424 -2.806644, -41.75632 -2…
+#> 3          3 Cerrado           2019 POLYGON ((-43.38741 -2.342188, -43.393 -2.3…
+#> 4          4 Mata Atlântica    2019 MULTIPOLYGON (((-48.70747 -28.44828, -48.70…
+#> 5          5 Pampa             2019 POLYGON ((-52.82498 -27.46271, -52.82891 -2…
+#> 6          6 Pantanal          2019 POLYGON ((-57.75659 -15.73327, -57.76628 -1…
+#> 7         NA Sistema Costeiro  2019 POLYGON ((-44.64799 -2.870376, -44.65249 -2…
 ```
 
 ## Legenda:
@@ -106,6 +121,16 @@ referência das coodenadas (CRS), por exemplo.
 
 ``` r
 biomes |> distinct(name_biome)
+#> # A tibble: 7 × 1
+#>   name_biome      
+#>   <chr>           
+#> 1 Amazônia        
+#> 2 Caatinga        
+#> 3 Cerrado         
+#> 4 Mata Atlântica  
+#> 5 Pampa           
+#> 6 Pantanal        
+#> 7 Sistema Costeiro
 ```
 
 ## Legenda:
@@ -215,6 +240,11 @@ map_biomes <- ggplot(biomes) + ## Legenda: A função ggplot() inicia a constru�
 
 # print(map_country)
 print(map_biomes)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
 
 ## Legenda: Depois de todas as etapas de construção, o comando print() exibe o mapa os biomas na tela, pois já construímos o objeto "map_biomes". 
 ```
@@ -273,6 +303,8 @@ biomes |>
             sample_n(1000)
               , aes(longitude, latitude), color="gray")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ## Legenda:
 
@@ -441,6 +473,8 @@ ggplot() +
   )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
 ## Legenda:
 
 Primeiro, criou-se o objeto “costeiro”, que é o biomes, filtrando apenas
@@ -467,7 +501,49 @@ ilustrativo, esses elementos não são necessários.
 costeiro_terrestre <- st_intersection(costeiro, brasil)
 
 st_crs(costeiro)
+#> Coordinate Reference System:
+#>   User input: EPSG:4674 
+#>   wkt:
+#> GEOGCRS["SIRGAS 2000",
+#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
+#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
+#>             LENGTHUNIT["metre",1]]],
+#>     PRIMEM["Greenwich",0,
+#>         ANGLEUNIT["degree",0.0174532925199433]],
+#>     CS[ellipsoidal,2],
+#>         AXIS["geodetic latitude (Lat)",north,
+#>             ORDER[1],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>         AXIS["geodetic longitude (Lon)",east,
+#>             ORDER[2],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>     USAGE[
+#>         SCOPE["Horizontal component of 3D system."],
+#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
+#>         BBOX[-59.87,-122.19,32.72,-25.28]],
+#>     ID["EPSG",4674]]
 st_crs(brasil)
+#> Coordinate Reference System:
+#>   User input: EPSG:4674 
+#>   wkt:
+#> GEOGCRS["SIRGAS 2000",
+#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
+#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
+#>             LENGTHUNIT["metre",1]]],
+#>     PRIMEM["Greenwich",0,
+#>         ANGLEUNIT["degree",0.0174532925199433]],
+#>     CS[ellipsoidal,2],
+#>         AXIS["geodetic latitude (Lat)",north,
+#>             ORDER[1],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>         AXIS["geodetic longitude (Lon)",east,
+#>             ORDER[2],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>     USAGE[
+#>         SCOPE["Horizontal component of 3D system."],
+#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
+#>         BBOX[-59.87,-122.19,32.72,-25.28]],
+#>     ID["EPSG",4674]]
 ```
 
 ## Legenda: A função st_crs() mostra o CRS (Coordinate Reference System) do objeto.
@@ -476,9 +552,16 @@ st_crs(brasil)
 
 ``` r
 plot(st_geometry(costeiro_terrestre))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
 costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre,0.04)
 plot(st_geometry(costeiro_terrestre_buffer))
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
 
 ## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
 
@@ -567,6 +650,7 @@ costeira terrestre.
 ``` r
 df_costeiro_terra_buffer <- read_rds("data/xco2-costeiro-terrestre-buffer.rds")
 nrow(df_costeiro_terra_buffer)
+#> [1] 175818
 ```
 
 ## Legenda: Aqui, leu o arquivo e contou o número de fileiras após os recortes. Aqui, respondemos: “Depois de todos os filtros, ainda tenho uma quantidade suficiente de dados?” SIM!
@@ -578,6 +662,18 @@ df_costeiro_terra_buffer |>
   st_drop_geometry() |> 
   count(year) |>   # ajuste nome da coluna de data
   arrange(year)
+#>    year     n
+#> 1  2014  4461
+#> 2  2015 13057
+#> 3  2016 11514
+#> 4  2017  9300
+#> 5  2018 12413
+#> 6  2019 13628
+#> 7  2020 24356
+#> 8  2021 29038
+#> 9  2022 20858
+#> 10 2023 20851
+#> 11 2024 16342
 ```
 
 ## Legenda: Verificar quantas observações existem em cada ano e organiza em ordem crescente, para verificar se algum ano possui poucos dados ou se há anos ausentes.
@@ -585,6 +681,8 @@ df_costeiro_terra_buffer |>
 ``` r
 # Estatística descritiva do XCO2 nessa faixa
 summary(df_costeiro_terra_buffer$xco2)  # ajuste nome da coluna
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>   390.8   406.2   412.1   411.2   416.0   429.4
 ```
 
 ## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
@@ -637,6 +735,8 @@ df_costeiro_terra_buffer |>
   geom_boxplot() 
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+
 ## Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre os biomas. Podemos visualizar mediana; quartis; dispersão; outliers. Excluímos Sistema Costeiro, pois não é um bioma de fato.
 
 ``` r
@@ -651,6 +751,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(x=month, y=xco2, color=name_biome) ) +
   geom_point() + geom_line()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 ## Legenda: Média mensal por bioma, agrupando por bioma e por mês, ou seja, “Qual foi o XCO₂ médio daquele bioma naquele mês?” - Resulta em um gráfico temporal. Buscamos ver se os biomas apresentam comportamento sazonal diferente.
 
@@ -667,6 +769,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(x=month, y=xco2, color=class_latitude) ) +
   geom_point() + geom_line()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ## Legenda: Média mensal por faixa de latitude (20 faixas). Então, calcula a média do XCO₂ para cada faixa de latitude em cada mês. O objetivo é verificar se existe um gradiente latitudinal, ou seja, “O comportamento do XCO₂ muda conforme se avança do sul para o norte do Brasil?”
 
@@ -716,6 +820,8 @@ df_costeiro_terra_buffer |>
   labs(x="Data",y=expression(paste(X[CO2]," (ppm)"))) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ## Legenda:
 
@@ -784,6 +890,8 @@ df_costeiro_terra_buffer |>
   theme_minimal()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+
 ## Legenda:
 
 O código divide as latitudes em 10 faixas e calcula a latitude média de
@@ -821,6 +929,8 @@ df_costeiro_terra_buffer |>
   ) +
   theme_minimal()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ## Legenda:
 
@@ -861,6 +971,8 @@ df_costeiro_terra_buffer |>
   scale_fill_viridis_d()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+
 ## Legenda: O código divide os dados em $35$ faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
 ## Análise de cluster da série temporal
@@ -887,6 +999,26 @@ df_cluster <- df_costeiro_terra_buffer |>
     where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
   ))
 df_cluster
+#> # A tibble: 115 × 120
+#>    latitude_media `2015_1` `2015_10` `2015_11` `2015_12` `2015_2` `2015_3`
+#>             <dbl>    <dbl>     <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
+#>  1          -33.6     380.      383.      383.      383.     381.     381.
+#>  2          -33.2     379.      383.      383.      383.     382.     382.
+#>  3          -32.6     382.      383.      383.      381.     380.     380.
+#>  4          -32.0     379.      383.      384.      383.     381.     381.
+#>  5          -31.6     379.      383.      381.      383.     380.     381.
+#>  6          -31.2     379.      383.      381.      382.     382.     382.
+#>  7          -24.0     382.      383.      383.      383.     382.     382.
+#>  8          -23.0     381.      383.      382.      383.     383.     381.
+#>  9          -22.6     380.      383.      382.      384.     382.     382.
+#> 10          -22.2     382.      382.      386.      383.     382.     382.
+#> # ℹ 105 more rows
+#> # ℹ 113 more variables: `2015_4` <dbl>, `2015_5` <dbl>, `2015_6` <dbl>,
+#> #   `2015_7` <dbl>, `2015_8` <dbl>, `2015_9` <dbl>, `2016_1` <dbl>,
+#> #   `2016_10` <dbl>, `2016_11` <dbl>, `2016_12` <dbl>, `2016_2` <dbl>,
+#> #   `2016_3` <dbl>, `2016_4` <dbl>, `2016_5` <dbl>, `2016_6` <dbl>,
+#> #   `2016_7` <dbl>, `2016_8` <dbl>, `2016_9` <dbl>, `2017_1` <dbl>,
+#> #   `2017_10` <dbl>, `2017_11` <dbl>, `2017_12` <dbl>, `2017_2` <dbl>, …
 ```
 
 ## Legenda: Precisávamos definir grupos de latitude com comportamento temporal semelhante de XCO₂ para, posteriormente, calcular as anomalias dentro desses grupos. Para isso, os dados foram organizados em classes de latitude e agregados mensalmente, considerando o período posterior a 2014. Para cada faixa de latitude e mês, foi calculada a média de XCO₂ com a tendência regional previamente removida (XCO₂ detrend). Em seguida, os dados foram reorganizados em uma matriz, na qual cada linha representava uma faixa de latitude e cada coluna correspondia a um mês da série temporal. Os valores ausentes foram preenchidos pela média da respectiva série para possibilitar a aplicação do agrupamento.
@@ -897,6 +1029,8 @@ df_cluster
 mc <- cor(df_cluster |> select(-latitude_media))
 corrplot::corrplot(mc)
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 ## Legenda: Para avaliar a similaridade temporal entre as diferentes faixas de latitude, foi calculada a matriz de correlação entre as séries mensais de XCO₂. Essa etapa permitiu verificar o grau de associação entre o comportamento temporal das diferentes regiões antes da realização do agrupamento.
 
@@ -913,6 +1047,11 @@ plot(da_pad_euc_ward,
      xlab="Acessos", hang=-1,
      col="blue", las=1,
      cex=.6,lwd=1.5);box()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
+``` r
 grupo<-cutree(da_pad_euc_ward,4)
 colunas <- df_cluster |> add_column(grupo) |> 
   select(latitude_media,grupo)
@@ -936,6 +1075,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
   geom_point()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
 
 ## Legenda: Após a definição dos grupos pelo agrupamento hierárquico, a classificação obtida para cada faixa de latitude foi associada às observações originais. A distribuição espacial dos grupos foi então visualizada para verificar como as regiões com comportamento temporal semelhante estavam distribuídas ao longo da faixa costeira.
 
@@ -981,6 +1122,8 @@ df_costeiro_terra_buffer |>
   ) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 ## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
 
@@ -1040,6 +1183,8 @@ df_costeiro_terra_buffer |>
   ) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
 ## Legenda: A partir da distribuição espacial observada no agrupamento, foram estabelecidos limites latitudinais para definir as regiões utilizadas na análise subsequente. Os limites foram ajustados de acordo com a organização espacial dos agrupamentos, resultando em cinco grupos latitudinais. Essa classificação foi utilizada como a divisão regional definitiva para o cálculo das anomalias.
 
@@ -1102,6 +1247,8 @@ df_grupos |>
   theme_minimal()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+
 ## Legenda: Com os grupos latitudinais definidos, foi possível calcular a anomalia de XCO₂ considerando como referência o comportamento típico de cada grupo. Para cada combinação de mês e grupo, foi calculada a mediana de XCO₂ e, posteriormente, esse valor foi subtraído de cada observação correspondente. As anomalias resultantes foram então agregadas por ano e latitude média, permitindo representar a variação de XCO₂ ao longo da costa em relação ao comportamento de referência de cada região.
 
 ## A partir daqui, peguei os dados de Manguezais do MapBiomas.
@@ -1120,12 +1267,22 @@ arquivos <- list.files(
 
 ``` r
 arquivos
+#> [1] "data/EarthEngine/manguezais_2018-0000000000-0000000000.tif"
+#> [2] "data/EarthEngine/manguezais_2018-0000000000-0000065536.tif"
+#> [3] "data/EarthEngine/manguezais_2018-0000000000-0000131072.tif"
+#> [4] "data/EarthEngine/manguezais_2018-0000065536-0000000000.tif"
+#> [5] "data/EarthEngine/manguezais_2018-0000065536-0000065536.tif"
+#> [6] "data/EarthEngine/manguezais_2018-0000065536-0000131072.tif"
+#> [7] "data/EarthEngine/manguezais_2018-0000131072-0000000000.tif"
+#> [8] "data/EarthEngine/manguezais_2018-0000131072-0000065536.tif"
+#> [9] "data/EarthEngine/manguezais_2018-0000131072-0000131072.tif"
 ```
 
 ## Ver quantos rasters ele encontra:
 
 ``` r
 length(arquivos)
+#> [1] 9
 ```
 
 ## Criar o objeto mangue
@@ -1254,12 +1411,12 @@ quality_flag; path; year; month; day.
 # Precisamos transformar os pontos em sf:
 
 ``` r
- df_sif_q0_sf <- df_sif_q0 |>
-   st_as_sf(
-     coords = c("longitude", "latitude"),
-     crs = 4326,
-     remove = FALSE
-   )
+ # df_sif_q0_sf <- df_sif_q0 |>
+ #   st_as_sf(
+ #     coords = c("longitude", "latitude"),
+ #     crs = 4326,
+ #     remove = FALSE
+ #   )
 ```
 
 \#Conferir CRS
@@ -1277,8 +1434,8 @@ quality_flag; path; year; month; day.
 # Fazendo o corte
 
 ``` r
- df_sif_costeiro <- df_sif_q0_sf |>
-   st_filter(costeiro_terrestre)
+ # df_sif_costeiro <- df_sif_q0_sf |>
+ #   st_filter(costeiro_terrestre)
 ```
 
 # Testando:
@@ -1301,6 +1458,7 @@ quality_flag; path; year; month; day.
 # Buffer para SIF
 
 ``` r
+df_sif_costeiro <- read_rds("data/sif-costeiro-terrestre.rds")
 df_sif_buffer <- sf::st_buffer(df_sif_costeiro, 0.04)
 ```
 
@@ -1310,69 +1468,71 @@ df_sif_buffer <- sf::st_buffer(df_sif_costeiro, 0.04)
 plot(st_geometry(df_sif_buffer))
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-68-1.png)<!-- -->
+
 # Analisando SIF para o Buffer:
 
 ``` r
-df_sif_buffer |>
-  mutate(
-    class_latitude = cut(latitude, 115),
-    latitude_media = (
-      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
-      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
-    ) / 2
-  ) |>
-  group_by(year, latitude_media) |>
-  summarise(
-    sif = mean(daily_sif757, na.rm = TRUE),
-    .groups = "drop"
-  ) |>
-  ggplot(aes(x = factor(latitude_media), y = sif, fill = factor(latitude_media))) +
-  geom_boxplot() +
-  coord_flip(ylim = c(-.3, .6)) +
-  labs(
-    x = "Latitude (°)",
-    y = "Concentração média de SIF757 (...)"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  scale_fill_viridis_d()
+# df_sif_buffer |>
+#   mutate(
+#     class_latitude = cut(latitude, 115),
+#     latitude_media = (
+#       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+#       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+#     ) / 2
+#   ) |>
+#   group_by(year, latitude_media) |>
+#   summarise(
+#     sif = mean(daily_sif757, na.rm = TRUE),
+#     .groups = "drop"
+#   ) |>
+#   ggplot(aes(x = factor(latitude_media), y = sif, fill = factor(latitude_media))) +
+#   geom_boxplot() +
+#   coord_flip(ylim = c(-.3, .6)) +
+#   labs(
+#     x = "Latitude (°)",
+#     y = "Concentração média de SIF757 (...)"
+#   ) +
+#   theme_minimal() +
+#   theme(legend.position = "none") +
+#   scale_fill_viridis_d()
 ```
 
 ``` r
-df_sif_buffer |>
-  mutate(
-    class_latitude = cut(
-      latitude, 115
-    ),
-    latitude_media = (
-      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
-      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
-    ) / 2
-  ) |>
-  group_by(year, latitude_media) |>
-  summarise(
-    sif = mean(daily_sif771, na.rm = TRUE),
-    .groups = "drop"
-  ) |> 
-  ggplot(
-    aes(
-      x = factor(latitude_media),
-      y = sif,
-      fill = factor(latitude_media)
-    )
-  ) +
-  geom_boxplot() + 
-  coord_flip(ylim = c(-.3, .6)) +
-  labs(
-    x = "Latitude (°)",
-    y = "Concentração média de SIF771 (...)",
-    color = "Ano"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "none"
-  ) +
-  scale_fill_viridis_d()
+# df_sif_buffer |>
+#   mutate(
+#     class_latitude = cut(
+#       latitude, 115
+#     ),
+#     latitude_media = (
+#       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+#       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+#     ) / 2
+#   ) |>
+#   group_by(year, latitude_media) |>
+#   summarise(
+#     sif = mean(daily_sif771, na.rm = TRUE),
+#     .groups = "drop"
+#   ) |> 
+#   ggplot(
+#     aes(
+#       x = factor(latitude_media),
+#       y = sif,
+#       fill = factor(latitude_media)
+#     )
+#   ) +
+#   geom_boxplot() + 
+#   coord_flip(ylim = c(-.3, .6)) +
+#   labs(
+#     x = "Latitude (°)",
+#     y = "Concentração média de SIF771 (...)",
+#     color = "Ano"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     legend.position = "none"
+#   ) +
+#   scale_fill_viridis_d()
 ```
 
 ## Legenda:
@@ -1394,7 +1554,7 @@ Viridis para diferenciar as classes de latitude.
 
 # Sugestão Luis: uma composição dos dois comprimentos de onda:
 
-## SIFagr​=SIF757​+1,5×SIF771​
+## SIFagr =SIF757 +1,5×SIF771
 
 ``` r
 df_sif_buffer <- df_sif_buffer |>
@@ -1407,6 +1567,18 @@ df_sif_buffer <- df_sif_buffer |>
 
 ``` r
 head(df_sif_buffer[, c("daily_sif757", "daily_sif771", "sif_agr")])
+#> Simple feature collection with 6 features and 3 fields
+#> Geometry type: POLYGON
+#> Dimension:     XY
+#> Bounding box:  xmin: -46.34277 ymin: -1.286622 xmax: -46.30048 ymax: -1.049438
+#> Geodetic CRS:  WGS 84
+#>   daily_sif757 daily_sif771    sif_agr                       geometry
+#> 1    0.4052238   0.10527229  0.5631323 POLYGON ((-46.30048 -1.2866...
+#> 2    0.4337406   0.53661442  1.2386622 POLYGON ((-46.31305 -1.2555...
+#> 3    0.3173637   0.31678677  0.7925439 POLYGON ((-46.31201 -1.0991...
+#> 4    0.2432318   0.04988003  0.3180518 POLYGON ((-46.31622 -1.0789...
+#> 5   -0.1346827  -0.01517487 -0.1574450 POLYGON ((-46.31708 -1.0494...
+#> 6    0.2379646  -0.20505142 -0.0696125 POLYGON ((-46.34277 -1.1144...
 ```
 
 ``` r
@@ -1442,3 +1614,229 @@ df_sif_buffer |>
   ) +
   scale_fill_viridis_d()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->
+
+``` r
+df_sif_buffer |> 
+  st_drop_geometry() |> 
+    filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot(aes(longitude, latitude, color = sif_agr)) +
+  geom_point()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-74-1.png)<!-- -->
+
+## Análise de cluster da série temporal
+
+``` r
+df_cluster_sif <- df_sif_buffer |>
+  st_drop_geometry() |> 
+  filter(year >2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year_month, latitude_media) |>
+  summarise(
+    sif = mean(sif_agr, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  pivot_wider(names_from = year_month, values_from = sif) |> 
+  mutate(across(
+    where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
+  ))
+df_cluster_sif
+#> # A tibble: 115 × 117
+#>    latitude_media `2015_1` `2015_10` `2015_11` `2015_12` `2015_2` `2015_3`
+#>             <dbl>    <dbl>     <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
+#>  1          -33.6   0.682     0.364     0.352      0.522    0.806    0.567
+#>  2          -33.2   0.696     0.364    -0.0424     0.522    0.697    0.586
+#>  3          -32.9   0.824     0.0613    0.584      0.522    1.16     0.561
+#>  4          -32.0   0.627     0.127     0.316      0.558    0.593    0.449
+#>  5          -31.6   0.849     0.364     0.209      0.506    0.996    0.570
+#>  6          -31.2   0.227     0.364     0.586      0.348    1.03     0.431
+#>  7          -24.6   0.951     0.364     0.352      0.522    0.595    0.561
+#>  8          -23.0   0.404     0.364     0.352      0.451    0.595    0.561
+#>  9          -22.6   0.0849    0.364     0.352      0.794    0.236    0.561
+#> 10          -22.0   0.254     0.364     0.352      0.522    0.595    0.561
+#> # ℹ 105 more rows
+#> # ℹ 110 more variables: `2015_4` <dbl>, `2015_5` <dbl>, `2015_6` <dbl>,
+#> #   `2015_7` <dbl>, `2015_8` <dbl>, `2015_9` <dbl>, `2016_1` <dbl>,
+#> #   `2016_10` <dbl>, `2016_11` <dbl>, `2016_12` <dbl>, `2016_2` <dbl>,
+#> #   `2016_3` <dbl>, `2016_4` <dbl>, `2016_5` <dbl>, `2016_6` <dbl>,
+#> #   `2016_7` <dbl>, `2016_8` <dbl>, `2016_9` <dbl>, `2017_1` <dbl>,
+#> #   `2017_10` <dbl>, `2017_11` <dbl>, `2017_12` <dbl>, `2017_2` <dbl>, …
+```
+
+## Matriz de correlação entre as latitudes
+
+``` r
+mc_sif <- cor(df_cluster_sif |> select(-latitude_media))
+corrplot::corrplot(mc_sif)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-76-1.png)<!-- -->
+
+``` r
+da_pad<-decostand(df_cluster_sif |> select(-latitude_media), 
+                  method = "standardize",
+                  na.rm=TRUE)
+
+da_pad_euc<-vegdist(da_pad,"euclidean") 
+da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
+da_pad_euc_ward$labels <- df_cluster$latitude_media
+plot(da_pad_euc_ward, 
+     ylab="Distância Euclidiana",
+     xlab="Acessos", hang=-1,
+     col="blue", las=1,
+     cex=.6,lwd=1.5);box()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
+
+``` r
+grupo<-cutree(da_pad_euc_ward,4)
+colunas <- df_cluster_sif |> add_column(grupo) |> 
+  select(latitude_media,grupo)
+```
+
+``` r
+df_sif_buffer |>
+  st_drop_geometry() |> 
+  filter(year >2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
+  geom_point()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
+
+``` r
+# Basemap do Brasil (uma vez só, fora do pipe principal)
+
+df_sif_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(as.character(year), as.character(month), sep = "_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot() +
+  geom_sf(data = brasil, fill = "grey96", color = "grey70", linewidth = 0.3) +
+  geom_point(
+    aes(x = longitude, y = latitude, color = as_factor(grupo)),
+    size = 1.4, alpha = 0.75
+  ) +
+  coord_sf(
+    xlim = range(df_sif_buffer$longitude, na.rm = TRUE),
+    ylim = range(df_sif_buffer$latitude, na.rm = TRUE)
+  ) +
+  scale_color_brewer(palette = "Set1", name = "Grupo") +
+  labs(
+    title = "Agrupamento espacial de SIF na faixa costeira",
+    subtitle = "Grupos formados a partir da análise de séries temporais (2015\u20132023)",
+    x = "Longitude", y = "Latitude"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40", size = 10),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey92"),
+    axis.text = element_text(color = "grey30")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-79-1.png)<!-- -->
+
+## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
+
+``` r
+df_sif_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(as.character(year), as.character(month), sep = "_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  arrange(latitude_media) |> 
+  mutate(
+    grupo = case_when(
+      latitude_media > 0.37 ~ 5,
+      latitude_media <= -28.6 ~2,
+      latitude_media < -20 & latitude_media > -28.6 ~1,
+      latitude_media > -5.5 & latitude_media <0.37 ~3,
+      .default=4
+    )
+  ) |> 
+  #filter(latitude_media < -5 & latitude_media > -10) |> 
+  # group_by(grupo) |> 
+  # summarise(
+  #   lat_max = max(latitude_media),
+  #   lat_min = min(latitude_media)
+  # ) |> 
+  # 
+  ggplot() +
+  geom_sf(data = brasil, fill = "grey96", color = "grey70", linewidth = 0.3) +
+  geom_point(
+    aes(x = longitude, y = latitude, color = as_factor(grupo)),
+    size = 1.4, alpha = 0.75
+  ) +
+  coord_sf(
+    xlim = range(df_sif_buffer$longitude, na.rm = TRUE),
+    ylim = range(df_sif_buffer$latitude, na.rm = TRUE)
+  ) +
+  scale_color_brewer(palette = "Set1", name = "Grupo") +
+  labs(
+    title = "Agrupamento espacial de SIF na faixa costeira",
+    subtitle = "Grupos formados a partir da análise de séries temporais (2015\u20132023)",
+    x = "Longitude", y = "Latitude"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40", size = 10),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey92"),
+    axis.text = element_text(color = "grey30")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-80-1.png)<!-- -->

@@ -61,6 +61,7 @@ library(vegan)
 library(sf)
 library(ggplot2)
 ```
+
 ## Legenda: 
 Ao carregar pacotes, carregamos as funções das diferentes bibliotecas. 
 
@@ -560,13 +561,14 @@ Como o objeto costeiro_terrestre também recebeu uma coluna com o mesmo nome("na
 
 
 ```{r}
-df_costeiro_terra_buffer |> 
-  st_drop_geometry() |> 
-  filter(year == 2023,
-         name_biome != "Sistema Costeiro") |> 
-  # group_by(year) |> 
-  ggplot(aes(x=name_biome, y=xco2, fill=name_biome)) +
-  geom_boxplot() 
+ano_exemplo <- 2018 # ajuste depois de conferir distinct(year) acima
+
+df_gosat1_costeiro_buffer |>
+  filter(year == ano_exemplo,
+         name_biome != "Sistema Costeiro") |>
+  ggplot(aes(x = name_biome, y = xch4, fill = name_biome)) +
+  geom_boxplot() +
+  theme_minimal()
 ```
 
 ## Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre os biomas. Podemos visualizar mediana; quartis; dispersão; outliers. Excluímos Sistema Costeiro, pois não é um bioma de fato. 
@@ -916,12 +918,12 @@ df_costeiro_terra_buffer |>
   left_join(colunas, by = "latitude_media") |> 
   arrange(latitude_media) |> 
   mutate(
-    grupo = case_when(
-      latitude_media > 0.37 ~ 5,
-      latitude_media <= -28.6 ~2,
-      latitude_media < -20 & latitude_media > -28.6 ~1,
-      latitude_media > -5.5 & latitude_media <0.37 ~3,
-      .default=4
+      grupo = case_when(
+      latitude_media <= -28.6 ~ 5,
+      latitude_media > -28.6 & latitude_media <= -22.5 ~ 4,
+      latitude_media > -22.5 & latitude_media <= -10.5 ~ 3,
+      latitude_media > -10.5 & latitude_media <= 0.37 ~ 2,
+      latitude_media > 0.37 ~ 1
     )
   ) |> 
   #filter(latitude_media < -5 & latitude_media > -10) |> 
@@ -976,13 +978,13 @@ df_grupos <- df_costeiro_terra_buffer |>
   arrange(latitude_media) |> 
   mutate(
     grupo = case_when(
-      latitude_media > 0.37 ~ 5,
-      latitude_media <= -28.6 ~2,
-      latitude_media < -20 & latitude_media > -28.6 ~1,
-      latitude_media > -5.5 & latitude_media <0.37 ~3,
-      .default=4
+      latitude_media <= -28.6 ~ 5,
+      latitude_media > -28.6 & latitude_media <= -22.5 ~ 4,
+      latitude_media > -22.5 & latitude_media <= -10.5 ~ 3,
+      latitude_media > -10.5 & latitude_media <= 0.37 ~ 2,
+      latitude_media > 0.37 ~ 1
     )
-  ) 
+  )
 ```
 
 ## Legenda: Com os limites dos grupos definidos, a classificação foi incorporada à base de dados original, mantendo as informações espaciais e temporais de cada observação. Dessa forma, foi criada a base que seria utilizada no cálculo das anomalias de XCO₂ dentro de cada grupo.
@@ -1357,5 +1359,705 @@ df_sif_buffer |>
     legend.position = "none"
   ) +
   scale_fill_viridis_d()
+```
+
+#Essa etapa replica, para o XCH~4~ (metano) medido pelo GOSAT-1 (e, na sequência, GOSAT-2), o mesmo pipeline de análise construído para o XCO~2~/OCO-2-3 no `README.Rmd`. A lógica é idêntica: recorte da faixa costeira terrestre, remoção de tendência regional, agrupamento das latitudes por comportamento temporal e cálculo de anomalias. Trocamos apenas a variável de interesse (`xco2` -> `xch4`) e a fonte de dados.
+
+## Ler os dados de XCH4 do GOSAT-1
+
+## Legenda: Diferente do XCO2, que partiu de um arquivo bruto global e precisou ser recortado para o Brasil, o `df_gosat1_br.rds` já parece vir pronto (nome sugere "br" = Brasil). Ainda assim, vamos conferir a estrutura antes de seguir.
+
+```{r}
+df_gosat1 <- read_rds("data-raw/df_gosat1_br.rds")
+glimpse(df_gosat1)
+names(df_gosat1)
+```
+## Conferir os anos e a cobertura temporal disponíveis
+
+```{r}
+df_gosat1 |> distinct(year) |> arrange(year)
+```
+
+## Plotar o shape do Brasil e os pontos amostrados de XCH4
+
+```{r}
+biomes |>
+  ggplot() +
+  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
+  scale_fill_manual(
+    values = c(
+      "Amazônia"         = "#1b4332",
+      "Cerrado"          = "#d4a017",
+      "Mata Atlântica"   = "#40916c",
+      "Caatinga"         = "#e76f51",
+      "Pampa"            = "#a7c957",
+      "Pantanal"         = "#4895ef",
+      "Sistema Costeiro" = "#90e0ef"
+    ),
+    name = "Bioma"
+  ) +
+  theme_minimal() +
+  geom_point(
+    data = df_gosat1 |> sample_n(min(1000, nrow(df_gosat1))),
+    aes(longitude, latitude), color = "gray"
+  )
+```
+
+## Legenda: Controle de qualidade espacial — checar visualmente se os pontos do GOSAT-1 caem sobre o território brasileiro e nos biomas esperados, exatamente como fizemos para o XCO2.
+
+## Transformar em objeto espacial (sf)
+
+```{r}
+df_gosat1_sf <- df_gosat1 |>
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+```
+
+## Join espacial: associar cada ponto ao bioma em que ele cai
+
+```{r}
+biomes <- st_transform(biomes, crs = 4326)
+brasil <- st_transform(brasil, crs = 4326)
+
+df_gosat1_biomas <- st_join(
+  df_gosat1_sf,
+  biomes |> select(name_biome, geometry)
+)
+```
+
+
+## Filtrar apenas pontos válidos (dentro de algum bioma brasileiro)
+
+```{r}
+df_gosat1_brasil <- df_gosat1_biomas |>
+  filter(!is.na(name_biome))
+
+glimpse(df_gosat1_brasil)
+```
+
+## Legenda: Como o arquivo já vem recortado para o Brasil, esperamos que praticamente todos os pontos sejam mantidos aqui — esse filtro é mais uma checagem de sanidade do que um recorte de fato.
+
+## Faixa costeira terrestre (Sistema Costeiro ∩ Brasil)
+
+## Legenda: Reaproveitamos a mesma lógica usada no XCO2 — pegamos o polígono "Sistema Costeiro" e cruzamos com o contorno terrestre do Brasil para remover a faixa marítima, depois aplicamos um buffer de 0,04° para suavizar a borda.
+
+```{r}
+costeiro <- biomes |>
+  filter(name_biome == "Sistema Costeiro")
+
+costeiro_terrestre <- st_intersection(costeiro, brasil)
+costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
+costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, 0.04)
+```
+
+## Filtrar apenas os pontos de XCH4 que caem dentro da faixa costeira terrestre
+
+```{r}
+pontos_gosat1_costeiro_buffer <- st_join(
+  df_gosat1_sf,
+  costeiro_terrestre_buffer |>
+    select(geometry),
+  left = FALSE
+)
+
+pontos_gosat1_costeiro_buffer <- st_join(
+  pontos_gosat1_costeiro_buffer,
+  biomes |>
+    select(name_biome, geometry),
+  left = FALSE
+)
+
+df_gosat1_costeiro_buffer <- pontos_gosat1_costeiro_buffer |>
+  filter(name_biome != "Sistema Costeiro") |>
+  st_drop_geometry()
+```
+
+```{r}
+df_gosat1_costeiro_buffer |>
+  count(name_biome)
+```
+
+## Salvar os dados recortados
+
+```{r}
+write_rds(df_gosat1_costeiro_buffer, "data/xch4-gosat1-costeiro-terrestre-buffer.rds")
+```
+
+## Volume de dados retido
+
+```{r}
+df_gosat1_costeiro_buffer <- read_rds(
+  "data/xch4-gosat1-costeiro-terrestre-buffer.rds"
+)
+
+nrow(df_gosat1_costeiro_buffer)
+
+df_gosat1_costeiro_buffer |>
+  count(name_biome)
+```
+
+## Cobertura temporal — quantos pontos por ano
+
+```{r}
+df_gosat1_costeiro_buffer |>
+  count(year) |>
+  arrange(year)
+```
+
+## Estatística descritiva do XCH4 na faixa costeira
+
+```{r}
+summary(df_gosat1_costeiro_buffer$xch4)
+```
+
+## Distribuição do XCH4 entre biomas (escolher um ano com boa cobertura, com base na checagem de anos feita acima)
+
+```{r}
+df_gosat1_costeiro_buffer |>
+  ggplot(aes(x = name_biome, y = xch4, fill = name_biome)) +
+  geom_boxplot() +
+  theme_minimal()
+```
+
+## Média mensal de XCH4 por faixa de latitude
+
+```{r}
+df_gosat1_costeiro_buffer |>
+  filter(year == ano_exemplo) |>
+  mutate(class_latitude = cut(latitude, 20)) |>
+  group_by(class_latitude, month) |>
+  summarise(xch4 = mean(xch4, na.rm = TRUE), .groups = "drop") |>
+  ggplot(aes(x = month, y = xch4, color = class_latitude)) +
+  geom_point() + geom_line()
+```
+## Legenda: Mesma pergunta feita para o XCO2 — existe um gradiente latitudinal no comportamento sazonal do XCH4 ao longo da costa?
+
+## Análise de regressão linear simples para caracterizar a tendência regional
+
+## Legenda: O arquivo já traz a coluna `date` como objeto Date, então diferente do XCO2 não precisamos reconstruí-la com `make_date()` — usamos direto, apenas convertendo para número de dias a partir do mínimo, do mesmo jeito.
+
+```{r}
+mod_trend_xch4 <- lm(
+  xch4 ~ date,
+  data = df_gosat1_costeiro_buffer |>
+    mutate(date = as.numeric(date - min(date)))
+)
+
+sm <- summary.lm(mod_trend_xch4)
+sm
+```
+
+## Gráfico da regressão (tendência temporal do XCH4)
+
+```{r}
+df_gosat1_costeiro_buffer |>
+  drop_na() |>
+  ggplot(aes(x = date, y = xch4)) +
+  geom_point(alpha = 0.25, size = 1) +
+  geom_smooth(method = "lm", color = "red", linetype = "dashed", size = 1) +
+  stat_regline_equation(aes(
+    label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~~")
+  )) +
+  theme_minimal() +
+  labs(x = "Data", y = expression(paste(X[CH4], " (ppb)"))) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+```
+
+## Legenda: Atenção à unidade — XCH4 costuma ser reportado em ppb (partes por bilhão), diferente do XCO2 que é em ppm. Ajustem o rótulo do eixo se a unidade do arquivo for outra.
+
+## Retirada de tendência (detrend)
+
+```{r}
+a_ch4 <- mod_trend_xch4$coefficients[[1]]
+b_ch4 <- mod_trend_xch4$coefficients[[2]]
+
+df_gosat1_costeiro_buffer <- df_gosat1_costeiro_buffer |>
+  mutate(
+    date_modif = as.numeric(date - min(date)),
+    xch4_est = a_ch4 + b_ch4 * date_modif,
+    delta = xch4_est - xch4,
+    xch4_detrend = (a_ch4 - delta) - (mean(xch4, na.rm = TRUE) - a_ch4)
+  )
+
+write_rds(df_gosat1_costeiro_buffer, "data/xch4-gosat1-costeiro-terrestre-buffer.rds")
+```
+
+## Criar as faixas de latitude e aplicar os 5 grupos definidos pelo XCO₂
+
+```{r}
+## Criar as faixas de latitude e aplicar os 5 grupos definidos pelo XCO₂
+
+df_gosat1_grupos <- df_gosat1_costeiro_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(
+      as.character(year),
+      as.character(month),
+      sep = "_"
+    ),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2,
+    grupo = case_when(
+      latitude <= -28.6 ~ 5,
+      latitude > -28.6 & latitude <= -22.5 ~ 4,
+      latitude > -22.5 & latitude <= -10.5 ~ 3,
+      latitude > -10.5 & latitude <= 0.37 ~ 2,
+      latitude > 0.37 ~ 1
+    )
+  )
+
+```
+
+```{r}
+df_gosat1_grupos |>
+  count(grupo) |>
+  arrange(grupo)
+```
+## Rodar anomalia
+
+```{r}
+df_anomalias_ch4 <- df_gosat1_grupos |>
+  group_by(year_month, grupo) |>
+  mutate(
+    mediana_xch4 = median(xch4_detrend, na.rm = TRUE),
+    anomalia = xch4_detrend - mediana_xch4
+  ) |>
+  ungroup()
+```
+
+```{r}
+df_anomalias_ch4 |>
+  select(year, month, latitude, grupo, xch4_detrend, mediana_xch4, anomalia) |>
+  head()
+```
+
+```{r}
+df_anomalias_ch4 <- df_anomalias_ch4 |>
+  group_by(year, latitude_media, grupo) |>
+  summarise(
+    anom = mean(anomalia, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+glimpse(df_anomalias_ch4)
+```
+
+## Testando gráfico 1:
+
+```{r}
+names(df_anomalias_ch4)
+```
+```{r}
+ggplot(
+  data = df_anomalias_ch4,
+  aes(
+    x = anom,
+    y = latitude_media,
+    colour = factor(grupo)
+  )
+) +
+  geom_point(alpha = 0.6) +
+  labs(
+    x = "Anomalia de XCH₄",
+    y = "Latitude",
+    colour = "Grupo"
+  ) +
+  theme_classic()
+```
+
+```{r}
+df_anomalias_ch4 |>
+  count(grupo) |>
+  arrange(grupo)
+```
+
+
+## REPRODUÇÃO PARA GOSAT 2
+
+```{r}
+df_gosat2 <- read_rds("data-raw/df_gosat2_br (1).rds")
+
+glimpse(df_gosat2)
+names(df_gosat2)
+```
+```{r}
+## Conferir os anos disponíveis
+
+df_gosat2 |>
+  distinct(year) |>
+  arrange(year)
+```
+
+```{r}
+## Conferir as datas
+
+range(df_gosat2$date, na.rm = TRUE)
+```
+
+```{r}
+range(df_gosat2$date, na.rm = TRUE)
+```
+
+```{r}
+biomes |>
+  ggplot() +
+  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
+  scale_fill_manual(
+    values = c(
+      "Amazônia"         = "#1b4332",
+      "Cerrado"          = "#d4a017",
+      "Mata Atlântica"   = "#40916c",
+      "Caatinga"         = "#e76f51",
+      "Pampa"            = "#a7c957",
+      "Pantanal"         = "#4895ef",
+      "Sistema Costeiro" = "#90e0ef"
+    ),
+    name = "Bioma"
+  ) +
+  theme_minimal() +
+  geom_point(
+    data = df_gosat2 |> sample_n(min(1000, nrow(df_gosat2))),
+    aes(longitude, latitude),
+    color = "gray"
+  )
+```
+```{r}
+df_gosat2_sf <- df_gosat2 |>
+  st_as_sf(
+    coords = c("longitude", "latitude"),
+    crs = 4326,
+    remove = FALSE
+  )
+```
+
+```{r}
+biomes <- st_transform(biomes, crs = 4326)
+brasil <- st_transform(brasil, crs = 4326)
+
+df_gosat2_biomas <- st_join(
+  df_gosat2_sf,
+  biomes |> select(name_biome, geometry)
+)
+```
+
+```{r}
+df_gosat2_brasil <- df_gosat2_biomas |>
+  filter(!is.na(name_biome))
+
+glimpse(df_gosat2_brasil)
+```
+
+```{r}
+costeiro <- biomes |>
+  filter(name_biome == "Sistema Costeiro")
+
+costeiro_terrestre <- st_intersection(
+  costeiro,
+  brasil
+)
+
+costeiro_terrestre <- st_set_crs(
+  costeiro_terrestre,
+  4326
+)
+```
+
+```{r}
+costeiro_terrestre_buffer <- sf::st_buffer(
+  costeiro_terrestre,
+  0.04
+)
+```
+
+```{r}
+pontos_gosat2_costeiro_buffer <- st_join(
+  df_gosat2_sf,
+  costeiro_terrestre_buffer |>
+    select(geometry),
+  left = FALSE
+)
+```
+
+```{r}
+pontos_gosat2_costeiro_buffer <- st_join(
+  pontos_gosat2_costeiro_buffer,
+  biomes |>
+    select(name_biome, geometry),
+  left = FALSE
+)
+```
+
+```{r}
+pontos_gosat2_costeiro_buffer <- st_join(
+  pontos_gosat2_costeiro_buffer,
+  biomes |>
+    select(name_biome, geometry),
+  left = FALSE
+)
+```
+
+```{r}
+df_gosat2_costeiro_buffer <- pontos_gosat2_costeiro_buffer |>
+  filter(name_biome != "Sistema Costeiro") |>
+  st_drop_geometry()
+```
+
+```{r}
+df_gosat2_costeiro_buffer |>
+  count(name_biome)
+```
+
+```{r}
+nrow(df_gosat2_costeiro_buffer)
+```
+```{r}
+write_rds(
+  df_gosat2_costeiro_buffer,
+  "data/xch4-gosat2-costeiro-terrestre-buffer.rds"
+)
+```
+
+```{r}
+df_gosat2_costeiro_buffer <- read_rds(
+  "data/xch4-gosat2-costeiro-terrestre-buffer.rds"
+)
+```
+
+```{r}
+df_gosat2_costeiro_buffer |>
+  count(name_biome)
+
+nrow(df_gosat2_costeiro_buffer)
+
+df_gosat2_costeiro_buffer |>
+  count(year) |>
+  arrange(year)
+```
+
+```{r}
+df_gosat2_costeiro_buffer |>
+  ggplot(aes(x = factor(year), y = xch4)) +
+  geom_boxplot() +
+  labs(
+    x = "Ano",
+    y = "XCH₄",
+    title = "Distribuição anual de XCH₄"
+  ) +
+  theme_classic()
+```
+```{r}
+df_gosat2_costeiro_buffer |>
+  ggplot(aes(x = name_biome, y = xch4, fill = name_biome)) +
+  geom_boxplot() +
+  theme_minimal()
+```
+
+```{r}
+## Estatística descritiva do XCH4 na faixa costeira
+
+summary(df_gosat2_costeiro_buffer$xch4)
+```
+
+```{r}
+## Média mensal de XCH4 por faixa de latitude
+
+df_gosat2_costeiro_buffer |>
+  filter(year == 2020) |>
+  mutate(class_latitude = cut(latitude, 20)) |>
+  group_by(class_latitude, month) |>
+  summarise(
+    xch4 = mean(xch4, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = month, y = xch4, color = class_latitude)) +
+  geom_point() +
+  geom_line()
+```
+
+```{r}
+## Análise de regressão linear simples para caracterizar a tendência regional
+
+mod_trend_xch4_gosat2 <- lm(
+  xch4 ~ date,
+  data = df_gosat2_costeiro_buffer |>
+    mutate(
+      date = as.numeric(date - min(date))
+    )
+)
+
+sm <- summary.lm(mod_trend_xch4_gosat2)
+sm
+```
+
+```{r}
+## Gráfico da regressão (tendência temporal do XCH4)
+
+df_gosat2_costeiro_buffer |>
+  drop_na() |>
+  ggplot(aes(x = date, y = xch4)) +
+  geom_point(alpha = 0.25, size = 1) +
+  geom_smooth(
+    method = "lm",
+    color = "red",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  stat_regline_equation(aes(
+    label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~~")
+  )) +
+  theme_minimal() +
+  labs(
+    x = "Data",
+    y = expression(paste(X[CH4], " (ppb)"))
+  ) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  )
+```
+```{r}
+## Retirada de tendência (detrend)
+
+a_ch4_gosat2 <- mod_trend_xch4_gosat2$coefficients[[1]]
+b_ch4_gosat2 <- mod_trend_xch4_gosat2$coefficients[[2]]
+
+df_gosat2_costeiro_buffer <- df_gosat2_costeiro_buffer |>
+  mutate(
+    date_modif = as.numeric(date - min(date)),
+    xch4_est = a_ch4_gosat2 + b_ch4_gosat2 * date_modif,
+    delta = xch4_est - xch4,
+    xch4_detrend = (
+      a_ch4_gosat2 - delta
+    ) - (
+      mean(xch4, na.rm = TRUE) - a_ch4_gosat2
+    )
+  )
+
+write_rds(
+  df_gosat2_costeiro_buffer,
+  "data/xch4-gosat2-costeiro-terrestre-buffer.rds"
+)
+```
+
+```{r}
+df_gosat2_grupos <- df_gosat2_costeiro_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(
+      as.character(year),
+      as.character(month),
+      sep = "_"
+    ),
+    latitude_media = (
+      as.numeric(sub(
+        "\\(([-0-9.]+),.*",
+        "\\1",
+        class_latitude
+      )) +
+      as.numeric(sub(
+        ".*[,]([-0-9.]+)\\]",
+        "\\1",
+        class_latitude
+      ))
+    ) / 2,
+    grupo = case_when(
+      latitude <= -28.6 ~ 5,
+      latitude > -28.6 & latitude <= -22.5 ~ 4,
+      latitude > -22.5 & latitude <= -10.5 ~ 3,
+      latitude > -10.5 & latitude <= 0.37 ~ 2,
+      latitude > 0.37 ~ 1
+    )
+  )
+```
+
+```{r}
+df_gosat2_grupos |>
+  count(grupo) |>
+  arrange(grupo)
+```
+```{r}
+df_anomalias_ch4_gosat2 <- df_gosat2_grupos |>
+  group_by(year_month, grupo) |>
+  mutate(
+    mediana_xch4 = median(
+      xch4_detrend,
+      na.rm = TRUE
+    ),
+    anomalia = xch4_detrend - mediana_xch4
+  ) |>
+  ungroup()
+```
+
+```{r}
+df_anomalias_ch4_gosat2 |>
+  select(
+    year,
+    month,
+    latitude,
+    grupo,
+    xch4_detrend,
+    mediana_xch4,
+    anomalia
+  ) |>
+  head()
+```
+
+```{r}
+df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
+  group_by(
+    year,
+    latitude_media,
+    grupo
+  ) |>
+  summarise(
+    anom = mean(anomalia, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+glimpse(df_anomalias_ch4_gosat2)
+```
+
+```{r}
+df_anomalias_ch4_gosat2 |>
+  count(grupo) |>
+  arrange(grupo)
+```
+```{r}
+df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
+  group_by(
+    year,
+    latitude_media,
+    grupo
+  ) |>
+  summarise(
+    anom = mean(anomalia, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+
+```{r}
+ggplot(
+  data = df_anomalias_ch4_gosat2,
+  aes(
+    x = anom,
+    y = latitude_media,
+    colour = factor(grupo)
+  )
+) +
+  geom_point(alpha = 0.6) +
+  labs(
+    x = "Anomalia de XCH₄",
+    y = "Latitude",
+    colour = "Grupo"
+  ) +
+  theme_classic()
 ```
 

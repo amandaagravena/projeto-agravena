@@ -628,14 +628,13 @@ enquanto a coluna proveniente da junção passou a se chamar
 “name_biome.y”(Costeiro Terrestre).
 
 ``` r
-ano_exemplo <- 2018 # ajuste depois de conferir distinct(year) acima
-
-df_gosat1_costeiro_buffer |>
-  filter(year == ano_exemplo,
-         name_biome != "Sistema Costeiro") |>
-  ggplot(aes(x = name_biome, y = xch4, fill = name_biome)) +
-  geom_boxplot() +
-  theme_minimal()
+df_costeiro_terra_buffer |> 
+  st_drop_geometry() |> 
+  filter(year == 2023,
+         name_biome != "Sistema Costeiro") |> 
+  # group_by(year) |> 
+  ggplot(aes(x=name_biome, y=xco2, fill=name_biome)) +
+  geom_boxplot() 
 ```
 
 ## Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre os biomas. Podemos visualizar mediana; quartis; dispersão; outliers. Excluímos Sistema Costeiro, pois não é um bioma de fato.
@@ -999,12 +998,12 @@ df_costeiro_terra_buffer |>
   left_join(colunas, by = "latitude_media") |> 
   arrange(latitude_media) |> 
   mutate(
-      grupo = case_when(
-      latitude_media <= -28.6 ~ 5,
-      latitude_media > -28.6 & latitude_media <= -22.5 ~ 4,
-      latitude_media > -22.5 & latitude_media <= -10.5 ~ 3,
-      latitude_media > -10.5 & latitude_media <= 0.37 ~ 2,
-      latitude_media > 0.37 ~ 1
+    grupo = case_when(
+      latitude_media > 0.37 ~ 5,
+      latitude_media <= -28.6 ~2,
+      latitude_media < -20 & latitude_media > -28.6 ~1,
+      latitude_media > -5.5 & latitude_media <0.37 ~3,
+      .default=4
     )
   ) |> 
   #filter(latitude_media < -5 & latitude_media > -10) |> 
@@ -1059,13 +1058,13 @@ df_grupos <- df_costeiro_terra_buffer |>
   arrange(latitude_media) |> 
   mutate(
     grupo = case_when(
-      latitude_media <= -28.6 ~ 5,
-      latitude_media > -28.6 & latitude_media <= -22.5 ~ 4,
-      latitude_media > -22.5 & latitude_media <= -10.5 ~ 3,
-      latitude_media > -10.5 & latitude_media <= 0.37 ~ 2,
-      latitude_media > 0.37 ~ 1
+      latitude_media > 0.37 ~ 5,
+      latitude_media <= -28.6 ~2,
+      latitude_media < -20 & latitude_media > -28.6 ~1,
+      latitude_media > -5.5 & latitude_media <0.37 ~3,
+      .default=4
     )
-  )
+  ) 
 ```
 
 ## Legenda: Com os limites dos grupos definidos, a classificação foi incorporada à base de dados original, mantendo as informações espaciais e temporais de cada observação. Dessa forma, foi criada a base que seria utilizada no cálculo das anomalias de XCO₂ dentro de cada grupo.
@@ -1255,12 +1254,12 @@ quality_flag; path; year; month; day.
 # Precisamos transformar os pontos em sf:
 
 ``` r
- df_sif_q0_sf <- df_sif_q0 |>
-   st_as_sf(
-     coords = c("longitude", "latitude"),
-     crs = 4326,
-     remove = FALSE
-   )
+ # df_sif_q0_sf <- df_sif_q0 |>
+ #   st_as_sf(
+ #     coords = c("longitude", "latitude"),
+ #     crs = 4326,
+ #     remove = FALSE
+ #   )
 ```
 
 \#Conferir CRS
@@ -1278,8 +1277,8 @@ quality_flag; path; year; month; day.
 # Fazendo o corte
 
 ``` r
- df_sif_costeiro <- df_sif_q0_sf |>
-   st_filter(costeiro_terrestre)
+ # df_sif_costeiro <- df_sif_q0_sf |>
+ #   st_filter(costeiro_terrestre)
 ```
 
 # Testando:
@@ -1302,6 +1301,7 @@ quality_flag; path; year; month; day.
 # Buffer para SIF
 
 ``` r
+df_sif_costeiro <- read_rds("data/sif-costeiro-terrestre.rds")
 df_sif_buffer <- sf::st_buffer(df_sif_costeiro, 0.04)
 ```
 
@@ -1314,66 +1314,66 @@ plot(st_geometry(df_sif_buffer))
 # Analisando SIF para o Buffer:
 
 ``` r
-df_sif_buffer |>
-  mutate(
-    class_latitude = cut(latitude, 115),
-    latitude_media = (
-      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
-      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
-    ) / 2
-  ) |>
-  group_by(year, latitude_media) |>
-  summarise(
-    sif = mean(daily_sif757, na.rm = TRUE),
-    .groups = "drop"
-  ) |>
-  ggplot(aes(x = factor(latitude_media), y = sif, fill = factor(latitude_media))) +
-  geom_boxplot() +
-  coord_flip(ylim = c(-.3, .6)) +
-  labs(
-    x = "Latitude (°)",
-    y = "Concentração média de SIF757 (...)"
-  ) +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  scale_fill_viridis_d()
+# df_sif_buffer |>
+#   mutate(
+#     class_latitude = cut(latitude, 115),
+#     latitude_media = (
+#       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+#       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+#     ) / 2
+#   ) |>
+#   group_by(year, latitude_media) |>
+#   summarise(
+#     sif = mean(daily_sif757, na.rm = TRUE),
+#     .groups = "drop"
+#   ) |>
+#   ggplot(aes(x = factor(latitude_media), y = sif, fill = factor(latitude_media))) +
+#   geom_boxplot() +
+#   coord_flip(ylim = c(-.3, .6)) +
+#   labs(
+#     x = "Latitude (°)",
+#     y = "Concentração média de SIF757 (...)"
+#   ) +
+#   theme_minimal() +
+#   theme(legend.position = "none") +
+#   scale_fill_viridis_d()
 ```
 
 ``` r
-df_sif_buffer |>
-  mutate(
-    class_latitude = cut(
-      latitude, 115
-    ),
-    latitude_media = (
-      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
-      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
-    ) / 2
-  ) |>
-  group_by(year, latitude_media) |>
-  summarise(
-    sif = mean(daily_sif771, na.rm = TRUE),
-    .groups = "drop"
-  ) |> 
-  ggplot(
-    aes(
-      x = factor(latitude_media),
-      y = sif,
-      fill = factor(latitude_media)
-    )
-  ) +
-  geom_boxplot() + 
-  coord_flip(ylim = c(-.3, .6)) +
-  labs(
-    x = "Latitude (°)",
-    y = "Concentração média de SIF771 (...)",
-    color = "Ano"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "none"
-  ) +
-  scale_fill_viridis_d()
+# df_sif_buffer |>
+#   mutate(
+#     class_latitude = cut(
+#       latitude, 115
+#     ),
+#     latitude_media = (
+#       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+#       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+#     ) / 2
+#   ) |>
+#   group_by(year, latitude_media) |>
+#   summarise(
+#     sif = mean(daily_sif771, na.rm = TRUE),
+#     .groups = "drop"
+#   ) |> 
+#   ggplot(
+#     aes(
+#       x = factor(latitude_media),
+#       y = sif,
+#       fill = factor(latitude_media)
+#     )
+#   ) +
+#   geom_boxplot() + 
+#   coord_flip(ylim = c(-.3, .6)) +
+#   labs(
+#     x = "Latitude (°)",
+#     y = "Concentração média de SIF771 (...)",
+#     color = "Ano"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     legend.position = "none"
+#   ) +
+#   scale_fill_viridis_d()
 ```
 
 ## Legenda:
@@ -1395,7 +1395,7 @@ Viridis para diferenciar as classes de latitude.
 
 # Sugestão Luis: uma composição dos dois comprimentos de onda:
 
-## SIFagr​=SIF757​+1,5×SIF771​
+## SIFagr =SIF757 +1,5×SIF771
 
 ``` r
 df_sif_buffer <- df_sif_buffer |>
@@ -1444,13 +1444,202 @@ df_sif_buffer |>
   scale_fill_viridis_d()
 ```
 
-\#Essa etapa replica, para o XCH<sub>4</sub> (metano) medido pelo
-GOSAT-1 (e, na sequência, GOSAT-2), o mesmo pipeline de análise
-construído para o XCO<sub>2</sub>/OCO-2-3 no `README.Rmd`. A lógica é
-idêntica: recorte da faixa costeira terrestre, remoção de tendência
-regional, agrupamento das latitudes por comportamento temporal e cálculo
-de anomalias. Trocamos apenas a variável de interesse (`xco2` -\>
-`xch4`) e a fonte de dados.
+``` r
+df_sif_buffer |> 
+  st_drop_geometry() |> 
+    filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot(aes(longitude, latitude, color = sif_agr)) +
+  geom_point()
+```
+
+## Análise de cluster da série temporal
+
+``` r
+df_cluster_sif <- df_sif_buffer |>
+  st_drop_geometry() |> 
+  filter(year >2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |>
+  group_by(year_month, latitude_media) |>
+  summarise(
+    sif = mean(sif_agr, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  pivot_wider(names_from = year_month, values_from = sif) |> 
+  mutate(across(
+    where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
+  ))
+df_cluster_sif
+```
+
+## Matriz de correlação entre as latitudes
+
+``` r
+mc_sif <- cor(df_cluster_sif |> select(-latitude_media))
+corrplot::corrplot(mc_sif)
+```
+
+``` r
+da_pad<-decostand(df_cluster_sif |> select(-latitude_media), 
+                  method = "standardize",
+                  na.rm=TRUE)
+
+da_pad_euc<-vegdist(da_pad,"euclidean") 
+da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
+da_pad_euc_ward$labels <- df_cluster$latitude_media
+plot(da_pad_euc_ward, 
+     ylab="Distância Euclidiana",
+     xlab="Acessos", hang=-1,
+     col="blue", las=1,
+     cex=.6,lwd=1.5);box()
+grupo<-cutree(da_pad_euc_ward,4)
+colunas <- df_cluster_sif |> add_column(grupo) |> 
+  select(latitude_media,grupo)
+```
+
+``` r
+df_sif_buffer |>
+  st_drop_geometry() |> 
+  filter(year >2014) |> 
+  mutate(
+    class_latitude = cut(
+      latitude, 115 ),
+   year_month = paste(as.character(year), as.character(month), sep="_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
+  geom_point()
+```
+
+``` r
+# Basemap do Brasil (uma vez só, fora do pipe principal)
+
+df_sif_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(as.character(year), as.character(month), sep = "_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  ggplot() +
+  geom_sf(data = brasil, fill = "grey96", color = "grey70", linewidth = 0.3) +
+  geom_point(
+    aes(x = longitude, y = latitude, color = as_factor(grupo)),
+    size = 1.4, alpha = 0.75
+  ) +
+  coord_sf(
+    xlim = range(df_sif_buffer$longitude, na.rm = TRUE),
+    ylim = range(df_sif_buffer$latitude, na.rm = TRUE)
+  ) +
+  scale_color_brewer(palette = "Set1", name = "Grupo") +
+  labs(
+    title = "Agrupamento espacial de SIF na faixa costeira",
+    subtitle = "Grupos formados a partir da análise de séries temporais (2015\u20132023)",
+    x = "Longitude", y = "Latitude"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40", size = 10),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey92"),
+    axis.text = element_text(color = "grey30")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+```
+
+## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
+
+``` r
+df_sif_buffer |>
+  filter(year > 2014) |> 
+  mutate(
+    class_latitude = cut(latitude, 115),
+    year_month = paste(as.character(year), as.character(month), sep = "_"),
+    latitude_media = (
+      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+    ) / 2
+  ) |> 
+  left_join(colunas, by = "latitude_media") |> 
+  arrange(latitude_media) |> 
+  mutate(
+    grupo = case_when(
+      latitude_media > 0.37 ~ 5,
+      latitude_media <= -28.6 ~2,
+      latitude_media < -20 & latitude_media > -28.6 ~1,
+      latitude_media > -5.5 & latitude_media <0.37 ~3,
+      .default=4
+    )
+  ) |> 
+  #filter(latitude_media < -5 & latitude_media > -10) |> 
+  # group_by(grupo) |> 
+  # summarise(
+  #   lat_max = max(latitude_media),
+  #   lat_min = min(latitude_media)
+  # ) |> 
+  # 
+  ggplot() +
+  geom_sf(data = brasil, fill = "grey96", color = "grey70", linewidth = 0.3) +
+  geom_point(
+    aes(x = longitude, y = latitude, color = as_factor(grupo)),
+    size = 1.4, alpha = 0.75
+  ) +
+  coord_sf(
+    xlim = range(df_sif_buffer$longitude, na.rm = TRUE),
+    ylim = range(df_sif_buffer$latitude, na.rm = TRUE)
+  ) +
+  scale_color_brewer(palette = "Set1", name = "Grupo") +
+  labs(
+    title = "Agrupamento espacial de SIF na faixa costeira",
+    subtitle = "Grupos formados a partir da análise de séries temporais (2015\u20132023)",
+    x = "Longitude", y = "Latitude"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40", size = 10),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey92"),
+    axis.text = element_text(color = "grey30")
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+```
+
+\<\<\<\<\<\<\< HEAD \#Essa etapa replica, para o XCH<sub>4</sub>
+(metano) medido pelo GOSAT-1 (e, na sequência, GOSAT-2), o mesmo
+pipeline de análise construído para o XCO<sub>2</sub>/OCO-2-3 no
+`README.Rmd`. A lógica é idêntica: recorte da faixa costeira terrestre,
+remoção de tendência regional, agrupamento das latitudes por
+comportamento temporal e cálculo de anomalias. Trocamos apenas a
+variável de interesse (`xco2` -\> `xch4`) e a fonte de dados.
 
 ## Ler os dados de XCH4 do GOSAT-1
 
@@ -2137,22 +2326,4 @@ df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
     anom = mean(anomalia, na.rm = TRUE),
     .groups = "drop"
   )
-```
-
-``` r
-ggplot(
-  data = df_anomalias_ch4_gosat2,
-  aes(
-    x = anom,
-    y = latitude_media,
-    colour = factor(grupo)
-  )
-) +
-  geom_point(alpha = 0.6) +
-  labs(
-    x = "Anomalia de XCH₄",
-    y = "Latitude",
-    colour = "Grupo"
-  ) +
-  theme_classic()
 ```

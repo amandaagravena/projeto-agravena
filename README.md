@@ -13,7 +13,7 @@ tabelas, o que é ótimo para projetos científicos.
 - warning = false = não mostre avisos quando o este bloco de código for
   executado.
 - message = false = não mostrar mensagens dos pacotes carregados que não
-  fazem parte da análise de dados.  
+  fazem parte da análise de dados.\
 - eval = false = não execute o código deste bloco, apenas mostre o
   código no documento.
 
@@ -25,20 +25,20 @@ tabelas, o que é ótimo para projetos científicos.
 
 ## 👨‍🔬 Autores
 
-- **Amanda de Oliveira Gravena**  
-  Mestranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
+- **Amanda de Oliveira Gravena**\
+  Mestranda em Agronomia (Ciência do Solo) - FCAV/Unesp\
   Email: <amanda.gravena@unesp.br>
 
-- **Ms. Witória de Oliveira Araújo**  
-  Doutoranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
+- **Ms. Witória de Oliveira Araújo**\
+  Doutoranda em Agronomia (Ciência do Solo) - FCAV/Unesp\
   Email: <witoria.araujo@unesp.br>
 
-- **Mr. Luís Miguel da Costa**  
-  Doutorando em Agronomia (Ciência do Solo) - FCAV/Unesp  
+- **Mr. Luís Miguel da Costa**\
+  Doutorando em Agronomia (Ciência do Solo) - FCAV/Unesp\
   Email: <lm.costa@unesp.br>
 
-- **Prof. Dr. Alan Rodrigo Panosso**  
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
+- **Prof. Dr. Alan Rodrigo Panosso**\
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp\
   Email: <alan.panosso@unesp.br>
 
 ## Carregando os pacotes
@@ -289,7 +289,7 @@ biomes |>
   ) +
   geom_point( data = df |> 
           filter(xco2_quality_flag == 0) |> 
-            sample_n(1000)
+            slice_sample(n = 1000)
               , aes(longitude, latitude), color="gray")
 ```
 
@@ -327,9 +327,9 @@ desenha uma amostra de pontos do conjunto de dados df.
 ## Transformar o df de XCO2 em objeto espacial (sf)
 
 ``` r
-# df_sf <- df |> 
-#   filter(xco2_quality_flag == 0) |> 
-#   st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
+df_sf <- df |>
+  filter(xco2_quality_flag == 0) |>
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
 ```
 
 ## Legenda:
@@ -424,7 +424,7 @@ Como?
 \##Lendo o arquivo salvo até aqui
 
 ``` r
-#df_brasil <- read_rds("data/xco2-brasil-biomas.rds")
+df_brasil <- read_rds("data/xco2-brasil-biomas.rds")
 ```
 
 ``` r
@@ -495,24 +495,29 @@ st_crs(brasil)
 
 ``` r
 plot(st_geometry(costeiro_terrestre))
-
 costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, 0.04)
-
 plot(
   st_geometry(costeiro_terrestre_buffer),
   main = "4 km Buffer Applied to the Terrestrial Portion of the Coastal Zone"
 )
 ```
 
+``` r
+costeiro_maritimo <- sf::st_difference(costeiro,costeiro_terrestre_buffer)
+plot(st_geometry(costeiro_terrestre_buffer), col = "lightyellow")
+plot(st_geometry(costeiro), col = "lightgreen")
+plot(st_geometry(costeiro_maritimo), col = "lightblue")
+```
+
 ## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
 
 ``` r
-# pontos_brasil <- st_as_sf(
-#   df_brasil,
-#   coords = c("longitude", "latitude"),
-#   crs = 4326,
-#   remove = FALSE
-# )
+pontos_brasil <- st_as_sf(
+  df_brasil,
+  coords = c("longitude", "latitude"),
+  crs = 4326,
+  remove = FALSE
+)
 ```
 
 \##Esse código cria um novo objeto espacial (sf), denominado
@@ -520,19 +525,26 @@ pontos_brasil, a partir do conjunto de dados df_brasil, utilizando as
 colunas de longitude e latitude para representar cada observação como um
 ponto geográfico.
 
-## Filtrar apenas os pontos que caem dentro da faixa costeira terrestre
+## Filtrar apenas os pontos que caem dentro da faixa costeira terrestre e costeira_maritimo
 
 ``` r
 # costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
-# 
-# pontos_costeiro_terra <- st_join(pontos_brasil, costeiro_terrestre  |>
+# pontos_costeiro_terra <- st_join(pontos_brasil, 
+#                                  costeiro_terrestre  |>
 #                                    mutate(name_biome = "Costeiro Terrestre") |>
-#                        select(name_biome, geometry))
-# 
-# pontos_costeiro_terra_buffer <- st_join(pontos_brasil, 
-#                                         costeiro_terrestre_buffer  |> 
-#                                    mutate(name_biome = "Costeiro Terrestre") |> 
-#                        select(name_biome, geometry))
+#                                    select(name_biome, geometry))
+
+# pontos_costeiro_terra_buffer <- st_join(pontos_brasil,
+#                                         costeiro_terrestre_buffer  |>
+#                                           mutate(name_biome = "Costeiro Terrestre") |>
+#                                           select(name_biome, geometry))
+
+costeiro_maritimo <- st_set_crs(costeiro_maritimo, 4326)
+
+pontos_costeiro_mar <- st_join(pontos_brasil,
+                               costeiro_maritimo  |>
+                                 mutate(name_biome = "Costeiro Marítimo") |>
+                                 select(name_biome, geometry))
 ```
 
 ## Legenda: Essa etapa: Quais pontos de XCO₂ estão dentro da faixa costeira terrestre?
@@ -552,6 +564,8 @@ geometry.
 # df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
 # 
 # df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
+# 
+df_costeiro_mar <- pontos_costeiro_mar |> filter(name_biome.y ==  "Costeiro Marítimo")  |>  st_drop_geometry()
 ```
 
 ## Legenda: Essa etapa serve para obter apenas os pontos que pertencem à faixa costeira terrestre e transformá-los novamente em uma tabela comum.
@@ -564,14 +578,23 @@ geometry.
 #   geom_point()
 # 
 # df_costeiro_terra_buffer |> 
+#   sample_n(1000) |> 
 #   ggplot(aes(longitude, latitude)) +
 #   geom_point()
+
+df_costeiro_mar |> filter(name_biome.x == "Sistema Costeiro") |>
+  sample_n(1000) |>
+  ggplot(aes(longitude, latitude)) +
+  geom_point(size = .5) +
+  geom_point(data = df_costeiro_terra_buffer |> sample_n(1000),
+             aes(longitude, latitude),color = "red",size = .5)
 ```
 
 ## Salvando na pasta data
 
 ``` r
 # write_rds(df_costeiro_terra_buffer,"data/xco2-costeiro-terrestre-buffer.rds")
+write_rds(df_costeiro_mar,"data/xco2-costeiro-mar.rds")
 ```
 
 \##A partir daqui, se inicia a parte de análise de dados que iniciamos.

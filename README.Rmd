@@ -520,12 +520,12 @@ Depois, passou a função mutate() para adicionar o name_biome "Costeiro Terrest
 #   ggplot(aes(longitude, latitude)) +
 #   geom_point()
 
-df_costeiro_mar |> filter(name_biome.x == "Sistema Costeiro") |>
-  sample_n(1000) |>
-  ggplot(aes(longitude, latitude)) +
-  geom_point(size = .5) +
-  geom_point(data = df_costeiro_terra_buffer |> sample_n(1000),
-             aes(longitude, latitude),color = "red",size = .5)
+# df_costeiro_mar |> filter(name_biome.x == "Sistema Costeiro") |>
+#   sample_n(1000) |>
+#   ggplot(aes(longitude, latitude)) +
+#   geom_point(size = .5) +
+#   geom_point(data = df_costeiro_terra_buffer |> sample_n(1000),
+#              aes(longitude, latitude),color = "red",size = .5)
 ```
 ## Salvando na pasta data
 
@@ -1147,6 +1147,23 @@ df_grupos <- df_costeiro_terra_buffer |>
   ) 
 ```
 
+
+## Incorporando, novamente as bases
+
+```{r}
+df_grupos <- bind_rows(
+  df_grupos |> mutate(local = "Buffer"),
+  df_costeiro_mar |> 
+    mutate(
+      grupo = 9,
+      local = "Oceano") |> 
+    select(-name_biome.x) |> 
+    rename(name_biome = name_biome.y)
+) |> 
+  select(-xco2_quality_flag , -path)
+df_grupos$grupo |>  unique()
+```
+
 ## Legenda: Com os limites dos grupos definidos, a classificação foi incorporada à base de dados original, mantendo as informações espaciais e temporais de cada observação. Dessa forma, foi criada a base que seria utilizada no cálculo das anomalias de XCO₂ dentro de cada grupo.
 
 ```{r}
@@ -1160,7 +1177,7 @@ df_grupos |>
     )
   ) |> 
   unnest() |> 
-  group_by(year, latitude_media) |>
+  group_by(grupo, year, latitude_media) |>
   summarise(
     anom = mean(anomalia, na.rm = TRUE),
     .groups = "drop"
@@ -1181,25 +1198,11 @@ df_grupos |>
     y = expression(Delta~"XCO2 (ppm)"),
     color = "Year"
   ) +
-  theme_minimal()
+  theme_minimal() 
 ```
 ## Legenda: Com os grupos latitudinais definidos, foi possível calcular a anomalia de XCO₂ considerando como referência o comportamento típico de cada grupo. Para cada combinação de mês e grupo, foi calculada a mediana de XCO₂ e, posteriormente, esse valor foi subtraído de cada observação correspondente. As anomalias resultantes foram então agregadas por ano e latitude média, permitindo representar a variação de XCO₂ ao longo da costa em relação ao comportamento de referência de cada região.
 
-## Incorporando, novamente as bases
 
-```{r}
-df_grupos <- bind_rows(
-  df_grupos |> mutate(local = "Buffer"),
-  df_costeiro_mar |> 
-    mutate(
-      grupo = 9,
-      local = "Oceano") |> 
-    select(-name_biome.x) |> 
-    rename(name_biome = name_biome.y)
-) |> 
-  select(-xco2_quality_flag , -path)
-df_grupos$grupo |>  unique()
-```
 
 ## A partir daqui, peguei os dados de Manguezais do MapBiomas. 
 

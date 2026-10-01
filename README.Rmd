@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -1508,6 +1508,7 @@ head(df_sif_buffer[, c("daily_sif757", "daily_sif771", "sif_agr")])
 
 ```{r}
 df_sif_buffer |>
+  sample_n(10000) |> 
   mutate(
     class_latitude = cut(latitude, 115),
     latitude_media = (
@@ -1539,8 +1540,11 @@ df_sif_buffer |>
   ) +
   scale_fill_viridis_d()
 ```
+
+
 ```{r}
 df_sif_buffer |> 
+  sample_n(10000) |> 
   st_drop_geometry() |> 
     filter(year > 2014) |> 
   mutate(
@@ -1561,6 +1565,7 @@ df_sif_buffer |>
 
 ```{r}
 df_cluster_sif <- df_sif_buffer |>
+  sample_n(10000) |> 
   st_drop_geometry() |> 
   filter(year >2014) |> 
   mutate(
@@ -1581,7 +1586,6 @@ df_cluster_sif <- df_sif_buffer |>
   mutate(across(
     where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
   ))
-df_cluster_sif
 ```
 
 
@@ -1596,16 +1600,15 @@ corrplot::corrplot(mc_sif)
 da_pad<-decostand(df_cluster_sif |> select(-latitude_media), 
                   method = "standardize",
                   na.rm=TRUE)
-
 da_pad_euc<-vegdist(da_pad,"euclidean") 
 da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
-da_pad_euc_ward$labels <- df_cluster$latitude_media
+da_pad_euc_ward$labels <- df_cluster_sif$latitude_media
 plot(da_pad_euc_ward, 
      ylab="Distância Euclidiana",
      xlab="Acessos", hang=-1,
      col="blue", las=1,
      cex=.6,lwd=1.5);box()
-grupo<-cutree(da_pad_euc_ward,4)
+grupo<-cutree(da_pad_euc_ward,2)
 colunas <- df_cluster_sif |> add_column(grupo) |> 
   select(latitude_media,grupo)
 ```
@@ -1891,7 +1894,7 @@ df_gosat1_costeiro_buffer |>
 
 ```{r}
 df_gosat1_costeiro_buffer |>
-  filter(year == ano_exemplo) |>
+  filter(year == 2019) |>
   mutate(class_latitude = cut(latitude, 20)) |>
   group_by(class_latitude, month) |>
   summarise(xch4 = mean(xch4, na.rm = TRUE), .groups = "drop") |>
@@ -2048,7 +2051,7 @@ df_anomalias_ch4 |>
 ## REPRODUÇÃO PARA GOSAT 2
 
 ```{r}
-df_gosat2 <- read_rds("data-raw/df_gosat2_br (1).rds")
+df_gosat2 <- read_rds("data-raw/df_gosat2_br.rds")
 
 glimpse(df_gosat2)
 names(df_gosat2)
@@ -2171,13 +2174,13 @@ pontos_gosat2_costeiro_buffer <- st_join(
 
 ```{r}
 df_gosat2_costeiro_buffer <- pontos_gosat2_costeiro_buffer |>
-  filter(name_biome != "Sistema Costeiro") |>
+  filter(name_biome.y != "Sistema Costeiro") |>
   st_drop_geometry()
 ```
 
 ```{r}
 df_gosat2_costeiro_buffer |>
-  count(name_biome)
+  count(name_biome.y)
 ```
 
 ```{r}
@@ -2198,7 +2201,7 @@ df_gosat2_costeiro_buffer <- read_rds(
 
 ```{r}
 df_gosat2_costeiro_buffer |>
-  count(name_biome)
+  count(name_biome.y)
 
 nrow(df_gosat2_costeiro_buffer)
 
@@ -2220,7 +2223,7 @@ df_gosat2_costeiro_buffer |>
 ```
 ```{r}
 df_gosat2_costeiro_buffer |>
-  ggplot(aes(x = name_biome, y = xch4, fill = name_biome)) +
+  ggplot(aes(x = name_biome.y, y = xch4, fill = name_biome.y)) +
   geom_boxplot() +
   theme_minimal()
 ```
@@ -2399,14 +2402,14 @@ df_anomalias_ch4_gosat2 |>
   arrange(grupo)
 ```
 ```{r}
-df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
-  group_by(
-    year,
-    latitude_media,
-    grupo
-  ) |>
-  summarise(
-    anom = mean(anomalia, na.rm = TRUE),
-    .groups = "drop"
-  )
+# df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
+#   group_by(
+#     year,
+#     latitude_media,
+#     grupo
+#   ) |>
+#   summarise(
+#     anom = mean(anomalia, na.rm = TRUE),
+#     .groups = "drop"
+#   )
 ```

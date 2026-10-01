@@ -92,6 +92,21 @@ biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 
 ``` r
 biomes
+#> Simple feature collection with 7 features and 3 fields
+#> Geometry type: GEOMETRY
+#> Dimension:     XY
+#> Bounding box:  xmin: -73.9829 ymin: -34.95942 xmax: -28.84785 ymax: 7.053767
+#> Geodetic CRS:  SIRGAS 2000
+#> # A tibble: 7 × 4
+#>   code_biome name_biome        year                                     geometry
+#> *      <dbl> <chr>            <dbl>                               <GEOMETRY [°]>
+#> 1          1 Amazônia          2019 MULTIPOLYGON (((-58.94533 -16.30136, -58.94…
+#> 2          2 Caatinga          2019 POLYGON ((-41.74424 -2.806644, -41.75632 -2…
+#> 3          3 Cerrado           2019 POLYGON ((-43.38741 -2.342188, -43.393 -2.3…
+#> 4          4 Mata Atlântica    2019 MULTIPOLYGON (((-48.70747 -28.44828, -48.70…
+#> 5          5 Pampa             2019 POLYGON ((-52.82498 -27.46271, -52.82891 -2…
+#> 6          6 Pantanal          2019 POLYGON ((-57.75659 -15.73327, -57.76628 -1…
+#> 7         NA Sistema Costeiro  2019 POLYGON ((-44.64799 -2.870376, -44.65249 -2…
 ```
 
 ## Legenda:
@@ -106,6 +121,16 @@ referência das coodenadas (CRS), por exemplo.
 
 ``` r
 biomes |> distinct(name_biome)
+#> # A tibble: 7 × 1
+#>   name_biome      
+#>   <chr>           
+#> 1 Amazônia        
+#> 2 Caatinga        
+#> 3 Cerrado         
+#> 4 Mata Atlântica  
+#> 5 Pampa           
+#> 6 Pantanal        
+#> 7 Sistema Costeiro
 ```
 
 ## Legenda:
@@ -215,6 +240,11 @@ map_biomes <- ggplot(biomes) + ## Legenda: A função ggplot() inicia a constru�
 
 # print(map_country)
 print(map_biomes)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
 
 ## Legenda: Depois de todas as etapas de construção, o comando print() exibe o mapa os biomas na tela, pois já construímos o objeto "map_biomes". 
 ```
@@ -292,6 +322,8 @@ biomes |>
             slice_sample(n = 1000)
               , aes(longitude, latitude), color="gray")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ## Legenda:
 
@@ -460,6 +492,8 @@ ggplot() +
   )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
 ## Legenda:
 
 Primeiro, criou-se o objeto “costeiro”, que é o biomes, filtrando apenas
@@ -486,7 +520,49 @@ ilustrativo, esses elementos não são necessários.
 costeiro_terrestre <- st_intersection(costeiro, brasil)
 
 st_crs(costeiro)
+#> Coordinate Reference System:
+#>   User input: EPSG:4674 
+#>   wkt:
+#> GEOGCRS["SIRGAS 2000",
+#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
+#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
+#>             LENGTHUNIT["metre",1]]],
+#>     PRIMEM["Greenwich",0,
+#>         ANGLEUNIT["degree",0.0174532925199433]],
+#>     CS[ellipsoidal,2],
+#>         AXIS["geodetic latitude (Lat)",north,
+#>             ORDER[1],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>         AXIS["geodetic longitude (Lon)",east,
+#>             ORDER[2],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>     USAGE[
+#>         SCOPE["Horizontal component of 3D system."],
+#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
+#>         BBOX[-59.87,-122.19,32.72,-25.28]],
+#>     ID["EPSG",4674]]
 st_crs(brasil)
+#> Coordinate Reference System:
+#>   User input: EPSG:4674 
+#>   wkt:
+#> GEOGCRS["SIRGAS 2000",
+#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
+#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
+#>             LENGTHUNIT["metre",1]]],
+#>     PRIMEM["Greenwich",0,
+#>         ANGLEUNIT["degree",0.0174532925199433]],
+#>     CS[ellipsoidal,2],
+#>         AXIS["geodetic latitude (Lat)",north,
+#>             ORDER[1],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>         AXIS["geodetic longitude (Lon)",east,
+#>             ORDER[2],
+#>             ANGLEUNIT["degree",0.0174532925199433]],
+#>     USAGE[
+#>         SCOPE["Horizontal component of 3D system."],
+#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
+#>         BBOX[-59.87,-122.19,32.72,-25.28]],
+#>     ID["EPSG",4674]]
 ```
 
 ## Legenda: A função st_crs() mostra o CRS (Coordinate Reference System) do objeto.
@@ -495,6 +571,11 @@ st_crs(brasil)
 
 ``` r
 plot(st_geometry(costeiro_terrestre))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
 costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, 0.04)
 plot(
   st_geometry(costeiro_terrestre_buffer),
@@ -502,12 +583,26 @@ plot(
 )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
+
 ``` r
 costeiro_maritimo <- sf::st_difference(costeiro,costeiro_terrestre_buffer)
 plot(st_geometry(costeiro_terrestre_buffer), col = "lightyellow")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
 plot(st_geometry(costeiro), col = "lightgreen")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+
+``` r
 plot(st_geometry(costeiro_maritimo), col = "lightblue")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
 
 ## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
 
@@ -614,9 +709,11 @@ costeira terrestre.
 ``` r
 df_costeiro_terra_buffer <- read_rds("data/xco2-costeiro-terrestre-buffer.rds")
 nrow(df_costeiro_terra_buffer)
+#> [1] 175818
 
 df_costeiro_mar <- read_rds("data/xco2-costeiro-mar.rds")
 nrow(df_costeiro_mar)
+#> [1] 1409497
 ```
 
 ## Verificando se há sobreposição de pontos
@@ -630,6 +727,7 @@ sobreposicao <- inner_join(
   by = chave
 )
 nrow(sobreposicao) # 0 = nenhum ponto em comum
+#> [1] 0
 ```
 
 ## Legenda: Aqui, leu o arquivo e contou o número de fileiras após os recortes. Aqui, respondemos: “Depois de todos os filtros, ainda tenho uma quantidade suficiente de dados?” SIM!
@@ -641,11 +739,35 @@ df_costeiro_terra_buffer |>
   st_drop_geometry() |> 
   count(year) |>   # ajuste nome da coluna de data
   arrange(year)
+#>    year     n
+#> 1  2014  4461
+#> 2  2015 13057
+#> 3  2016 11514
+#> 4  2017  9300
+#> 5  2018 12413
+#> 6  2019 13628
+#> 7  2020 24356
+#> 8  2021 29038
+#> 9  2022 20858
+#> 10 2023 20851
+#> 11 2024 16342
 
 df_costeiro_mar |> 
   st_drop_geometry() |> 
   count(year) |>   # ajuste nome da coluna de data
   arrange(year)
+#>    year      n
+#> 1  2014  23051
+#> 2  2015 103217
+#> 3  2016 123517
+#> 4  2017  98841
+#> 5  2018 128376
+#> 6  2019 134176
+#> 7  2020 158773
+#> 8  2021 165201
+#> 9  2022 169947
+#> 10 2023 164612
+#> 11 2024 139786
 ```
 
 ## Legenda: Verificar quantas observações existem em cada ano e organiza em ordem crescente, para verificar se algum ano possui poucos dados ou se há anos ausentes.
@@ -653,9 +775,13 @@ df_costeiro_mar |>
 ``` r
 # Estatística descritiva do XCO2 nessa faixa
 summary(df_costeiro_terra_buffer$xco2)  # ajuste nome da coluna
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>   390.8   406.2   412.1   411.2   416.0   429.4
 
 # Estatística descritiva do XCO2 maritimo
 summary(df_costeiro_mar$xco2)  # ajuste nome da coluna
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>   390.4   405.2   411.7   410.9   416.2   428.3
 ```
 
 ## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
@@ -698,6 +824,23 @@ df_costeiro <- bind_rows(
 ) |> 
   select(-xco2_quality_flag , -path)
 df_costeiro |> glimpse()
+#> Rows: 1,585,315
+#> Columns: 15
+#> $ longitude      <dbl> -50.43696, -50.43696, -50.42663, -50.42663, -50.44736, …
+#> $ latitude       <dbl> -30.626656, -30.626656, -30.574715, -30.574715, -30.586…
+#> $ time           <dttm> 2034-09-07 14:17:05, 2034-09-07 14:17:05, 2034-09-07 1…
+#> $ xco2           <dbl> 398.7742, 398.7742, 397.2436, 397.2436, 394.5156, 394.5…
+#> $ xco2_incerteza <dbl> 0.5059505, 0.5059505, 0.4166382, 0.4166382, 0.5214518, …
+#> $ year           <dbl> 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2…
+#> $ month          <dbl> 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9…
+#> $ day            <int> 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8…
+#> $ name_biome     <chr> "Pampa", "Sistema Costeiro", "Pampa", "Sistema Costeiro…
+#> $ date           <date> 2014-09-07, 2014-09-07, 2014-09-07, 2014-09-07, 2014-0…
+#> $ date_modif     <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+#> $ xco2_est       <dbl> 396.8347, 396.8347, 396.8347, 396.8347, 396.8347, 396.8…
+#> $ delta          <dbl> -1.9395539, -1.9395539, -0.4089142, -0.4089142, 2.31911…
+#> $ xco2_detrend   <dbl> 384.4503, 384.4503, 382.9197, 382.9197, 380.1916, 380.1…
+#> $ grupo          <chr> "Buffer", "Buffer", "Buffer", "Buffer", "Buffer", "Buff…
 ```
 
 ## Durante a segunda junção espacial (st_join), o objeto pontos_brasil já possuía
@@ -731,6 +874,8 @@ df_costeiro |>
   )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+
 ## Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre os biomas. Podemos visualizar mediana; quartis; dispersão; outliers. Excluímos Sistema Costeiro, pois não é um bioma de fato.
 
 ``` r
@@ -745,6 +890,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(x=month, y=xco2, color=name_biome) ) +
   geom_point() + geom_line()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ## Legenda: Média mensal por bioma, agrupando por bioma e por mês, ou seja, “Qual foi o XCO₂ médio daquele bioma naquele mês?” - Resulta em um gráfico temporal. Buscamos ver se os biomas apresentam comportamento sazonal diferente.
 
@@ -761,6 +908,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(x=month, y=xco2, color=class_latitude) ) +
   geom_point() + geom_line()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 ## Legenda: Média mensal por faixa de latitude (20 faixas). Então, calcula a média do XCO₂ para cada faixa de latitude em cada mês. O objetivo é verificar se existe um gradiente latitudinal, ou seja, “O comportamento do XCO₂ muda conforme se avança do sul para o norte do Brasil?”
 
@@ -825,6 +974,8 @@ df_costeiro |>
   ) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ## Legenda:
 
@@ -893,6 +1044,8 @@ df_costeiro |>
   facet_wrap(~grupo)
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+
 ## Legenda:
 
 O código divide as latitudes em 10 faixas e calcula a latitude média de
@@ -931,6 +1084,8 @@ df_costeiro |>
   theme_minimal()+ 
   facet_wrap(~grupo, scale="free")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 ## Legenda:
 
@@ -971,6 +1126,8 @@ df_costeiro |>
   scale_fill_viridis_d()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
 ## Legenda: O código divide os dados em $35$ faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
 ## Análise de cluster da série temporal
@@ -997,6 +1154,26 @@ df_cluster <- df_costeiro_terra_buffer |>
     where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
   ))
 df_cluster
+#> # A tibble: 115 × 120
+#>    latitude_media `2015_1` `2015_10` `2015_11` `2015_12` `2015_2` `2015_3`
+#>             <dbl>    <dbl>     <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
+#>  1          -33.6     380.      383.      383.      383.     381.     381.
+#>  2          -33.2     379.      383.      383.      383.     382.     382.
+#>  3          -32.6     382.      383.      383.      381.     380.     380.
+#>  4          -32.0     379.      383.      384.      383.     381.     381.
+#>  5          -31.6     379.      383.      381.      383.     380.     381.
+#>  6          -31.2     379.      383.      381.      382.     382.     382.
+#>  7          -24.0     382.      383.      383.      383.     382.     382.
+#>  8          -23.0     381.      383.      382.      383.     383.     381.
+#>  9          -22.6     380.      383.      382.      384.     382.     382.
+#> 10          -22.2     382.      382.      386.      383.     382.     382.
+#> # ℹ 105 more rows
+#> # ℹ 113 more variables: `2015_4` <dbl>, `2015_5` <dbl>, `2015_6` <dbl>,
+#> #   `2015_7` <dbl>, `2015_8` <dbl>, `2015_9` <dbl>, `2016_1` <dbl>,
+#> #   `2016_10` <dbl>, `2016_11` <dbl>, `2016_12` <dbl>, `2016_2` <dbl>,
+#> #   `2016_3` <dbl>, `2016_4` <dbl>, `2016_5` <dbl>, `2016_6` <dbl>,
+#> #   `2016_7` <dbl>, `2016_8` <dbl>, `2016_9` <dbl>, `2017_1` <dbl>,
+#> #   `2017_10` <dbl>, `2017_11` <dbl>, `2017_12` <dbl>, `2017_2` <dbl>, …
 ```
 
 ## Legenda: Precisávamos definir grupos de latitude com comportamento temporal semelhante de XCO₂ para, posteriormente, calcular as anomalias dentro desses grupos. Para isso, os dados foram organizados em classes de latitude e agregados mensalmente, considerando o período posterior a 2014. Para cada faixa de latitude e mês, foi calculada a média de XCO₂ com a tendência regional previamente removida (XCO₂ detrend). Em seguida, os dados foram reorganizados em uma matriz, na qual cada linha representava uma faixa de latitude e cada coluna correspondia a um mês da série temporal. Os valores ausentes foram preenchidos pela média da respectiva série para possibilitar a aplicação do agrupamento.
@@ -1013,6 +1190,8 @@ corrplot::corrplot(
 )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+
 ## Legenda: Para avaliar a similaridade temporal entre as diferentes faixas de latitude, foi calculada a matriz de correlação entre as séries mensais de XCO₂. Essa etapa permitiu verificar o grau de associação entre o comportamento temporal das diferentes regiões antes da realização do agrupamento.
 
 ``` r
@@ -1028,6 +1207,11 @@ plot(da_pad_euc_ward,
      xlab="Acessos", hang=-1,
      col="blue", las=1,
      cex=.6,lwd=1.5);box()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+
+``` r
 grupo<-cutree(da_pad_euc_ward,4)
 colunas <- df_cluster |> add_column(grupo) |> 
   select(latitude_media,grupo)
@@ -1051,6 +1235,8 @@ df_costeiro_terra_buffer |>
   ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
   geom_point()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
 
 ## Legenda: Após a definição dos grupos pelo agrupamento hierárquico, a classificação obtida para cada faixa de latitude foi associada às observações originais. A distribuição espacial dos grupos foi então visualizada para verificar como as regiões com comportamento temporal semelhante estavam distribuídas ao longo da faixa costeira.
 
@@ -1124,6 +1310,8 @@ df_costeiro_terra_buffer |>
     )
   )
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
 ## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
 
@@ -1201,6 +1389,8 @@ df_costeiro_terra_buffer |>
   )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+
 ## Legenda: A partir da distribuição espacial observada no agrupamento, foram estabelecidos limites latitudinais para definir as regiões utilizadas na análise subsequente. Os limites foram ajustados de acordo com a organização espacial dos agrupamentos, resultando em cinco grupos latitudinais. Essa classificação foi utilizada como a divisão regional definitiva para o cálculo das anomalias.
 
 ``` r
@@ -1241,6 +1431,7 @@ df_grupos <- bind_rows(
 ) |> 
   select(-xco2_quality_flag , -path)
 df_grupos$grupo |>  unique()
+#> [1] 2 1 4 3 5 9
 ```
 
 ## Legenda: Com os limites dos grupos definidos, a classificação foi incorporada à base de dados original, mantendo as informações espaciais e temporais de cada observação. Dessa forma, foi criada a base que seria utilizada no cálculo das anomalias de XCO₂ dentro de cada grupo.
@@ -1280,7 +1471,14 @@ df_grupos |>
   theme_minimal() 
 ```
 
-## Legenda: Com os grupos latitudinais definidos, foi possível calcular a anomalia de XCO₂ considerando como referência o comportamento típico de cada grupo. Para cada combinação de mês e grupo, foi calculada a mediana de XCO₂ e, posteriormente, esse valor foi subtraído de cada observação correspondente. As anomalias resultantes foram então agregadas por ano e latitude média, permitindo representar a variação de XCO₂ ao longo da costa em relação ao comportamento de referência de cada região.
+![](README_files/figure-gfm/unnamed-chunk-49-1.png)<!-- --> \## Legenda:
+Com os grupos latitudinais definidos, foi possível calcular a anomalia
+de XCO₂ considerando como referência o comportamento típico de cada
+grupo. Para cada combinação de mês e grupo, foi calculada a mediana de
+XCO₂ e, posteriormente, esse valor foi subtraído de cada observação
+correspondente. As anomalias resultantes foram então agregadas por ano e
+latitude média, permitindo representar a variação de XCO₂ ao longo da
+costa em relação ao comportamento de referência de cada região.
 
 ## A partir daqui, peguei os dados de Manguezais do MapBiomas.
 
@@ -1298,12 +1496,22 @@ arquivos <- list.files(
 
 ``` r
 arquivos
+#> [1] "data/EarthEngine/manguezais_2018-0000000000-0000000000.tif"
+#> [2] "data/EarthEngine/manguezais_2018-0000000000-0000065536.tif"
+#> [3] "data/EarthEngine/manguezais_2018-0000000000-0000131072.tif"
+#> [4] "data/EarthEngine/manguezais_2018-0000065536-0000000000.tif"
+#> [5] "data/EarthEngine/manguezais_2018-0000065536-0000065536.tif"
+#> [6] "data/EarthEngine/manguezais_2018-0000065536-0000131072.tif"
+#> [7] "data/EarthEngine/manguezais_2018-0000131072-0000000000.tif"
+#> [8] "data/EarthEngine/manguezais_2018-0000131072-0000065536.tif"
+#> [9] "data/EarthEngine/manguezais_2018-0000131072-0000131072.tif"
 ```
 
 ## Ver quantos rasters ele encontra:
 
 ``` r
 length(arquivos)
+#> [1] 9
 ```
 
 ## Criar o objeto mangue
@@ -1489,6 +1697,8 @@ df_sif_buffer <- sf::st_buffer(df_sif_costeiro, 0.04)
 plot(st_geometry(df_sif_buffer))
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
+
 # Analisando SIF para o Buffer:
 
 ``` r
@@ -1586,10 +1796,23 @@ df_sif_buffer <- df_sif_buffer |>
 
 ``` r
 head(df_sif_buffer[, c("daily_sif757", "daily_sif771", "sif_agr")])
+#> Simple feature collection with 6 features and 3 fields
+#> Geometry type: POLYGON
+#> Dimension:     XY
+#> Bounding box:  xmin: -46.34277 ymin: -1.286622 xmax: -46.30048 ymax: -1.049438
+#> Geodetic CRS:  WGS 84
+#>   daily_sif757 daily_sif771    sif_agr                       geometry
+#> 1    0.4052238   0.10527229  0.5631323 POLYGON ((-46.30048 -1.2866...
+#> 2    0.4337406   0.53661442  1.2386622 POLYGON ((-46.31305 -1.2555...
+#> 3    0.3173637   0.31678677  0.7925439 POLYGON ((-46.31201 -1.0991...
+#> 4    0.2432318   0.04988003  0.3180518 POLYGON ((-46.31622 -1.0789...
+#> 5   -0.1346827  -0.01517487 -0.1574450 POLYGON ((-46.31708 -1.0494...
+#> 6    0.2379646  -0.20505142 -0.0696125 POLYGON ((-46.34277 -1.1144...
 ```
 
 ``` r
 df_sif_buffer |>
+  sample_n(10000) |> 
   mutate(
     class_latitude = cut(latitude, 115),
     latitude_media = (
@@ -1622,8 +1845,11 @@ df_sif_buffer |>
   scale_fill_viridis_d()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
+
 ``` r
 df_sif_buffer |> 
+  sample_n(10000) |> 
   st_drop_geometry() |> 
     filter(year > 2014) |> 
   mutate(
@@ -1640,10 +1866,13 @@ df_sif_buffer |>
   geom_point()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
+
 ## Análise de cluster da série temporal
 
 ``` r
 df_cluster_sif <- df_sif_buffer |>
+  sample_n(10000) |> 
   st_drop_geometry() |> 
   filter(year >2014) |> 
   mutate(
@@ -1664,7 +1893,6 @@ df_cluster_sif <- df_sif_buffer |>
   mutate(across(
     where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
   ))
-df_cluster_sif
 ```
 
 ## Matriz de correlação entre as latitudes
@@ -1674,20 +1902,26 @@ mc_sif <- cor(df_cluster_sif |> select(-latitude_media))
 corrplot::corrplot(mc_sif)
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-80-1.png)<!-- -->
+
 ``` r
 da_pad<-decostand(df_cluster_sif |> select(-latitude_media), 
                   method = "standardize",
                   na.rm=TRUE)
-
 da_pad_euc<-vegdist(da_pad,"euclidean") 
 da_pad_euc_ward<-hclust(da_pad_euc, method="ward.D")
-da_pad_euc_ward$labels <- df_cluster$latitude_media
+da_pad_euc_ward$labels <- df_cluster_sif$latitude_media
 plot(da_pad_euc_ward, 
      ylab="Distância Euclidiana",
      xlab="Acessos", hang=-1,
      col="blue", las=1,
      cex=.6,lwd=1.5);box()
-grupo<-cutree(da_pad_euc_ward,4)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-81-1.png)<!-- -->
+
+``` r
+grupo<-cutree(da_pad_euc_ward,2)
 colunas <- df_cluster_sif |> add_column(grupo) |> 
   select(latitude_media,grupo)
 ```
@@ -1709,6 +1943,8 @@ df_sif_buffer |>
   ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
   geom_point()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-82-1.png)<!-- -->
 
 ``` r
 # Basemap do Brasil (uma vez só, fora do pipe principal)
@@ -1751,6 +1987,8 @@ df_sif_buffer |>
   ) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-83-1.png)<!-- -->
 
 ## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
 
@@ -1811,6 +2049,7 @@ df_sif_buffer |>
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-84-1.png)<!-- -->
 \<\<\<\<\<\<\< HEAD \#Essa etapa replica, para o XCH<sub>4</sub>
 (metano) medido pelo GOSAT-1 (e, na sequência, GOSAT-2), o mesmo
 pipeline de análise construído para o XCO<sub>2</sub>/OCO-2-3 no
@@ -1826,13 +2065,41 @@ variável de interesse (`xco2` -\> `xch4`) e a fonte de dados.
 ``` r
 df_gosat1 <- read_rds("data-raw/df_gosat1_br.rds")
 glimpse(df_gosat1)
+#> Rows: 92,302
+#> Columns: 11
+#> $ latitude  <dbl> -11.99342, -11.99135, -11.98562, -4.14557, -18.46369, -19.74…
+#> $ longitude <dbl> -53.28216, -53.28276, -53.28263, -33.19255, -36.39090, -36.6…
+#> $ height    <dbl> 304, 303, 304, 0, 0, 0, 0, 0, 0, 0, 0, 197, 196, 831, 826, 1…
+#> $ time      <chr> "2015-02-01 16:04:16.543", "2015-02-01 16:04:21.066", "2015-…
+#> $ date      <date> 2015-02-01, 2015-02-01, 2015-02-01, 2015-02-02, 2015-02-02,…
+#> $ year      <dbl> 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, …
+#> $ month     <dbl> 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, …
+#> $ day       <int> 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, …
+#> $ xch4      <dbl> 1.806782, 1.787975, 1.792623, 1.789745, 1.774158, 1.776228, …
+#> $ xco2      <dbl> 395.9766, 393.5092, 395.0066, 393.0119, 388.7304, 391.7210, …
+#> $ h2o       <dbl> 6345.907, 6339.775, 6370.612, 6443.303, 4297.979, 3871.684, …
 names(df_gosat1)
+#>  [1] "latitude"  "longitude" "height"    "time"      "date"      "year"     
+#>  [7] "month"     "day"       "xch4"      "xco2"      "h2o"
 ```
 
 ## Conferir os anos e a cobertura temporal disponíveis
 
 ``` r
 df_gosat1 |> distinct(year) |> arrange(year)
+#>    year
+#> 1  2015
+#> 2  2016
+#> 3  2017
+#> 4  2018
+#> 5  2019
+#> 6  2020
+#> 7  2021
+#> 8  2022
+#> 9  2023
+#> 10 2024
+#> 11 2025
+#> 12 2026
 ```
 
 ## Plotar o shape do Brasil e os pontos amostrados de XCH4
@@ -1859,6 +2126,8 @@ biomes |>
     aes(longitude, latitude), color = "gray"
   )
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-87-1.png)<!-- -->
 
 ## Legenda: Controle de qualidade espacial — checar visualmente se os pontos do GOSAT-1 caem sobre o território brasileiro e nos biomas esperados, exatamente como fizemos para o XCO2.
 
@@ -1888,6 +2157,21 @@ df_gosat1_brasil <- df_gosat1_biomas |>
   filter(!is.na(name_biome))
 
 glimpse(df_gosat1_brasil)
+#> Rows: 35,907
+#> Columns: 13
+#> $ latitude   <dbl> -11.993422, -11.991345, -11.985618, -4.145570, -18.463694, …
+#> $ longitude  <dbl> -53.28216, -53.28276, -53.28263, -33.19255, -36.39090, -36.…
+#> $ height     <dbl> 304, 303, 304, 0, 0, 0, 831, 826, 101, 261, 84, 0, 0, 0, 0,…
+#> $ time       <chr> "2015-02-01 16:04:16.543", "2015-02-01 16:04:21.066", "2015…
+#> $ date       <date> 2015-02-01, 2015-02-01, 2015-02-01, 2015-02-02, 2015-02-02…
+#> $ year       <dbl> 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015,…
+#> $ month      <dbl> 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,…
+#> $ day        <int> 1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 8, 8, 8, 8, 8, 9, 9, 9, 9,…
+#> $ xch4       <dbl> 1.806782, 1.787975, 1.792623, 1.789745, 1.774158, 1.776228,…
+#> $ xco2       <dbl> 395.9766, 393.5092, 395.0066, 393.0119, 388.7304, 391.7210,…
+#> $ h2o        <dbl> 6345.907, 6339.775, 6370.612, 6443.303, 4297.979, 3871.684,…
+#> $ name_biome <chr> "Amazônia", "Amazônia", "Amazônia", "Sistema Costeiro", "Si…
+#> $ geometry   <POINT [°]> POINT (-53.28216 -11.99342), POINT (-53.28276 -11.991…
 ```
 
 ## Legenda: Como o arquivo já vem recortado para o Brasil, esperamos que praticamente todos os pontos sejam mantidos aqui — esse filtro é mais uma checagem de sanidade do que um recorte de fato.
@@ -1930,6 +2214,10 @@ df_gosat1_costeiro_buffer <- pontos_gosat1_costeiro_buffer |>
 ``` r
 df_gosat1_costeiro_buffer |>
   count(name_biome)
+#>       name_biome   n
+#> 1       Amazônia  12
+#> 2 Mata Atlântica 861
+#> 3          Pampa   9
 ```
 
 ## Salvar os dados recortados
@@ -1946,9 +2234,14 @@ df_gosat1_costeiro_buffer <- read_rds(
 )
 
 nrow(df_gosat1_costeiro_buffer)
+#> [1] 882
 
 df_gosat1_costeiro_buffer |>
   count(name_biome)
+#>       name_biome   n
+#> 1       Amazônia  12
+#> 2 Mata Atlântica 861
+#> 3          Pampa   9
 ```
 
 ## Cobertura temporal — quantos pontos por ano
@@ -1957,12 +2250,27 @@ df_gosat1_costeiro_buffer |>
 df_gosat1_costeiro_buffer |>
   count(year) |>
   arrange(year)
+#>    year   n
+#> 1  2015  46
+#> 2  2016  67
+#> 3  2017  53
+#> 4  2018  37
+#> 5  2019  89
+#> 6  2020 104
+#> 7  2021  92
+#> 8  2022  85
+#> 9  2023  86
+#> 10 2024 135
+#> 11 2025  81
+#> 12 2026   7
 ```
 
 ## Estatística descritiva do XCH4 na faixa costeira
 
 ``` r
 summary(df_gosat1_costeiro_buffer$xch4)
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>   1.756   1.824   1.857   1.855   1.888   1.946
 ```
 
 ## Distribuição do XCH4 entre biomas (escolher um ano com boa cobertura, com base na checagem de anos feita acima)
@@ -1974,11 +2282,13 @@ df_gosat1_costeiro_buffer |>
   theme_minimal()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-98-1.png)<!-- -->
+
 ## Média mensal de XCH4 por faixa de latitude
 
 ``` r
 df_gosat1_costeiro_buffer |>
-  filter(year == ano_exemplo) |>
+  filter(year == 2019) |>
   mutate(class_latitude = cut(latitude, 20)) |>
   group_by(class_latitude, month) |>
   summarise(xch4 = mean(xch4, na.rm = TRUE), .groups = "drop") |>
@@ -1986,7 +2296,9 @@ df_gosat1_costeiro_buffer |>
   geom_point() + geom_line()
 ```
 
-## Legenda: Mesma pergunta feita para o XCO2 — existe um gradiente latitudinal no comportamento sazonal do XCH4 ao longo da costa?
+![](README_files/figure-gfm/unnamed-chunk-99-1.png)<!-- --> \## Legenda:
+Mesma pergunta feita para o XCO2 — existe um gradiente latitudinal no
+comportamento sazonal do XCH4 ao longo da costa?
 
 ## Análise de regressão linear simples para caracterizar a tendência regional
 
@@ -2001,6 +2313,25 @@ mod_trend_xch4 <- lm(
 
 sm <- summary.lm(mod_trend_xch4)
 sm
+#> 
+#> Call:
+#> lm(formula = xch4 ~ date, data = mutate(df_gosat1_costeiro_buffer, 
+#>     date = as.numeric(date - min(date))))
+#> 
+#> Residuals:
+#>       Min        1Q    Median        3Q       Max 
+#> -0.058355 -0.013025  0.000535  0.013245  0.064312 
+#> 
+#> Coefficients:
+#>              Estimate Std. Error t value Pr(>|t|)    
+#> (Intercept) 1.787e+00  1.492e-03 1197.88   <2e-16 ***
+#> date        3.002e-05  5.895e-07   50.92   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 
+#> Residual standard error: 0.01927 on 880 degrees of freedom
+#> Multiple R-squared:  0.7466, Adjusted R-squared:  0.7464 
+#> F-statistic:  2593 on 1 and 880 DF,  p-value: < 2.2e-16
 ```
 
 ## Gráfico da regressão (tendência temporal do XCH4)
@@ -2018,6 +2349,8 @@ df_gosat1_costeiro_buffer |>
   labs(x = "Data", y = expression(paste(X[CH4], " (ppb)"))) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-101-1.png)<!-- -->
 
 ## Legenda: Atenção à unidade — XCH4 costuma ser reportado em ppb (partes por bilhão), diferente do XCO2 que é em ppm. Ajustem o rótulo do eixo se a unidade do arquivo for outra.
 
@@ -2070,6 +2403,11 @@ df_gosat1_grupos <- df_gosat1_costeiro_buffer |>
 df_gosat1_grupos |>
   count(grupo) |>
   arrange(grupo)
+#>   grupo   n
+#> 1     1  12
+#> 2     3  35
+#> 3     4 712
+#> 4     5 123
 ```
 
 ## Rodar anomalia
@@ -2088,6 +2426,15 @@ df_anomalias_ch4 <- df_gosat1_grupos |>
 df_anomalias_ch4 |>
   select(year, month, latitude, grupo, xch4_detrend, mediana_xch4, anomalia) |>
   head()
+#> # A tibble: 6 × 7
+#>    year month latitude grupo xch4_detrend mediana_xch4 anomalia
+#>   <dbl> <dbl>    <dbl> <dbl>        <dbl>        <dbl>    <dbl>
+#> 1  2015     2    -22.9     4         1.73         1.75 -0.0168 
+#> 2  2015     2    -26.2     4         1.77         1.75  0.0168 
+#> 3  2015     3    -25.9     4         1.72         1.73 -0.00662
+#> 4  2015     3    -26.2     4         1.73         1.73  0.00662
+#> 5  2015     4    -29.0     5         1.71         1.71  0      
+#> 6  2015     4    -22.9     4         1.73         1.73  0
 ```
 
 ``` r
@@ -2101,12 +2448,19 @@ df_anomalias_ch4 <- df_anomalias_ch4 |>
 
 ``` r
 glimpse(df_anomalias_ch4)
+#> Rows: 76
+#> Columns: 4
+#> $ year           <dbl> 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2016, 2016, 2…
+#> $ latitude_media <dbl> -31.8500, -29.0000, -26.1500, -25.8500, -25.6000, -22.7…
+#> $ grupo          <dbl> 5, 5, 4, 4, 4, 4, 1, 5, 4, 4, 4, 4, 4, 1, 5, 4, 4, 4, 4…
+#> $ anom           <dbl> 1.057731e-02, -1.322163e-03, 3.072951e-03, -1.325365e-0…
 ```
 
 ## Testando gráfico 1:
 
 ``` r
 names(df_anomalias_ch4)
+#> [1] "year"           "latitude_media" "grupo"          "anom"
 ```
 
 ``` r
@@ -2127,19 +2481,42 @@ ggplot(
   theme_classic()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-110-1.png)<!-- -->
+
 ``` r
 df_anomalias_ch4 |>
   count(grupo) |>
   arrange(grupo)
+#> # A tibble: 4 × 2
+#>   grupo     n
+#>   <dbl> <int>
+#> 1     1     3
+#> 2     3     6
+#> 3     4    50
+#> 4     5    17
 ```
 
 ## REPRODUÇÃO PARA GOSAT 2
 
 ``` r
-df_gosat2 <- read_rds("data-raw/df_gosat2_br (1).rds")
+df_gosat2 <- read_rds("data-raw/df_gosat2_br.rds")
 
 glimpse(df_gosat2)
+#> Rows: 21,585
+#> Columns: 10
+#> $ latitude  <dbl> -1.786000, -6.056003, -15.973621, -17.468662, -19.032803, -3…
+#> $ longitude <dbl> -41.30400, -42.18088, -44.59983, -44.62923, -44.39851, -49.6…
+#> $ height    <dbl> 0.0000, 235.0142, 658.5041, 540.9784, 761.8316, 0.0000, 0.00…
+#> $ date      <date> 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01,…
+#> $ year      <dbl> 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, …
+#> $ month     <dbl> 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, …
+#> $ day       <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
+#> $ xco2      <dbl> 399.1213, 406.4696, 410.6140, 406.5443, 407.8338, 409.6601, …
+#> $ xch4      <dbl> 1.811561, 1.838640, 1.843810, 1.834588, 1.828708, 1.798668, …
+#> $ xh2o      <dbl> 8234.3506, 8001.9019, 6336.1846, 7165.0688, 7060.9341, 3940.…
 names(df_gosat2)
+#>  [1] "latitude"  "longitude" "height"    "date"      "year"      "month"    
+#>  [7] "day"       "xco2"      "xch4"      "xh2o"
 ```
 
 ``` r
@@ -2148,16 +2525,25 @@ names(df_gosat2)
 df_gosat2 |>
   distinct(year) |>
   arrange(year)
+#>   year
+#> 1 2019
+#> 2 2020
+#> 3 2021
+#> 4 2022
+#> 5 2023
+#> 6 2024
 ```
 
 ``` r
 ## Conferir as datas
 
 range(df_gosat2$date, na.rm = TRUE)
+#> [1] "2019-03-01" "2024-12-31"
 ```
 
 ``` r
 range(df_gosat2$date, na.rm = TRUE)
+#> [1] "2019-03-01" "2024-12-31"
 ```
 
 ``` r
@@ -2184,6 +2570,8 @@ biomes |>
   )
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-116-1.png)<!-- -->
+
 ``` r
 df_gosat2_sf <- df_gosat2 |>
   st_as_sf(
@@ -2208,6 +2596,20 @@ df_gosat2_brasil <- df_gosat2_biomas |>
   filter(!is.na(name_biome))
 
 glimpse(df_gosat2_brasil)
+#> Rows: 10,148
+#> Columns: 12
+#> $ latitude   <dbl> -1.786000, -6.056003, -15.973621, -17.468662, -19.032803, -…
+#> $ longitude  <dbl> -41.30400, -42.18088, -44.59983, -44.62923, -44.39851, -49.…
+#> $ height     <dbl> 0.0000000, 235.0141602, 658.5040894, 540.9783936, 761.83160…
+#> $ date       <date> 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01…
+#> $ year       <dbl> 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019,…
+#> $ month      <dbl> 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,…
+#> $ day        <int> 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3,…
+#> $ xco2       <dbl> 399.1213, 406.4696, 410.6140, 406.5443, 407.8338, 409.6601,…
+#> $ xch4       <dbl> 1.811561, 1.838640, 1.843810, 1.834588, 1.828708, 1.798668,…
+#> $ xh2o       <dbl> 8234.351, 8001.902, 6336.185, 7165.069, 7060.934, 3940.076,…
+#> $ name_biome <chr> "Sistema Costeiro", "Cerrado", "Caatinga", "Cerrado", "Cerr…
+#> $ geometry   <POINT [°]> POINT (-41.304 -1.786), POINT (-42.18088 -6.056003), …
 ```
 
 ``` r
@@ -2261,17 +2663,24 @@ pontos_gosat2_costeiro_buffer <- st_join(
 
 ``` r
 df_gosat2_costeiro_buffer <- pontos_gosat2_costeiro_buffer |>
-  filter(name_biome != "Sistema Costeiro") |>
+  filter(name_biome.y != "Sistema Costeiro") |>
   st_drop_geometry()
 ```
 
 ``` r
 df_gosat2_costeiro_buffer |>
-  count(name_biome)
+  count(name_biome.y)
+#>     name_biome.y   n
+#> 1       Amazônia 107
+#> 2       Caatinga  37
+#> 3        Cerrado  66
+#> 4 Mata Atlântica  16
+#> 5          Pampa   2
 ```
 
 ``` r
 nrow(df_gosat2_costeiro_buffer)
+#> [1] 228
 ```
 
 ``` r
@@ -2289,13 +2698,27 @@ df_gosat2_costeiro_buffer <- read_rds(
 
 ``` r
 df_gosat2_costeiro_buffer |>
-  count(name_biome)
+  count(name_biome.y)
+#>     name_biome.y   n
+#> 1       Amazônia 107
+#> 2       Caatinga  37
+#> 3        Cerrado  66
+#> 4 Mata Atlântica  16
+#> 5          Pampa   2
 
 nrow(df_gosat2_costeiro_buffer)
+#> [1] 228
 
 df_gosat2_costeiro_buffer |>
   count(year) |>
   arrange(year)
+#>   year  n
+#> 1 2019 38
+#> 2 2020 55
+#> 3 2021 19
+#> 4 2022 31
+#> 5 2023 33
+#> 6 2024 52
 ```
 
 ``` r
@@ -2310,17 +2733,23 @@ df_gosat2_costeiro_buffer |>
   theme_classic()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-131-1.png)<!-- -->
+
 ``` r
 df_gosat2_costeiro_buffer |>
-  ggplot(aes(x = name_biome, y = xch4, fill = name_biome)) +
+  ggplot(aes(x = name_biome.y, y = xch4, fill = name_biome.y)) +
   geom_boxplot() +
   theme_minimal()
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-132-1.png)<!-- -->
 
 ``` r
 ## Estatística descritiva do XCH4 na faixa costeira
 
 summary(df_gosat2_costeiro_buffer$xch4)
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>   1.806   1.845   1.865   1.867   1.892   1.922
 ```
 
 ``` r
@@ -2339,6 +2768,8 @@ df_gosat2_costeiro_buffer |>
   geom_line()
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-134-1.png)<!-- -->
+
 ``` r
 ## Análise de regressão linear simples para caracterizar a tendência regional
 
@@ -2352,6 +2783,25 @@ mod_trend_xch4_gosat2 <- lm(
 
 sm <- summary.lm(mod_trend_xch4_gosat2)
 sm
+#> 
+#> Call:
+#> lm(formula = xch4 ~ date, data = mutate(df_gosat2_costeiro_buffer, 
+#>     date = as.numeric(date - min(date))))
+#> 
+#> Residuals:
+#>       Min        1Q    Median        3Q       Max 
+#> -0.042632 -0.005146  0.002191  0.007281  0.028931 
+#> 
+#> Coefficients:
+#>              Estimate Std. Error t value Pr(>|t|)    
+#> (Intercept) 1.828e+00  1.506e-03 1214.22   <2e-16 ***
+#> date        3.526e-05  1.159e-06   30.43   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 
+#> Residual standard error: 0.01188 on 226 degrees of freedom
+#> Multiple R-squared:  0.8039, Adjusted R-squared:  0.803 
+#> F-statistic: 926.3 on 1 and 226 DF,  p-value: < 2.2e-16
 ```
 
 ``` r
@@ -2380,6 +2830,8 @@ df_gosat2_costeiro_buffer |>
     date_labels = "%Y"
   )
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-136-1.png)<!-- -->
 
 ``` r
 ## Retirada de tendência (detrend)
@@ -2441,6 +2893,12 @@ df_gosat2_grupos <- df_gosat2_costeiro_buffer |>
 df_gosat2_grupos |>
   count(grupo) |>
   arrange(grupo)
+#>   grupo   n
+#> 1     1   6
+#> 2     2 205
+#> 3     3  11
+#> 4     4   4
+#> 5     5   2
 ```
 
 ``` r
@@ -2468,6 +2926,15 @@ df_anomalias_ch4_gosat2 |>
     anomalia
   ) |>
   head()
+#> # A tibble: 6 × 7
+#>    year month latitude grupo xch4_detrend mediana_xch4 anomalia
+#>   <dbl> <dbl>    <dbl> <dbl>        <dbl>        <dbl>    <dbl>
+#> 1  2019     3   -33.0      5         1.78         1.78  0      
+#> 2  2019     3   -33.0      5         1.78         1.78  0      
+#> 3  2019     4   -10.0      2         1.79         1.80 -0.00787
+#> 4  2019     4    -4.51     2         1.81         1.80  0.00787
+#> 5  2019     5    -4.53     2         1.81         1.81  0      
+#> 6  2019     6    -2.78     2         1.79         1.79  0
 ```
 
 ``` r
@@ -2485,23 +2952,37 @@ df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
 
 ``` r
 glimpse(df_anomalias_ch4_gosat2)
+#> Rows: 53
+#> Columns: 4
+#> $ year           <dbl> 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2020, 2020, 2…
+#> $ latitude_media <dbl> -32.8000, -14.8000, -10.0150, -4.5300, -3.2500, -2.9300…
+#> $ grupo          <dbl> 5, 3, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 2, 2…
+#> $ anom           <dbl> 0.000000e+00, 0.000000e+00, -7.866436e-03, 4.765842e-04…
 ```
 
 ``` r
 df_anomalias_ch4_gosat2 |>
   count(grupo) |>
   arrange(grupo)
+#> # A tibble: 5 × 2
+#>   grupo     n
+#>   <dbl> <int>
+#> 1     1     2
+#> 2     2    38
+#> 3     3    10
+#> 4     4     2
+#> 5     5     1
 ```
 
 ``` r
-df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
-  group_by(
-    year,
-    latitude_media,
-    grupo
-  ) |>
-  summarise(
-    anom = mean(anomalia, na.rm = TRUE),
-    .groups = "drop"
-  )
+# df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
+#   group_by(
+#     year,
+#     latitude_media,
+#     grupo
+#   ) |>
+#   summarise(
+#     anom = mean(anomalia, na.rm = TRUE),
+#     .groups = "drop"
+#   )
 ```

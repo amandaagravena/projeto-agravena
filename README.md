@@ -538,13 +538,13 @@ ponto geográfico.
 #                                         costeiro_terrestre_buffer  |>
 #                                           mutate(name_biome = "Costeiro Terrestre") |>
 #                                           select(name_biome, geometry))
-
-costeiro_maritimo <- st_set_crs(costeiro_maritimo, 4326)
-
-pontos_costeiro_mar <- st_join(pontos_brasil,
-                               costeiro_maritimo  |>
-                                 mutate(name_biome = "Costeiro Marítimo") |>
-                                 select(name_biome, geometry))
+# 
+# costeiro_maritimo <- st_set_crs(costeiro_maritimo, 4326)
+# 
+# pontos_costeiro_mar <- st_join(pontos_brasil,
+#                                costeiro_maritimo  |>
+#                                  mutate(name_biome = "Costeiro Marítimo") |>
+#                                  select(name_biome, geometry))
 ```
 
 ## Legenda: Essa etapa: Quais pontos de XCO₂ estão dentro da faixa costeira terrestre?
@@ -565,7 +565,7 @@ geometry.
 # 
 # df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
 # 
-df_costeiro_mar <- pontos_costeiro_mar |> filter(name_biome.y ==  "Costeiro Marítimo")  |>  st_drop_geometry()
+# df_costeiro_mar <- pontos_costeiro_mar |> filter(name_biome.y ==  "Costeiro Marítimo")  |>  st_drop_geometry()
 ```
 
 ## Legenda: Essa etapa serve para obter apenas os pontos que pertencem à faixa costeira terrestre e transformá-los novamente em uma tabela comum.
@@ -594,7 +594,7 @@ df_costeiro_mar |> filter(name_biome.x == "Sistema Costeiro") |>
 
 ``` r
 # write_rds(df_costeiro_terra_buffer,"data/xco2-costeiro-terrestre-buffer.rds")
-write_rds(df_costeiro_mar,"data/xco2-costeiro-mar.rds")
+# write_rds(df_costeiro_mar,"data/xco2-costeiro-mar.rds")
 ```
 
 \##A partir daqui, se inicia a parte de análise de dados que iniciamos.
@@ -614,6 +614,22 @@ costeira terrestre.
 ``` r
 df_costeiro_terra_buffer <- read_rds("data/xco2-costeiro-terrestre-buffer.rds")
 nrow(df_costeiro_terra_buffer)
+
+df_costeiro_mar <- read_rds("data/xco2-costeiro-mar.rds")
+nrow(df_costeiro_mar)
+```
+
+## Verificando se há sobreposição de pontos
+
+``` r
+chave <- c("year", "longitude", "latitude")
+
+sobreposicao <- inner_join(
+  df_costeiro_mar          |> distinct(across(all_of(chave))),
+  df_costeiro_terra_buffer |> distinct(across(all_of(chave))),
+  by = chave
+)
+nrow(sobreposicao) # 0 = nenhum ponto em comum
 ```
 
 ## Legenda: Aqui, leu o arquivo e contou o número de fileiras após os recortes. Aqui, respondemos: “Depois de todos os filtros, ainda tenho uma quantidade suficiente de dados?” SIM!
@@ -625,6 +641,11 @@ df_costeiro_terra_buffer |>
   st_drop_geometry() |> 
   count(year) |>   # ajuste nome da coluna de data
   arrange(year)
+
+df_costeiro_mar |> 
+  st_drop_geometry() |> 
+  count(year) |>   # ajuste nome da coluna de data
+  arrange(year)
 ```
 
 ## Legenda: Verificar quantas observações existem em cada ano e organiza em ordem crescente, para verificar se algum ano possui poucos dados ou se há anos ausentes.
@@ -632,6 +653,9 @@ df_costeiro_terra_buffer |>
 ``` r
 # Estatística descritiva do XCO2 nessa faixa
 summary(df_costeiro_terra_buffer$xco2)  # ajuste nome da coluna
+
+# Estatística descritiva do XCO2 maritimo
+summary(df_costeiro_mar$xco2)  # ajuste nome da coluna
 ```
 
 ## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
@@ -663,6 +687,19 @@ pois não há Pantanal na zona costeira.
 
 ## Legenda: Nesse ponto, queríamos comparar a distribuição do XCO₂ entre os biomas. Nele, evidenciamos o erro (Pantanal) e o Sistema Costeiro, pois não deve aparecer pontos de Pantanal no Sistema costeiro.
 
+## Vamos juntar os arquivos
+
+``` r
+df_costeiro <- bind_rows(
+  df_costeiro_terra_buffer |> mutate(grupo = "Buffer"),
+  df_costeiro_mar          |> mutate(grupo = "Oceano") |> 
+    select(-name_biome.x) |> 
+    rename(name_biome = name_biome.y)
+) |> 
+  select(-xco2_quality_flag , -path)
+df_costeiro |> glimpse()
+```
+
 ## Durante a segunda junção espacial (st_join), o objeto pontos_brasil já possuía
 
 uma coluna chamada “name_biome”, indicando o bioma em que cada ponto
@@ -675,7 +712,7 @@ enquanto a coluna proveniente da junção passou a se chamar
 “name_biome.y”(Costeiro Terrestre).
 
 ``` r
-df_costeiro_terra_buffer |> 
+df_costeiro |> 
   st_drop_geometry() |> 
   filter(
     year > 2014,
@@ -733,7 +770,7 @@ df_costeiro_terra_buffer |>
 
 ``` r
 mod_trend_xco2 <- lm(xco2 ~ date, 
-          data = df_costeiro_terra_buffer |> 
+          data = df_costeiro |> 
             mutate(
               date = make_date(year, month, day),
               date = as.numeric(date - min(date))
@@ -755,7 +792,7 @@ regressão.
 ## Mostrando o gráfico da regressão
 
 ``` r
-df_costeiro_terra_buffer |>
+df_costeiro |>
   # sample_n(1000) |>
   drop_na() |>
   mutate(
@@ -801,19 +838,18 @@ período analisado.
 ## retirada de tendência Propriamente dita
 
 ``` r
-# a_co2 <- mod_trend_xco2$coefficients[[1]]
-# b_co2 <- mod_trend_xco2$coefficients[[2]]
-# 
-# df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
-#   mutate(
-#     date= make_date(year, month, day),
-#     date_modif = as.numeric(date - min(date)),
-#     xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
-#     delta = xco2_est-xco2, ## estimado menos o observado real
-#     xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
-#   ) |> select(-xco2_quality_flag, -path, -name_biome.y) |> 
-#   rename(name_biome = name_biome.x)
-# write_rds(df_costeiro_terra_buffer, "data/xco2-costeiro-terrestre-buffer.rds")
+a_co2 <- mod_trend_xco2$coefficients[[1]]
+b_co2 <- mod_trend_xco2$coefficients[[2]]
+
+df_costeiro <- df_costeiro |>
+  mutate(
+    date= make_date(year, month, day),
+    date_modif = as.numeric(date - min(date)),
+    xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
+    delta = xco2_est-xco2, ## estimado menos o observado real
+    xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
+  )
+write_rds(df_costeiro, "data/xco2-costeiro.rds")
 ```
 
 ## Legenda:
@@ -828,8 +864,8 @@ após a remoção da tendência regional.
 ### PARTE AMANDA
 
 ``` r
-df_costeiro_terra_buffer <-read_rds("data/xco2-costeiro-terrestre-buffer.rds")
-df_costeiro_terra_buffer |>
+df_costeiro <-read_rds("data/xco2-costeiro.rds")
+df_costeiro |>
   mutate(
     class_latitude = cut(
       latitude,10
@@ -839,7 +875,7 @@ df_costeiro_terra_buffer |>
       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
     ) / 2
   ) |>
-  group_by(year, latitude_media) |>
+  group_by(grupo, year, latitude_media) |>
   summarise(
     xco2 = mean(xco2_detrend, na.rm = TRUE),
     .groups = "drop"
@@ -853,7 +889,8 @@ df_costeiro_terra_buffer |>
     y = "Concentração média de XCO2 (ppm)",
     color = "Ano"
   ) +
-  theme_minimal()
+  theme_minimal() + 
+  facet_wrap(~grupo)
 ```
 
 ## Legenda:
@@ -865,7 +902,7 @@ barras permite comparar a concentração média de XCO₂ entre as diferentes
 latitudes e anos.
 
 ``` r
-df_costeiro_terra_buffer |>
+df_costeiro |>
   mutate(
     class_latitude = cut(
       latitude, 10
@@ -875,7 +912,7 @@ df_costeiro_terra_buffer |>
       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
     ) / 2
   ) |>
-  group_by(year, latitude_media) |>
+  group_by(grupo, year, latitude_media) |>
   summarise(
     xco2 = mean(xco2_detrend, na.rm = TRUE),
     .groups = "drop"
@@ -891,7 +928,8 @@ df_costeiro_terra_buffer |>
     y = "Concentração média de XCO2 (ppm)",
     color = "Ano"
   ) +
-  theme_minimal()
+  theme_minimal()+ 
+  facet_wrap(~grupo, scale="free")
 ```
 
 ## Legenda:
@@ -902,7 +940,7 @@ visualizar e comparar o comportamento espacial do XCO₂ ao longo das
 diferentes latitudes em cada ano.
 
 ``` r
-df_costeiro_terra_buffer |>
+df_costeiro |>
   mutate(
     class_latitude = cut(
       latitude, 115
@@ -912,7 +950,7 @@ df_costeiro_terra_buffer |>
       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
     ) / 2
   ) |>
-  group_by(year, latitude_media) |>
+  group_by(grupo,year, latitude_media) |>
   summarise(
     xco2 = mean(xco2_detrend, na.rm = TRUE),
     .groups = "drop"
@@ -1227,6 +1265,22 @@ df_grupos |>
 ```
 
 ## Legenda: Com os grupos latitudinais definidos, foi possível calcular a anomalia de XCO₂ considerando como referência o comportamento típico de cada grupo. Para cada combinação de mês e grupo, foi calculada a mediana de XCO₂ e, posteriormente, esse valor foi subtraído de cada observação correspondente. As anomalias resultantes foram então agregadas por ano e latitude média, permitindo representar a variação de XCO₂ ao longo da costa em relação ao comportamento de referência de cada região.
+
+## Incorporando, novamente as bases
+
+``` r
+df_grupos <- bind_rows(
+  df_grupos |> mutate(local = "Buffer"),
+  df_costeiro_mar |> 
+    mutate(
+      grupo = 9,
+      local = "Oceano") |> 
+    select(-name_biome.x) |> 
+    rename(name_biome = name_biome.y)
+) |> 
+  select(-xco2_quality_flag , -path)
+df_grupos$grupo |>  unique()
+```
 
 ## A partir daqui, peguei os dados de Manguezais do MapBiomas.
 

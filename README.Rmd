@@ -67,7 +67,7 @@ knitr::opts_chunk$set(
 | `data/xch4-gosat2-costeiro-terrestre-buffer.rds` | ⬇️ [Download](https://drive.google.com/file/d/15djifMr41HJ15tu4XnzQ4rNCXBWc_URw/view?usp=sharing) 
 
     
-    
+# [Preparo Mapas](https://arpanosso.github.io/projeto-agravena/Docs/preparo-mapas.html)    
 
 
 ## Durante a segunda junção espacial (st_join), o objeto pontos_brasil já possuía

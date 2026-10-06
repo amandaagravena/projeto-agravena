@@ -56,6 +56,8 @@ tabelas, o que é ótimo para projetos científicos.
 | `data/xch4-gosat1-costeiro-terrestre-buffer.rds` | ⬇️ [Download](https://drive.google.com/file/d/1RO0AOZebAYy17I0g1NLBce2hjpqnsjXf/view?usp=sharing) |
 | `data/xch4-gosat2-costeiro-terrestre-buffer.rds` | ⬇️ [Download](https://drive.google.com/file/d/15djifMr41HJ15tu4XnzQ4rNCXBWc_URw/view?usp=sharing) |
 
+# [Preparo Mapas](https://arpanosso.github.io/projeto-agravena/Docs/preparo-mapas.html)
+
 ## Durante a segunda junção espacial (st_join), o objeto pontos_brasil já possuía
 
 uma coluna chamada “name_biome”, indicando o bioma em que cada ponto

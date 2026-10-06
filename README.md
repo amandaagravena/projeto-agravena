@@ -41,807 +41,20 @@ tabelas, o que é ótimo para projetos científicos.
   Coorientador — Departamento de Ciências Exatas - FCAV/Unesp\
   Email: <alan.panosso@unesp.br>
 
-## Carregando os pacotes
-
-``` r
-library(tidyverse)
-library(ggpubr)
-library(terra)
-library(geobr)
-library(vegan)
-library(sf)
-library(ggplot2)
-```
-
-## Legenda:
-
-Ao carregar pacotes, carregamos as funções das diferentes bibliotecas.
-
-- tidyverse: coleção de pacotes para ciências de dados. Inclui: dplyr,
-  ggplot2, readr, tibble, string etc.
-- geobr: Baixa mapas oficiais do IBGE, não precisando baixar shapefiles
-  manualmente.
-- sf: Pacote mais importante para os dados espaciais. Permite: ler
-  shapefiles, transformar coordenadas, fazer recortes espaciais e unir
-  polígonos.
-- ggpubr: Facilita gráficos científicos.
-- dplyr: Manipulação de tabelas. Exemplos: filter(), mutate(), select(),
-  summarise().
-- ggplot2: Construção de gráficos.
-
-OBS: não é preciso carregar os que já estão dentro de tidyverse, mas
-carregamos.
-
-## Extrair os shapes da costa brasileira
-
-``` r
-brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
-biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
-```
-
-## Legenda:
-
-- O geobr baixa automaticamente o limite político do Brasil através do
-  read country. Temos que colocar o ano a partir de agora, devido a uma
-  atualização do R.
-
-- através do read biomes, baixamos todos os biomas brasileiros.Eles
-  possuem:nome; geometria;projeção.
-
-## Resumo do objeto `biomes`
-
-``` r
-biomes
-#> Simple feature collection with 7 features and 3 fields
-#> Geometry type: GEOMETRY
-#> Dimension:     XY
-#> Bounding box:  xmin: -73.9829 ymin: -34.95942 xmax: -28.84785 ymax: 7.053767
-#> Geodetic CRS:  SIRGAS 2000
-#> # A tibble: 7 × 4
-#>   code_biome name_biome        year                                     geometry
-#> *      <dbl> <chr>            <dbl>                               <GEOMETRY [°]>
-#> 1          1 Amazônia          2019 MULTIPOLYGON (((-58.94533 -16.30136, -58.94…
-#> 2          2 Caatinga          2019 POLYGON ((-41.74424 -2.806644, -41.75632 -2…
-#> 3          3 Cerrado           2019 POLYGON ((-43.38741 -2.342188, -43.393 -2.3…
-#> 4          4 Mata Atlântica    2019 MULTIPOLYGON (((-48.70747 -28.44828, -48.70…
-#> 5          5 Pampa             2019 POLYGON ((-52.82498 -27.46271, -52.82891 -2…
-#> 6          6 Pantanal          2019 POLYGON ((-57.75659 -15.73327, -57.76628 -1…
-#> 7         NA Sistema Costeiro  2019 POLYGON ((-44.64799 -2.870376, -44.65249 -2…
-```
-
-## Legenda:
-
-Esse comando serve para mostrar o resumo do objeto biomes. Assim,
-podemos conferir se os dados foram carregados corretamente antes de
-seguir a análise. Nele, podemos ver a classe do objeto (sf), número de
-linhas (polígonos), número de colunas, nomes das variáveis e sistema de
-referência das coodenadas (CRS), por exemplo.
-
-## Listando os biomas individuais (distintos)
-
-``` r
-biomes |> distinct(name_biome)
-#> # A tibble: 7 × 1
-#>   name_biome      
-#>   <chr>           
-#> 1 Amazônia        
-#> 2 Caatinga        
-#> 3 Cerrado         
-#> 4 Mata Atlântica  
-#> 5 Pampa           
-#> 6 Pantanal        
-#> 7 Sistema Costeiro
-```
-
-## Legenda:
-
-Esse comando lista apenas os nomes distindos dos biomas, sem repetições.
-Ele serve para verificar quais biomas existem na base de dados do geobr.
-
-## Visualização dos mapas, Brasil e Biomas
-
-``` r
-# Mapa 1 — Contorno do Brasil
-map_country <- ggplot(brasil) +
-  geom_sf(fill = "#2d6a4f", color = "#95d5b2", linewidth = 0.8) +
-  labs(
-    title    = "Brasil",
-    subtitle = "Território Nacional",
-    caption  = "Fonte: IBGE via geobr"
-  ) +
-  theme_void(base_family = "serif") +
-  theme(
-    plot.background  = element_rect(fill = "#0d1b2a", color = NA),
-    panel.background = element_rect(fill = "#0d1b2a", color = NA),
-    plot.title       = element_text(color = "#95d5b2", size = 22, face = "bold",
-                                    hjust = 0.5, margin = margin(t = 16, b = 4)),
-    plot.subtitle    = element_text(color = "#74c69d", size = 13,
-                                    hjust = 0.5, margin = margin(b = 8)),
-    plot.caption     = element_text(color = "#52b788", size = 8,
-                                    hjust = 1, margin = margin(b = 10, r = 12)),
-    plot.margin      = margin(20, 20, 10, 20)
-  )
-
-## Tiramos os itens do Mapa 1, pois não eram úteis para o momento, mas o que ele fazia: Esse bloco possui a finalidade de criar um mapa do contorno do Brasil para visualização, sem alterar nenhum dado. Não analisa nem faz recortes espaciais. Apenas constrói uma figura. 
-
-#Esse bloco possui a finalidade de criar um mapa do contorno do Brasil para visualização, sem alterar nenhum dado. Não analisa nem faz recortes espaciais. Apenas constrói uma figura. 
-
-#map_country <- ggplot(brasil) + aqui, o ggplot() inicia a construção do gráfico utilizando o objeto brasil, que contém o limite territorial do país, armazenando no objeto map_country. 
-
-#A função geom_sf() desenha a geometria do objeto espacial, definindo cores e espessuras de bordas. 
-
-#O theme_void() remove elementos que não são necessários em um mapa, como: eixos; linhas de grade; marcações.
-
-#A função theme() altera o aspecto visual do gráfico.
-
-#Ou seja, esse bloco de código construía uma figura do contorno do Brasil, aplicando uma série de personalizações visuais, como cores, títulos, fonte, fundo e margens.
-
-# Paleta para os biomas
-biome_colors <- c(
-"Amazônia" = "#1b4332", 
-"Cerrado" = "#d4a017", 
-"Mata Atlântica" = "#40916c", 
-"Caatinga" = "#e76f51", 
-"Pampa" = "#a7c957", 
-"Pantanal" = "#4895ef", 
-"Sistema Costeiro" = "#90e0ef"
-  # "Sistema Costeiro-Marinho" = "#90e0ef"
-)
-
-## Legenda: definindo as cores dos biomas.
-
-#A função 'c()' significa combine.Neste caso, ela reúne vários pares de informações:nome do bioma;código da cor.
-#O símbolo '<-' significa atribuir.
-#Ou seja, o R está criando um objeto chamado biome_colors.
-#Esse objeto armazenará a relação entre o nome de cada bioma e sua respectiva cor.
-
-# Mapa 2 — Biomas: 
-
-## Legenda: O bloco constrói o mapa dos biomas brasileiros. A lógica é sempre a mesma: inicia um gráfico, desenha os biomas, define as cores, adiciona título e legenda, ajusta a aparência e exibe o mapa. 
-
-map_biomes <- ggplot(biomes) + ## Legenda: A função ggplot() inicia a construção do gráfico com o objeto biomes, que contém os limites espaciais dos biomas brasileiros, armazenando o gráfico em map_biomes. No momento, o gráfico ainda está vazio, pois apenas foi definido o conjunto de dados que será utilizado. 
-  
-  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
-  scale_fill_manual(
-    values = biome_colors,
-    name   = "Bioma",
-    # na.value = "#555555"
-  ) + ## : A função geom_sf() desenha as geometrias presentes dentro do objeto biomes. Como biomes é um objeto espacial (sf), cada bioma é representado por um polígono no mapa. 
-  
-#Já a função aes(), de estética, informa as características visuais do gráfico associadas aos dados. Nesse caso, fill=name_biome, ou seja, cada bioma será preenchido por uma cor diferente, de acordo com a variável name_biome. 
-  
-#Já os itens: scale_fill_manual = permite definir manualmente as cores utilizadas, o values = biomes_colors utiliza a paleta criada anteriormente. Os demais itens são intuitivos. 
-  
-  labs(
-    title    = "Brazilian Biomes",
-    subtitle = "Distribution of terrestrial and coastal biomes",
-    caption  = "Source: IBGE via geobr"
-  ) + ## Legenda: A função labs() adiciona informações descritivas do gráfico, nesse caso título da figura, subtítulo e fonte dos dados. Essas informações ajudam a identificar o conteúdo do mapa. 
-  
-  theme_void(base_family = "serif") +
-  theme(
-    # plot.background  = element_rect(fill = "#0d1b2a", color = NA),
-    # panel.background = element_rect(fill = "#0d1b2a", color = NA),
-    # plot.title       = element_text(color = "#f4d35e", size = 22, face = "bold",
-    #                                 hjust = 0.5, margin = margin(t = 16, b = 4)),
-    # plot.subtitle    = element_text(color = "#f4a261", size = 11,
-                                    # hjust = 0.5, margin = margin(b = 8)),
-    plot.caption     = element_text(size = 8,
-                                    hjust = 1, margin = margin(b = 10, r = 12)),
-    legend.title     = element_text(color = "#ffffff", size = 10, face = "bold"),
-    legend.text      = element_text(size = 9),
-    legend.position  = "right",
-    plot.margin      = margin(20, 20, 10, 20)
-  )
-
-## Legenda: O theme_void() remove os elementos gráficos que não são úteis para mapas, como eixos, grades e marcações. Já o base_family = "serif" define que os textos utilizarão uma fonte do tipo serifada.Os demais itens definem a estética do gráfico. 
-
-#As linhas de "plot." alteravam o fundo do gráfico e a aparência do título e do subtítulo, porém, não achamos mais necessário. 
-
-# print(map_country)
-print(map_biomes)
-```
-
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-
-``` r
-
-## Legenda: Depois de todas as etapas de construção, o comando print() exibe o mapa os biomas na tela, pois já construímos o objeto "map_biomes". 
-```
-
-## Ler e interpretar os dados em “data-raw”
-
-``` r
-df <- read_rds("data-raw/data-set-xco2-br-002.rds") |> 
-  mutate(year = year - 20)
-
-## Legenda: A função read_rds() lê o arquivo que contém os dados de XCO₂. O conteúdo do arquivo será armazenado em df (dataframe), que será utilizado nas etapas seguintes. 
-
-## Como estamos apenas lendo e corrigindo os dados raw, por enquanto, chamaremos de df. 
-
-## Já a função mutate() é utilizada para modificar colunas de um conjunto de dados. Nesse, ela altera a coluna year, retirando 20 anos, pois notamos pelo nome dos arquivos que esse dado está com esse erro. 
-```
-
-## Resumo do data-set
-
-``` r
-# glimpse(df |> 
-#           filter(xco2_quality_flag == 0))
-```
-
-\##Legenda: Aqui ocorre a inspeção da estrutura do conjunto ed dados
-antes de continuar a análise (glimpse: olhadela).
-
-\#O operador \|\> envia o objeto df para a próxima função, tipo “pegue a
-tabela df e aplique a função seguinte”.
-
-O df é a tabela de dados que foi lida anteriormente. Pegamos ela e
-filtramos xco2_quality_flag = 0 apenas. 0 → dado considerado válido ou
-recomendado para uso.
-
-## Listando os anos individuais (distintos)
-
-``` r
-# df |> distinct(year)
-```
-
-## “Utilize a tabela df na função seguinte.” → distinct() seleciona apenas os valores únicos de uma variável, removendo as repetições. Ou seja, cada ano aparece apenas uma vez. Esse comando é uma forma rápida de verificar quais anos estão presentes na base de dados depois da correção anterior.
-
-## Plotar o shape do brasil e as coordenadas de pontos amostrados dentro do objeto df
-
-``` r
-biomes |> 
-  ggplot() +
-  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
-  scale_fill_manual(
-    values = biome_colors,
-    name   = "Biomes",
-    # na.value = "#555555"
-  ) + theme_minimal() +
-    labs(
-    title    = "XCO2 Across Brazilian Biomes and Coastal Areas",
-    caption  = "Source: IBGE via geobr"
-  ) +
-  theme_void(base_family = "serif") +
-  theme(
-    # plot.background  = element_rect(fill = "#0d1b2a", color = NA),
-    # panel.background = element_rect(fill = "#0d1b2a", color = NA),
-    # plot.title       = element_text(color = "#f4d35e", size = 22, face = "bold",
-    #                                 hjust = 0.5, margin = margin(t = 16, b = 4)),
-    # plot.subtitle    = element_text(color = "#f4a261", size = 11,
-                                    # hjust = 0.5, margin = margin(b = 8)),
-    plot.caption     = element_text(size = 8,
-                                    hjust = 1, margin = margin(b = 10, r = 12)),
-    legend.title     = element_text(color = "#ffffff", size = 10, face = "bold"),
-    legend.text      = element_text(size = 9),
-    legend.position  = "right",
-    plot.margin      = margin(20, 20, 10, 20)
-  ) +
-  geom_point( data = df |> 
-          filter(xco2_quality_flag == 0) |> 
-            slice_sample(n = 1000)
-              , aes(longitude, latitude), color="gray")
-```
-
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
-
-## Legenda:
-
-Esse trecho responde à pergunta: Os pontos amostrados de XCO₂ realmente
-estão localizados sobre o território brasileiro e nos biomas esperados?
-
-------------------------------------------------------------------------
-
-Como? O código cria um mapa dos biomas brasileiros e, sobre esse mapa,
-desenha uma amostra de pontos do conjunto de dados df.
-
-- O objeto biomes contém os limites espaciais dos biomas brasileiros.
-  Ele será utilizado como base para construir o mapa.
-
-- A função ggplot() inicia a construção do gráfico. Como o objeto biomes
-  já foi enviado pelo operador \|\>, ele será a base do mapa.
-
-- A função geom_sf() desenha os polígonos dos biomas. fill = name_biome
-  faz com que cada bioma seja preenchido com uma cor diferente, de
-  acordo com a variável name_biome. Aqui o ggplot2 utiliza a paleta de
-  cores criada anteriormente, definida em biome_colors.
-
-- Agora, utilizamos o conjunto de dados df novamente, mantemos o filtro
-  de quality flag e sorteamos uma amostra de 1000 dados.
-
-- Depois, a função geom_point() adiciona os pontos no mapa.
-
-- Esse tipo de inspeção é uma etapa de controle de qualidade espacial
-  antes de realizar recortes, integrações ou modelagens.O objetivo
-  principal é verificar visualmente se as coordenadas geográficas dos
-  dados estão corretamente posicionadas sobre a área de estudo.
-
-## Transformar o df de XCO2 em objeto espacial (sf)
-
-``` r
-df_sf <- df |>
-  filter(xco2_quality_flag == 0) |>
-  st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
-```
-
-## Legenda:
-
-Até aqui, estávamos trabalhando com uma tabela comum.A partir desse
-ponto, passamos a trabalhar com um objeto espacial, que permite realizar
-operações geográficas, como recortar pela costa brasileira.
-
-## Por que transformar em um objeto espacial?
-
-- Antes desse código, o df é apenas uma tabela.
-- Para o leitor, imaginamos esses números como locais no mapa (latitude
-  e longitude). Já para o R, são apenas colunas numéricas. É justamente
-  isso que st_as_sf() faz.A função st_as_sf() converte uma tabela comum
-  em um objeto espacial. É ela que permite utilizar todas as funções do
-  pacote sf.
-- Depois dele, cada linha da tabela passa a possuir uma geometria. Para
-  isso, a coluna geometry é criada automaticamente.
-- Aqui, será criado um novo objeto, chamado df_sf. O final sf significa
-  simple features. Filtramos de novo os dados de boa qualidade para não
-  repetir dados já descartados.
-- crs = 4326 corresponde ao sistema geográfico WGS 84, que é o padrão
-  utilizado por GPS e pela maioria dos satélites.
-- Quando a geometria é criada, o sf poderia remover as colunas longitude
-  e latitude, pois elas já estariam representadas na coluna geometry.,
-  por isso, remove = false. Elas permanecem ali para análises
-  posteriores.
-
-## Join espacial: associa cada ponto ao bioma em que ele cai (pontos fora do Brasil recebem NA em name_biome)
-
-``` r
-# Transforma os biomas para o mesmo sistema de referência (CRS) do objeto df_sf (WGS84)
-biomes <- st_transform(biomes, crs = 4326)
-brasil <- st_transform(brasil, crs = 4326)
-
-# Realiza a junção espacial entre os pontos de XCO2 e os biomas
-# df_biomas <- st_join(
-#   df_sf,
-#   biomes |>
-#     select(name_biome, geometry)
-# )
-```
-
-## Legenda:
-
-Aqui, fazemos a junção espacial. Até aqui, sabemos a localização de cada
-ponto df_sf (lat e long), e o objeto biomes são os polígonos. O
-st_join() juntará as duas informações. O objetivo desse código é
-associar cada observação de XCO₂ ao bioma em que ela está localizada.
-
-Como?
-
-- Primeiro, o st_transform() altera o sistema crs do bioma e do brasil.
-- Depois, fazemos a junção. O objeto biomes possui várias colunas, mas
-  queremos apenas name_biome e geometry.
-- Já o df_sf são os pontos.
-- Com o join, mesclamos, dando para cada ponto um name_biome e uma
-  localização no polígono.
-
-## Filtrar apenas pontos do Brasil
-
-``` r
-# df_brasil <- df_biomas |> 
-#   filter(!is.na(name_biome))
-# 
-# glimpse(df_brasil)
-```
-
-## Legenda:
-
-- df_brasil \<- cria um novo objeto chamado **df_brasil**, onde será
-  armazenado o resultado do filtro.
-- df_biomas é o conjunto de dados que contém os pontos de XCO₂ e o bioma
-  associado a cada ponto.
-- filter(!is.na(name_biome)) mantém apenas as linhas em que a coluna
-  name_biome possui um valor, ou seja, apenas os pontos que pertencem a
-  algum bioma brasileiro. Os pontos fora do Brasil possuem NA nessa
-  coluna e são removidos.
-- glimpse(df_brasil) mostra um resumo do novo conjunto de dados,
-  permitindo conferir as colunas, seus tipos e algumas informações
-  gerais.
-
-## Salvar os dados na pasta data
-
-``` r
-# write_rds(
-#   df_brasil,
-#   "data/xco2-brasil-biomas.rds"
-# )
-```
-
-\##Lendo o arquivo salvo até aqui
-
-``` r
-df_brasil <- read_rds("data/xco2-brasil-biomas.rds")
-```
-
-``` r
-##Conferir quantos pontos por bioma
-# df_brasil |> 
-#   st_drop_geometry() |> 
-#   count(name_biome, sort = TRUE)
-```
-
-## Legenda: st_drop_geometry() temporariamente remove a coluna geometry, transformando o objeto espacial (sf) em uma tabela comum, pois queremos contar observações. Para contar, usamos a função count(), que contabilizará quantos linhas possuem para cada valor da coluna name_biome.O sort = TRUE faz com que o resultado seja ordenado do maior para o menor.
-
-## A partir daqui, a ideia surgiu da conversa: como vamos ver apenas os locais de possíveis manguezais, sem entrarmos nas 12 milhas de área marítima do Sistema Costeiro?
-
-## Aqui, surgiram duas ideias: Cruzamento com o shape do Brasil (Terra firme) com o shape do Sistema Costeiro ou pegamos os dados do MapBiomas focado em Manguezais e cruzamos com os dados de Sistema costeiro.
-
-## Cruzamento com o shape de terra firme do Brasil
-
-``` r
-costeiro <- biomes |> 
-  filter(name_biome == "Sistema Costeiro")
-ggplot() +
-  geom_sf(data = brasil, fill = "grey95", color = "grey50", linewidth = 0.3) +
-  geom_sf(data = costeiro, fill = "#2c7fb8", color = NA, alpha = 0.6) +
-  labs(
-   title    = "Brazil and Coastal-Marine System (IBGE/geobr)",
-   subtitle = "Coastal zone used as the spatial extent for XCO2 analysis"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    panel.grid = element_blank()
-  )
-```
-
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
-
-## Legenda:
-
-Primeiro, criou-se o objeto “costeiro”, que é o biomes, filtrando apenas
-o Sistema Costeiro.
-
-Em ggplot(), começamos a construção do mapa.
-
-Depois disso, fazemos o desenho do Brasil. A função geom_sf() desenha o
-shapefile do Brasil.
-
-Depois, na segunda camada, preenchemos o sistema costeiro com uma cor,
-também colocamos NA cor em contorno dos polígonos e aplicamos
-transparência com o alpha = 0.6, podendo visualizar o mapa do Brasil por
-baixo.
-
-OBS: - axis.text = element_blank() → remove os números dos eixos. -
-axis.ticks = element_blank() → remove as marcas dos eixos. - panel.grid
-= element_blank() → remove a grade de fundo. \*Como se trata de um mapa
-ilustrativo, esses elementos não são necessários.
-
-## Calcular a interseção geométrica: só a parte do Sistema Costeiro que também é terra (contorno do Brasil) -\> remove a faixa marítima
-
-``` r
-costeiro_terrestre <- st_intersection(costeiro, brasil)
-
-st_crs(costeiro)
-#> Coordinate Reference System:
-#>   User input: EPSG:4674 
-#>   wkt:
-#> GEOGCRS["SIRGAS 2000",
-#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
-#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
-#>             LENGTHUNIT["metre",1]]],
-#>     PRIMEM["Greenwich",0,
-#>         ANGLEUNIT["degree",0.0174532925199433]],
-#>     CS[ellipsoidal,2],
-#>         AXIS["geodetic latitude (Lat)",north,
-#>             ORDER[1],
-#>             ANGLEUNIT["degree",0.0174532925199433]],
-#>         AXIS["geodetic longitude (Lon)",east,
-#>             ORDER[2],
-#>             ANGLEUNIT["degree",0.0174532925199433]],
-#>     USAGE[
-#>         SCOPE["Horizontal component of 3D system."],
-#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
-#>         BBOX[-59.87,-122.19,32.72,-25.28]],
-#>     ID["EPSG",4674]]
-st_crs(brasil)
-#> Coordinate Reference System:
-#>   User input: EPSG:4674 
-#>   wkt:
-#> GEOGCRS["SIRGAS 2000",
-#>     DATUM["Sistema de Referencia Geocentrico para las AmericaS 2000",
-#>         ELLIPSOID["GRS 1980",6378137,298.257222101,
-#>             LENGTHUNIT["metre",1]]],
-#>     PRIMEM["Greenwich",0,
-#>         ANGLEUNIT["degree",0.0174532925199433]],
-#>     CS[ellipsoidal,2],
-#>         AXIS["geodetic latitude (Lat)",north,
-#>             ORDER[1],
-#>             ANGLEUNIT["degree",0.0174532925199433]],
-#>         AXIS["geodetic longitude (Lon)",east,
-#>             ORDER[2],
-#>             ANGLEUNIT["degree",0.0174532925199433]],
-#>     USAGE[
-#>         SCOPE["Horizontal component of 3D system."],
-#>         AREA["Latin America - Central America and South America - onshore and offshore. Brazil - onshore and offshore."],
-#>         BBOX[-59.87,-122.19,32.72,-25.28]],
-#>     ID["EPSG",4674]]
-```
-
-## Legenda: A função st_crs() mostra o CRS (Coordinate Reference System) do objeto.
-
-## Conferir se a geometria resultante faz sentido (plot rápido)
-
-``` r
-plot(st_geometry(costeiro_terrestre))
-```
-
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
-
-``` r
-costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, 0.04)
-plot(
-  st_geometry(costeiro_terrestre_buffer),
-  main = "4 km Buffer Applied to the Terrestrial Portion of the Coastal Zone"
-)
-```
-
-![](README_files/figure-gfm/unnamed-chunk-19-2.png)<!-- -->
-
-``` r
-costeiro_maritimo <- sf::st_difference(costeiro,costeiro_terrestre_buffer)
-plot(st_geometry(costeiro_terrestre_buffer), col = "lightyellow")
-```
-
-![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
-
-``` r
-plot(st_geometry(costeiro), col = "lightgreen")
-```
-
-![](README_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
-
-``` r
-plot(st_geometry(costeiro_maritimo), col = "lightblue")
-```
-
-![](README_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
-
-## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
-
-``` r
-pontos_brasil <- st_as_sf(
-  df_brasil,
-  coords = c("longitude", "latitude"),
-  crs = 4326,
-  remove = FALSE
-)
-```
-
-\##Esse código cria um novo objeto espacial (sf), denominado
-pontos_brasil, a partir do conjunto de dados df_brasil, utilizando as
-colunas de longitude e latitude para representar cada observação como um
-ponto geográfico.
-
-## Filtrar apenas os pontos que caem dentro da faixa costeira terrestre e costeira_maritimo
-
-``` r
-# costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
-# pontos_costeiro_terra <- st_join(pontos_brasil, 
-#                                  costeiro_terrestre  |>
-#                                    mutate(name_biome = "Costeiro Terrestre") |>
-#                                    select(name_biome, geometry))
-
-# pontos_costeiro_terra_buffer <- st_join(pontos_brasil,
-#                                         costeiro_terrestre_buffer  |>
-#                                           mutate(name_biome = "Costeiro Terrestre") |>
-#                                           select(name_biome, geometry))
-# 
-# costeiro_maritimo <- st_set_crs(costeiro_maritimo, 4326)
-# 
-# pontos_costeiro_mar <- st_join(pontos_brasil,
-#                                costeiro_maritimo  |>
-#                                  mutate(name_biome = "Costeiro Marítimo") |>
-#                                  select(name_biome, geometry))
-```
-
-## Legenda: Essa etapa: Quais pontos de XCO₂ estão dentro da faixa costeira terrestre?
-
-- Criou-se um novo objeto, pontos_costeiro_terra, através de uma junção
-  st_join(), que relaciona os pontos_brasil com o polígono
-  costeiro_terrestre, que vem da intersecção st_intersection(costeiro,
-  brasil).
-
-Depois, passou a função mutate() para adicionar o name_biome “Costeiro
-Terrestre” e selecionou com select apenas a coluna name_biome e
-geometry.
-
-## Voltar para data.frame puro, se precisar
-
-``` r
-# df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
-# 
-# df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
-# 
-# df_costeiro_mar <- pontos_costeiro_mar |> filter(name_biome.y ==  "Costeiro Marítimo")  |>  st_drop_geometry()
-```
-
-## Legenda: Essa etapa serve para obter apenas os pontos que pertencem à faixa costeira terrestre e transformá-los novamente em uma tabela comum.
-
-## Verificar se eles formam a linha literânea
-
-``` r
-# df_costeiro_terra |> 
-#   ggplot(aes(longitude, latitude)) +
-#   geom_point()
-# 
-# df_costeiro_terra_buffer |> 
-#   sample_n(1000) |> 
-#   ggplot(aes(longitude, latitude)) +
-#   geom_point()
-
-# df_costeiro_mar |> filter(name_biome.x == "Sistema Costeiro") |>
-#   sample_n(1000) |>
-#   ggplot(aes(longitude, latitude)) +
-#   geom_point(size = .5) +
-#   geom_point(data = df_costeiro_terra_buffer |> sample_n(1000),
-#              aes(longitude, latitude),color = "red",size = .5)
-```
-
-## Salvando na pasta data
-
-``` r
-# write_rds(df_costeiro_terra_buffer,"data/xco2-costeiro-terrestre-buffer.rds")
-# write_rds(df_costeiro_mar,"data/xco2-costeiro-mar.rds")
-```
-
-\##A partir daqui, se inicia a parte de análise de dados que iniciamos.
-
-A sequência é bem lógica:
-
-Quantos dados ficaram após o recorte? Como esses dados estão
-distribuídos no tempo? Como estão distribuídos no espaço? Como se
-comporta o XCO₂? Existem diferenças entre biomas? Existe um padrão
-temporal?
-
-Lembrando, ainda não afunilamos para apenas manguezais, e sim para zona
-costeira terrestre.
-
-## Volume de dados retido
-
-``` r
-df_costeiro_terra_buffer <- read_rds("data/xco2-costeiro-terrestre-buffer.rds")
-nrow(df_costeiro_terra_buffer)
-#> [1] 175818
-
-df_costeiro_mar <- read_rds("data/xco2-costeiro-mar.rds")
-nrow(df_costeiro_mar)
-#> [1] 1409497
-```
-
-## Verificando se há sobreposição de pontos
-
-``` r
-chave <- c("year", "longitude", "latitude")
-
-sobreposicao <- inner_join(
-  df_costeiro_mar          |> distinct(across(all_of(chave))),
-  df_costeiro_terra_buffer |> distinct(across(all_of(chave))),
-  by = chave
-)
-nrow(sobreposicao) # 0 = nenhum ponto em comum
-#> [1] 0
-```
-
-## Legenda: Aqui, leu o arquivo e contou o número de fileiras após os recortes. Aqui, respondemos: “Depois de todos os filtros, ainda tenho uma quantidade suficiente de dados?” SIM!
-
-# Cobertura temporal — quantos pontos por ano/mês
-
-``` r
-df_costeiro_terra_buffer |> 
-  st_drop_geometry() |> 
-  count(year) |>   # ajuste nome da coluna de data
-  arrange(year)
-#>    year     n
-#> 1  2014  4461
-#> 2  2015 13057
-#> 3  2016 11514
-#> 4  2017  9300
-#> 5  2018 12413
-#> 6  2019 13628
-#> 7  2020 24356
-#> 8  2021 29038
-#> 9  2022 20858
-#> 10 2023 20851
-#> 11 2024 16342
-
-df_costeiro_mar |> 
-  st_drop_geometry() |> 
-  count(year) |>   # ajuste nome da coluna de data
-  arrange(year)
-#>    year      n
-#> 1  2014  23051
-#> 2  2015 103217
-#> 3  2016 123517
-#> 4  2017  98841
-#> 5  2018 128376
-#> 6  2019 134176
-#> 7  2020 158773
-#> 8  2021 165201
-#> 9  2022 169947
-#> 10 2023 164612
-#> 11 2024 139786
-```
-
-## Legenda: Verificar quantas observações existem em cada ano e organiza em ordem crescente, para verificar se algum ano possui poucos dados ou se há anos ausentes.
-
-``` r
-# Estatística descritiva do XCO2 nessa faixa
-summary(df_costeiro_terra_buffer$xco2)  # ajuste nome da coluna
-#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#>   390.8   406.2   412.1   411.2   416.0   429.4
-
-# Estatística descritiva do XCO2 maritimo
-summary(df_costeiro_mar$xco2)  # ajuste nome da coluna
-#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#>   390.4   405.2   411.7   410.9   416.2   428.3
-```
-
-## Legenda: O summary() calcula automaticamente: mínimo; primeiro quartil; mediana; média; terceiro quartil; máximo.Assim, verificamos: valores muito altos;
-
-valores muito baixos;possíveis erros.
-
-Nesse ponto, de início, apareceu o bioma Pantanal. O que é estranho,
-pois não há Pantanal na zona costeira.
-
-``` r
-# costeiro <- biomes |> 
-#   filter(name_biome == "Sistema Costeiro")
-# ggplot() +
-#   geom_sf(data = brasil, fill = "grey95", color = "grey50", linewidth = 0.3) +
-#   geom_sf(data = costeiro, fill = "#2c7fb8", color = NA, alpha = 0.6) +
-#   geom_point(data = df_costeiro_terra |> filter(name_biome.x == "Pantanal") |> 
-#   st_drop_geometry(), aes(longitude,latitude), colour = "red") +
-#   labs(
-#     title = "Brasil e Sistema Costeiro-Marinho (IBGE/geobr)",
-#     subtitle = "Faixa costeira usada como recorte para análise de XCO2"
-#   ) +
-#   theme_minimal() +
-#   theme(
-#     axis.text = element_blank(),
-#     axis.ticks = element_blank(),
-#     panel.grid = element_blank()
-#   ) 
-```
-
-## Legenda: Nesse ponto, queríamos comparar a distribuição do XCO₂ entre os biomas. Nele, evidenciamos o erro (Pantanal) e o Sistema Costeiro, pois não deve aparecer pontos de Pantanal no Sistema costeiro.
-
-## Vamos juntar os arquivos
-
-``` r
-df_costeiro <- bind_rows(
-  df_costeiro_terra_buffer |> mutate(grupo = "Buffer"),
-  df_costeiro_mar          |> mutate(grupo = "Oceano") |> 
-    select(-name_biome.x) |> 
-    rename(name_biome = name_biome.y)
-) |> 
-  select(-xco2_quality_flag , -path)
-df_costeiro |> glimpse()
-#> Rows: 1,585,315
-#> Columns: 15
-#> $ longitude      <dbl> -50.43696, -50.43696, -50.42663, -50.42663, -50.44736, …
-#> $ latitude       <dbl> -30.626656, -30.626656, -30.574715, -30.574715, -30.586…
-#> $ time           <dttm> 2034-09-07 14:17:05, 2034-09-07 14:17:05, 2034-09-07 1…
-#> $ xco2           <dbl> 398.7742, 398.7742, 397.2436, 397.2436, 394.5156, 394.5…
-#> $ xco2_incerteza <dbl> 0.5059505, 0.5059505, 0.4166382, 0.4166382, 0.5214518, …
-#> $ year           <dbl> 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2…
-#> $ month          <dbl> 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9…
-#> $ day            <int> 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8…
-#> $ name_biome     <chr> "Pampa", "Sistema Costeiro", "Pampa", "Sistema Costeiro…
-#> $ date           <date> 2014-09-07, 2014-09-07, 2014-09-07, 2014-09-07, 2014-0…
-#> $ date_modif     <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
-#> $ xco2_est       <dbl> 396.8347, 396.8347, 396.8347, 396.8347, 396.8347, 396.8…
-#> $ delta          <dbl> -1.9395539, -1.9395539, -0.4089142, -0.4089142, 2.31911…
-#> $ xco2_detrend   <dbl> 384.4503, 384.4503, 382.9197, 382.9197, 380.1916, 380.1…
-#> $ grupo          <chr> "Buffer", "Buffer", "Buffer", "Buffer", "Buffer", "Buff…
-```
+### 🔗 Links para Download dos dados para processamento:
+
+| Descrição do caminho | Link para Download |
+|:--:|:--:|
+| `data-raw/data-set-xco2-br-002.rds` | ⬇️ [Download](https://drive.google.com/file/d/1uqWGbahdfezYqhgOYzdCfFN6cB6mnCm_/view?usp=drive_link) |
+| `data-raw/df_gosat1_br.rds` | ⬇️ [Download](https://drive.google.com/file/d/1DeSfw9_8bBdmhDuiAJFnRLzoCN3lkKPB/view?usp=sharing) |
+| `data-raw/df_gosat2_br.rds` | ⬇️ [Download](https://drive.google.com/file/d/1-fvAQ4ypDF9Umszgg6OZ7Wz25WBD80h4/view?usp=sharing) |
+| `data/xco2-brasil-biomas.rds` | ⬇️ [Download](https://drive.google.com/file/d/14Gg3c4tDM_GFOiTgKuXStH8Xrh_Bqbku/view?usp=sharing) |
+| `data/xco2-costeiro-terrestre-buffer.rds` | ⬇️ [Download](https://drive.google.com/file/d/11n_b_b-Jto6aV7kGwZxotUuLcG5twk9x/view?usp=sharing) |
+| `data/xco2-costeiro-mar.rds` | ⬇️ [Download](https://drive.google.com/file/d/1fBuds1mJ6PiItguulIavZ0G_k_IsfpIr/view?usp=sharing) |
+| `data/xco2-costeiro.rds` | ⬇️ [Download](https://drive.google.com/file/d/1mUQ0z-UdIrFAS_mXMdnGcNkkIsl8w4dw/view?usp=sharing) |
+| `data/sif-costeiro-terrestre.rds` | ⬇️ [Download](https://drive.google.com/file/d/1c5BOe_qAVX4CVZqvSLB31cnsA74U1HdL/view?usp=sharing) |
+| `data/xch4-gosat1-costeiro-terrestre-buffer.rds` | ⬇️ [Download](https://drive.google.com/file/d/1RO0AOZebAYy17I0g1NLBce2hjpqnsjXf/view?usp=sharing) |
+| `data/xch4-gosat2-costeiro-terrestre-buffer.rds` | ⬇️ [Download](https://drive.google.com/file/d/15djifMr41HJ15tu4XnzQ4rNCXBWc_URw/view?usp=sharing) |
 
 ## Durante a segunda junção espacial (st_join), o objeto pontos_brasil já possuía
 
@@ -874,8 +87,6 @@ df_costeiro |>
   )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
-
 ## Legenda: Boxplot é usado para comparar a distribuição do XCO₂ entre os biomas. Podemos visualizar mediana; quartis; dispersão; outliers. Excluímos Sistema Costeiro, pois não é um bioma de fato.
 
 ``` r
@@ -890,8 +101,6 @@ df_costeiro_terra_buffer |>
   ggplot(aes(x=month, y=xco2, color=name_biome) ) +
   geom_point() + geom_line()
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ## Legenda: Média mensal por bioma, agrupando por bioma e por mês, ou seja, “Qual foi o XCO₂ médio daquele bioma naquele mês?” - Resulta em um gráfico temporal. Buscamos ver se os biomas apresentam comportamento sazonal diferente.
 
@@ -908,8 +117,6 @@ df_costeiro_terra_buffer |>
   ggplot(aes(x=month, y=xco2, color=class_latitude) ) +
   geom_point() + geom_line()
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 ## Legenda: Média mensal por faixa de latitude (20 faixas). Então, calcula a média do XCO₂ para cada faixa de latitude em cada mês. O objetivo é verificar se existe um gradiente latitudinal, ou seja, “O comportamento do XCO₂ muda conforme se avança do sul para o norte do Brasil?”
 
@@ -974,8 +181,6 @@ df_costeiro |>
   ) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ## Legenda:
 
@@ -1044,8 +249,6 @@ df_costeiro |>
   facet_wrap(~grupo)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
-
 ## Legenda:
 
 O código divide as latitudes em 10 faixas e calcula a latitude média de
@@ -1084,8 +287,6 @@ df_costeiro |>
   theme_minimal()+ 
   facet_wrap(~grupo, scale="free")
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 ## Legenda:
 
@@ -1126,8 +327,6 @@ df_costeiro |>
   scale_fill_viridis_d()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
-
 ## Legenda: O código divide os dados em $35$ faixas de latitude e calcula a média do XCO₂ sem tendência para cada faixa. O boxplot permite visualizar a distribuição dos valores de XCO₂ ao longo das latitudes, mostrando a variação dos dados entre as diferentes regiões latitudinais.
 
 ## Análise de cluster da série temporal
@@ -1154,26 +353,6 @@ df_cluster <- df_costeiro_terra_buffer |>
     where(is.numeric), .fns = ~replace_na(.x, mean(.x,na.rm=TRUE))
   ))
 df_cluster
-#> # A tibble: 115 × 120
-#>    latitude_media `2015_1` `2015_10` `2015_11` `2015_12` `2015_2` `2015_3`
-#>             <dbl>    <dbl>     <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
-#>  1          -33.6     380.      383.      383.      383.     381.     381.
-#>  2          -33.2     379.      383.      383.      383.     382.     382.
-#>  3          -32.6     382.      383.      383.      381.     380.     380.
-#>  4          -32.0     379.      383.      384.      383.     381.     381.
-#>  5          -31.6     379.      383.      381.      383.     380.     381.
-#>  6          -31.2     379.      383.      381.      382.     382.     382.
-#>  7          -24.0     382.      383.      383.      383.     382.     382.
-#>  8          -23.0     381.      383.      382.      383.     383.     381.
-#>  9          -22.6     380.      383.      382.      384.     382.     382.
-#> 10          -22.2     382.      382.      386.      383.     382.     382.
-#> # ℹ 105 more rows
-#> # ℹ 113 more variables: `2015_4` <dbl>, `2015_5` <dbl>, `2015_6` <dbl>,
-#> #   `2015_7` <dbl>, `2015_8` <dbl>, `2015_9` <dbl>, `2016_1` <dbl>,
-#> #   `2016_10` <dbl>, `2016_11` <dbl>, `2016_12` <dbl>, `2016_2` <dbl>,
-#> #   `2016_3` <dbl>, `2016_4` <dbl>, `2016_5` <dbl>, `2016_6` <dbl>,
-#> #   `2016_7` <dbl>, `2016_8` <dbl>, `2016_9` <dbl>, `2017_1` <dbl>,
-#> #   `2017_10` <dbl>, `2017_11` <dbl>, `2017_12` <dbl>, `2017_2` <dbl>, …
 ```
 
 ## Legenda: Precisávamos definir grupos de latitude com comportamento temporal semelhante de XCO₂ para, posteriormente, calcular as anomalias dentro desses grupos. Para isso, os dados foram organizados em classes de latitude e agregados mensalmente, considerando o período posterior a 2014. Para cada faixa de latitude e mês, foi calculada a média de XCO₂ com a tendência regional previamente removida (XCO₂ detrend). Em seguida, os dados foram reorganizados em uma matriz, na qual cada linha representava uma faixa de latitude e cada coluna correspondia a um mês da série temporal. Os valores ausentes foram preenchidos pela média da respectiva série para possibilitar a aplicação do agrupamento.
@@ -1190,8 +369,6 @@ corrplot::corrplot(
 )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
-
 ## Legenda: Para avaliar a similaridade temporal entre as diferentes faixas de latitude, foi calculada a matriz de correlação entre as séries mensais de XCO₂. Essa etapa permitiu verificar o grau de associação entre o comportamento temporal das diferentes regiões antes da realização do agrupamento.
 
 ``` r
@@ -1207,11 +384,6 @@ plot(da_pad_euc_ward,
      xlab="Acessos", hang=-1,
      col="blue", las=1,
      cex=.6,lwd=1.5);box()
-```
-
-![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
-
-``` r
 grupo<-cutree(da_pad_euc_ward,4)
 colunas <- df_cluster |> add_column(grupo) |> 
   select(latitude_media,grupo)
@@ -1235,8 +407,6 @@ df_costeiro_terra_buffer |>
   ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
   geom_point()
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
 
 ## Legenda: Após a definição dos grupos pelo agrupamento hierárquico, a classificação obtida para cada faixa de latitude foi associada às observações originais. A distribuição espacial dos grupos foi então visualizada para verificar como as regiões com comportamento temporal semelhante estavam distribuídas ao longo da faixa costeira.
 
@@ -1310,8 +480,6 @@ df_costeiro_terra_buffer |>
     )
   )
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
 ## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
 
@@ -1389,8 +557,6 @@ df_costeiro_terra_buffer |>
   )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
-
 ## Legenda: A partir da distribuição espacial observada no agrupamento, foram estabelecidos limites latitudinais para definir as regiões utilizadas na análise subsequente. Os limites foram ajustados de acordo com a organização espacial dos agrupamentos, resultando em cinco grupos latitudinais. Essa classificação foi utilizada como a divisão regional definitiva para o cálculo das anomalias.
 
 ``` r
@@ -1431,7 +597,6 @@ df_grupos <- bind_rows(
 ) |> 
   select(-xco2_quality_flag , -path)
 df_grupos$grupo |>  unique()
-#> [1] 2 1 4 3 5 9
 ```
 
 ## Legenda: Com os limites dos grupos definidos, a classificação foi incorporada à base de dados original, mantendo as informações espaciais e temporais de cada observação. Dessa forma, foi criada a base que seria utilizada no cálculo das anomalias de XCO₂ dentro de cada grupo.
@@ -1471,14 +636,7 @@ df_grupos |>
   theme_minimal() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-49-1.png)<!-- --> \## Legenda:
-Com os grupos latitudinais definidos, foi possível calcular a anomalia
-de XCO₂ considerando como referência o comportamento típico de cada
-grupo. Para cada combinação de mês e grupo, foi calculada a mediana de
-XCO₂ e, posteriormente, esse valor foi subtraído de cada observação
-correspondente. As anomalias resultantes foram então agregadas por ano e
-latitude média, permitindo representar a variação de XCO₂ ao longo da
-costa em relação ao comportamento de referência de cada região.
+## Legenda: Com os grupos latitudinais definidos, foi possível calcular a anomalia de XCO₂ considerando como referência o comportamento típico de cada grupo. Para cada combinação de mês e grupo, foi calculada a mediana de XCO₂ e, posteriormente, esse valor foi subtraído de cada observação correspondente. As anomalias resultantes foram então agregadas por ano e latitude média, permitindo representar a variação de XCO₂ ao longo da costa em relação ao comportamento de referência de cada região.
 
 ## A partir daqui, peguei os dados de Manguezais do MapBiomas.
 
@@ -1496,22 +654,12 @@ arquivos <- list.files(
 
 ``` r
 arquivos
-#> [1] "data/EarthEngine/manguezais_2018-0000000000-0000000000.tif"
-#> [2] "data/EarthEngine/manguezais_2018-0000000000-0000065536.tif"
-#> [3] "data/EarthEngine/manguezais_2018-0000000000-0000131072.tif"
-#> [4] "data/EarthEngine/manguezais_2018-0000065536-0000000000.tif"
-#> [5] "data/EarthEngine/manguezais_2018-0000065536-0000065536.tif"
-#> [6] "data/EarthEngine/manguezais_2018-0000065536-0000131072.tif"
-#> [7] "data/EarthEngine/manguezais_2018-0000131072-0000000000.tif"
-#> [8] "data/EarthEngine/manguezais_2018-0000131072-0000065536.tif"
-#> [9] "data/EarthEngine/manguezais_2018-0000131072-0000131072.tif"
 ```
 
 ## Ver quantos rasters ele encontra:
 
 ``` r
 length(arquivos)
-#> [1] 9
 ```
 
 ## Criar o objeto mangue
@@ -1697,8 +845,6 @@ df_sif_buffer <- sf::st_buffer(df_sif_costeiro, 0.04)
 plot(st_geometry(df_sif_buffer))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
-
 # Analisando SIF para o Buffer:
 
 ``` r
@@ -1796,18 +942,6 @@ df_sif_buffer <- df_sif_buffer |>
 
 ``` r
 head(df_sif_buffer[, c("daily_sif757", "daily_sif771", "sif_agr")])
-#> Simple feature collection with 6 features and 3 fields
-#> Geometry type: POLYGON
-#> Dimension:     XY
-#> Bounding box:  xmin: -46.34277 ymin: -1.286622 xmax: -46.30048 ymax: -1.049438
-#> Geodetic CRS:  WGS 84
-#>   daily_sif757 daily_sif771    sif_agr                       geometry
-#> 1    0.4052238   0.10527229  0.5631323 POLYGON ((-46.30048 -1.2866...
-#> 2    0.4337406   0.53661442  1.2386622 POLYGON ((-46.31305 -1.2555...
-#> 3    0.3173637   0.31678677  0.7925439 POLYGON ((-46.31201 -1.0991...
-#> 4    0.2432318   0.04988003  0.3180518 POLYGON ((-46.31622 -1.0789...
-#> 5   -0.1346827  -0.01517487 -0.1574450 POLYGON ((-46.31708 -1.0494...
-#> 6    0.2379646  -0.20505142 -0.0696125 POLYGON ((-46.34277 -1.1144...
 ```
 
 ``` r
@@ -1845,8 +979,6 @@ df_sif_buffer |>
   scale_fill_viridis_d()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
-
 ``` r
 df_sif_buffer |> 
   sample_n(10000) |> 
@@ -1865,8 +997,6 @@ df_sif_buffer |>
   ggplot(aes(longitude, latitude, color = sif_agr)) +
   geom_point()
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
 
 ## Análise de cluster da série temporal
 
@@ -1902,8 +1032,6 @@ mc_sif <- cor(df_cluster_sif |> select(-latitude_media))
 corrplot::corrplot(mc_sif)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-80-1.png)<!-- -->
-
 ``` r
 da_pad<-decostand(df_cluster_sif |> select(-latitude_media), 
                   method = "standardize",
@@ -1916,11 +1044,6 @@ plot(da_pad_euc_ward,
      xlab="Acessos", hang=-1,
      col="blue", las=1,
      cex=.6,lwd=1.5);box()
-```
-
-![](README_files/figure-gfm/unnamed-chunk-81-1.png)<!-- -->
-
-``` r
 grupo<-cutree(da_pad_euc_ward,2)
 colunas <- df_cluster_sif |> add_column(grupo) |> 
   select(latitude_media,grupo)
@@ -1943,8 +1066,6 @@ df_sif_buffer |>
   ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
   geom_point()
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-82-1.png)<!-- -->
 
 ``` r
 # Basemap do Brasil (uma vez só, fora do pipe principal)
@@ -1987,8 +1108,6 @@ df_sif_buffer |>
   ) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-83-1.png)<!-- -->
 
 ## Legenda: Para facilitar a interpretação espacial dos agrupamentos, os grupos foram representados sobre o mapa do Brasil, permitindo visualizar sua distribuição ao longo da região costeira e verificar a coerência espacial dos agrupamentos definidos a partir das séries temporais.
 
@@ -2049,7 +1168,6 @@ df_sif_buffer |>
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-84-1.png)<!-- -->
 \<\<\<\<\<\<\< HEAD \#Essa etapa replica, para o XCH<sub>4</sub>
 (metano) medido pelo GOSAT-1 (e, na sequência, GOSAT-2), o mesmo
 pipeline de análise construído para o XCO<sub>2</sub>/OCO-2-3 no
@@ -2065,41 +1183,13 @@ variável de interesse (`xco2` -\> `xch4`) e a fonte de dados.
 ``` r
 df_gosat1 <- read_rds("data-raw/df_gosat1_br.rds")
 glimpse(df_gosat1)
-#> Rows: 92,302
-#> Columns: 11
-#> $ latitude  <dbl> -11.99342, -11.99135, -11.98562, -4.14557, -18.46369, -19.74…
-#> $ longitude <dbl> -53.28216, -53.28276, -53.28263, -33.19255, -36.39090, -36.6…
-#> $ height    <dbl> 304, 303, 304, 0, 0, 0, 0, 0, 0, 0, 0, 197, 196, 831, 826, 1…
-#> $ time      <chr> "2015-02-01 16:04:16.543", "2015-02-01 16:04:21.066", "2015-…
-#> $ date      <date> 2015-02-01, 2015-02-01, 2015-02-01, 2015-02-02, 2015-02-02,…
-#> $ year      <dbl> 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, …
-#> $ month     <dbl> 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, …
-#> $ day       <int> 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, …
-#> $ xch4      <dbl> 1.806782, 1.787975, 1.792623, 1.789745, 1.774158, 1.776228, …
-#> $ xco2      <dbl> 395.9766, 393.5092, 395.0066, 393.0119, 388.7304, 391.7210, …
-#> $ h2o       <dbl> 6345.907, 6339.775, 6370.612, 6443.303, 4297.979, 3871.684, …
 names(df_gosat1)
-#>  [1] "latitude"  "longitude" "height"    "time"      "date"      "year"     
-#>  [7] "month"     "day"       "xch4"      "xco2"      "h2o"
 ```
 
 ## Conferir os anos e a cobertura temporal disponíveis
 
 ``` r
 df_gosat1 |> distinct(year) |> arrange(year)
-#>    year
-#> 1  2015
-#> 2  2016
-#> 3  2017
-#> 4  2018
-#> 5  2019
-#> 6  2020
-#> 7  2021
-#> 8  2022
-#> 9  2023
-#> 10 2024
-#> 11 2025
-#> 12 2026
 ```
 
 ## Plotar o shape do Brasil e os pontos amostrados de XCH4
@@ -2126,8 +1216,6 @@ biomes |>
     aes(longitude, latitude), color = "gray"
   )
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-87-1.png)<!-- -->
 
 ## Legenda: Controle de qualidade espacial — checar visualmente se os pontos do GOSAT-1 caem sobre o território brasileiro e nos biomas esperados, exatamente como fizemos para o XCO2.
 
@@ -2157,21 +1245,6 @@ df_gosat1_brasil <- df_gosat1_biomas |>
   filter(!is.na(name_biome))
 
 glimpse(df_gosat1_brasil)
-#> Rows: 35,907
-#> Columns: 13
-#> $ latitude   <dbl> -11.993422, -11.991345, -11.985618, -4.145570, -18.463694, …
-#> $ longitude  <dbl> -53.28216, -53.28276, -53.28263, -33.19255, -36.39090, -36.…
-#> $ height     <dbl> 304, 303, 304, 0, 0, 0, 831, 826, 101, 261, 84, 0, 0, 0, 0,…
-#> $ time       <chr> "2015-02-01 16:04:16.543", "2015-02-01 16:04:21.066", "2015…
-#> $ date       <date> 2015-02-01, 2015-02-01, 2015-02-01, 2015-02-02, 2015-02-02…
-#> $ year       <dbl> 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2015,…
-#> $ month      <dbl> 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,…
-#> $ day        <int> 1, 1, 1, 2, 2, 2, 3, 3, 3, 6, 6, 8, 8, 8, 8, 8, 9, 9, 9, 9,…
-#> $ xch4       <dbl> 1.806782, 1.787975, 1.792623, 1.789745, 1.774158, 1.776228,…
-#> $ xco2       <dbl> 395.9766, 393.5092, 395.0066, 393.0119, 388.7304, 391.7210,…
-#> $ h2o        <dbl> 6345.907, 6339.775, 6370.612, 6443.303, 4297.979, 3871.684,…
-#> $ name_biome <chr> "Amazônia", "Amazônia", "Amazônia", "Sistema Costeiro", "Si…
-#> $ geometry   <POINT [°]> POINT (-53.28216 -11.99342), POINT (-53.28276 -11.991…
 ```
 
 ## Legenda: Como o arquivo já vem recortado para o Brasil, esperamos que praticamente todos os pontos sejam mantidos aqui — esse filtro é mais uma checagem de sanidade do que um recorte de fato.
@@ -2214,10 +1287,6 @@ df_gosat1_costeiro_buffer <- pontos_gosat1_costeiro_buffer |>
 ``` r
 df_gosat1_costeiro_buffer |>
   count(name_biome)
-#>       name_biome   n
-#> 1       Amazônia  12
-#> 2 Mata Atlântica 861
-#> 3          Pampa   9
 ```
 
 ## Salvar os dados recortados
@@ -2234,14 +1303,9 @@ df_gosat1_costeiro_buffer <- read_rds(
 )
 
 nrow(df_gosat1_costeiro_buffer)
-#> [1] 882
 
 df_gosat1_costeiro_buffer |>
   count(name_biome)
-#>       name_biome   n
-#> 1       Amazônia  12
-#> 2 Mata Atlântica 861
-#> 3          Pampa   9
 ```
 
 ## Cobertura temporal — quantos pontos por ano
@@ -2250,27 +1314,12 @@ df_gosat1_costeiro_buffer |>
 df_gosat1_costeiro_buffer |>
   count(year) |>
   arrange(year)
-#>    year   n
-#> 1  2015  46
-#> 2  2016  67
-#> 3  2017  53
-#> 4  2018  37
-#> 5  2019  89
-#> 6  2020 104
-#> 7  2021  92
-#> 8  2022  85
-#> 9  2023  86
-#> 10 2024 135
-#> 11 2025  81
-#> 12 2026   7
 ```
 
 ## Estatística descritiva do XCH4 na faixa costeira
 
 ``` r
 summary(df_gosat1_costeiro_buffer$xch4)
-#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#>   1.756   1.824   1.857   1.855   1.888   1.946
 ```
 
 ## Distribuição do XCH4 entre biomas (escolher um ano com boa cobertura, com base na checagem de anos feita acima)
@@ -2281,8 +1330,6 @@ df_gosat1_costeiro_buffer |>
   geom_boxplot() +
   theme_minimal()
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-98-1.png)<!-- -->
 
 ## Média mensal de XCH4 por faixa de latitude
 
@@ -2296,9 +1343,7 @@ df_gosat1_costeiro_buffer |>
   geom_point() + geom_line()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-99-1.png)<!-- --> \## Legenda:
-Mesma pergunta feita para o XCO2 — existe um gradiente latitudinal no
-comportamento sazonal do XCH4 ao longo da costa?
+## Legenda: Mesma pergunta feita para o XCO2 — existe um gradiente latitudinal no comportamento sazonal do XCH4 ao longo da costa?
 
 ## Análise de regressão linear simples para caracterizar a tendência regional
 
@@ -2313,25 +1358,6 @@ mod_trend_xch4 <- lm(
 
 sm <- summary.lm(mod_trend_xch4)
 sm
-#> 
-#> Call:
-#> lm(formula = xch4 ~ date, data = mutate(df_gosat1_costeiro_buffer, 
-#>     date = as.numeric(date - min(date))))
-#> 
-#> Residuals:
-#>       Min        1Q    Median        3Q       Max 
-#> -0.058355 -0.013025  0.000535  0.013245  0.064312 
-#> 
-#> Coefficients:
-#>              Estimate Std. Error t value Pr(>|t|)    
-#> (Intercept) 1.787e+00  1.492e-03 1197.88   <2e-16 ***
-#> date        3.002e-05  5.895e-07   50.92   <2e-16 ***
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-#> 
-#> Residual standard error: 0.01927 on 880 degrees of freedom
-#> Multiple R-squared:  0.7466, Adjusted R-squared:  0.7464 
-#> F-statistic:  2593 on 1 and 880 DF,  p-value: < 2.2e-16
 ```
 
 ## Gráfico da regressão (tendência temporal do XCH4)
@@ -2349,8 +1375,6 @@ df_gosat1_costeiro_buffer |>
   labs(x = "Data", y = expression(paste(X[CH4], " (ppb)"))) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y")
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-101-1.png)<!-- -->
 
 ## Legenda: Atenção à unidade — XCH4 costuma ser reportado em ppb (partes por bilhão), diferente do XCO2 que é em ppm. Ajustem o rótulo do eixo se a unidade do arquivo for outra.
 
@@ -2403,11 +1427,6 @@ df_gosat1_grupos <- df_gosat1_costeiro_buffer |>
 df_gosat1_grupos |>
   count(grupo) |>
   arrange(grupo)
-#>   grupo   n
-#> 1     1  12
-#> 2     3  35
-#> 3     4 712
-#> 4     5 123
 ```
 
 ## Rodar anomalia
@@ -2426,15 +1445,6 @@ df_anomalias_ch4 <- df_gosat1_grupos |>
 df_anomalias_ch4 |>
   select(year, month, latitude, grupo, xch4_detrend, mediana_xch4, anomalia) |>
   head()
-#> # A tibble: 6 × 7
-#>    year month latitude grupo xch4_detrend mediana_xch4 anomalia
-#>   <dbl> <dbl>    <dbl> <dbl>        <dbl>        <dbl>    <dbl>
-#> 1  2015     2    -22.9     4         1.73         1.75 -0.0168 
-#> 2  2015     2    -26.2     4         1.77         1.75  0.0168 
-#> 3  2015     3    -25.9     4         1.72         1.73 -0.00662
-#> 4  2015     3    -26.2     4         1.73         1.73  0.00662
-#> 5  2015     4    -29.0     5         1.71         1.71  0      
-#> 6  2015     4    -22.9     4         1.73         1.73  0
 ```
 
 ``` r
@@ -2448,19 +1458,12 @@ df_anomalias_ch4 <- df_anomalias_ch4 |>
 
 ``` r
 glimpse(df_anomalias_ch4)
-#> Rows: 76
-#> Columns: 4
-#> $ year           <dbl> 2015, 2015, 2015, 2015, 2015, 2015, 2015, 2016, 2016, 2…
-#> $ latitude_media <dbl> -31.8500, -29.0000, -26.1500, -25.8500, -25.6000, -22.7…
-#> $ grupo          <dbl> 5, 5, 4, 4, 4, 4, 1, 5, 4, 4, 4, 4, 4, 1, 5, 4, 4, 4, 4…
-#> $ anom           <dbl> 1.057731e-02, -1.322163e-03, 3.072951e-03, -1.325365e-0…
 ```
 
 ## Testando gráfico 1:
 
 ``` r
 names(df_anomalias_ch4)
-#> [1] "year"           "latitude_media" "grupo"          "anom"
 ```
 
 ``` r
@@ -2481,19 +1484,10 @@ ggplot(
   theme_classic()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-110-1.png)<!-- -->
-
 ``` r
 df_anomalias_ch4 |>
   count(grupo) |>
   arrange(grupo)
-#> # A tibble: 4 × 2
-#>   grupo     n
-#>   <dbl> <int>
-#> 1     1     3
-#> 2     3     6
-#> 3     4    50
-#> 4     5    17
 ```
 
 ## REPRODUÇÃO PARA GOSAT 2
@@ -2502,21 +1496,7 @@ df_anomalias_ch4 |>
 df_gosat2 <- read_rds("data-raw/df_gosat2_br.rds")
 
 glimpse(df_gosat2)
-#> Rows: 21,585
-#> Columns: 10
-#> $ latitude  <dbl> -1.786000, -6.056003, -15.973621, -17.468662, -19.032803, -3…
-#> $ longitude <dbl> -41.30400, -42.18088, -44.59983, -44.62923, -44.39851, -49.6…
-#> $ height    <dbl> 0.0000, 235.0142, 658.5041, 540.9784, 761.8316, 0.0000, 0.00…
-#> $ date      <date> 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01,…
-#> $ year      <dbl> 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, …
-#> $ month     <dbl> 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, …
-#> $ day       <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
-#> $ xco2      <dbl> 399.1213, 406.4696, 410.6140, 406.5443, 407.8338, 409.6601, …
-#> $ xch4      <dbl> 1.811561, 1.838640, 1.843810, 1.834588, 1.828708, 1.798668, …
-#> $ xh2o      <dbl> 8234.3506, 8001.9019, 6336.1846, 7165.0688, 7060.9341, 3940.…
 names(df_gosat2)
-#>  [1] "latitude"  "longitude" "height"    "date"      "year"      "month"    
-#>  [7] "day"       "xco2"      "xch4"      "xh2o"
 ```
 
 ``` r
@@ -2525,25 +1505,16 @@ names(df_gosat2)
 df_gosat2 |>
   distinct(year) |>
   arrange(year)
-#>   year
-#> 1 2019
-#> 2 2020
-#> 3 2021
-#> 4 2022
-#> 5 2023
-#> 6 2024
 ```
 
 ``` r
 ## Conferir as datas
 
 range(df_gosat2$date, na.rm = TRUE)
-#> [1] "2019-03-01" "2024-12-31"
 ```
 
 ``` r
 range(df_gosat2$date, na.rm = TRUE)
-#> [1] "2019-03-01" "2024-12-31"
 ```
 
 ``` r
@@ -2570,8 +1541,6 @@ biomes |>
   )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-116-1.png)<!-- -->
-
 ``` r
 df_gosat2_sf <- df_gosat2 |>
   st_as_sf(
@@ -2596,20 +1565,6 @@ df_gosat2_brasil <- df_gosat2_biomas |>
   filter(!is.na(name_biome))
 
 glimpse(df_gosat2_brasil)
-#> Rows: 10,148
-#> Columns: 12
-#> $ latitude   <dbl> -1.786000, -6.056003, -15.973621, -17.468662, -19.032803, -…
-#> $ longitude  <dbl> -41.30400, -42.18088, -44.59983, -44.62923, -44.39851, -49.…
-#> $ height     <dbl> 0.0000000, 235.0141602, 658.5040894, 540.9783936, 761.83160…
-#> $ date       <date> 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01, 2019-03-01…
-#> $ year       <dbl> 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2019,…
-#> $ month      <dbl> 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,…
-#> $ day        <int> 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3,…
-#> $ xco2       <dbl> 399.1213, 406.4696, 410.6140, 406.5443, 407.8338, 409.6601,…
-#> $ xch4       <dbl> 1.811561, 1.838640, 1.843810, 1.834588, 1.828708, 1.798668,…
-#> $ xh2o       <dbl> 8234.351, 8001.902, 6336.185, 7165.069, 7060.934, 3940.076,…
-#> $ name_biome <chr> "Sistema Costeiro", "Cerrado", "Caatinga", "Cerrado", "Cerr…
-#> $ geometry   <POINT [°]> POINT (-41.304 -1.786), POINT (-42.18088 -6.056003), …
 ```
 
 ``` r
@@ -2670,17 +1625,10 @@ df_gosat2_costeiro_buffer <- pontos_gosat2_costeiro_buffer |>
 ``` r
 df_gosat2_costeiro_buffer |>
   count(name_biome.y)
-#>     name_biome.y   n
-#> 1       Amazônia 107
-#> 2       Caatinga  37
-#> 3        Cerrado  66
-#> 4 Mata Atlântica  16
-#> 5          Pampa   2
 ```
 
 ``` r
 nrow(df_gosat2_costeiro_buffer)
-#> [1] 228
 ```
 
 ``` r
@@ -2699,26 +1647,12 @@ df_gosat2_costeiro_buffer <- read_rds(
 ``` r
 df_gosat2_costeiro_buffer |>
   count(name_biome.y)
-#>     name_biome.y   n
-#> 1       Amazônia 107
-#> 2       Caatinga  37
-#> 3        Cerrado  66
-#> 4 Mata Atlântica  16
-#> 5          Pampa   2
 
 nrow(df_gosat2_costeiro_buffer)
-#> [1] 228
 
 df_gosat2_costeiro_buffer |>
   count(year) |>
   arrange(year)
-#>   year  n
-#> 1 2019 38
-#> 2 2020 55
-#> 3 2021 19
-#> 4 2022 31
-#> 5 2023 33
-#> 6 2024 52
 ```
 
 ``` r
@@ -2733,8 +1667,6 @@ df_gosat2_costeiro_buffer |>
   theme_classic()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-131-1.png)<!-- -->
-
 ``` r
 df_gosat2_costeiro_buffer |>
   ggplot(aes(x = name_biome.y, y = xch4, fill = name_biome.y)) +
@@ -2742,14 +1674,10 @@ df_gosat2_costeiro_buffer |>
   theme_minimal()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-132-1.png)<!-- -->
-
 ``` r
 ## Estatística descritiva do XCH4 na faixa costeira
 
 summary(df_gosat2_costeiro_buffer$xch4)
-#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#>   1.806   1.845   1.865   1.867   1.892   1.922
 ```
 
 ``` r
@@ -2768,8 +1696,6 @@ df_gosat2_costeiro_buffer |>
   geom_line()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-134-1.png)<!-- -->
-
 ``` r
 ## Análise de regressão linear simples para caracterizar a tendência regional
 
@@ -2783,25 +1709,6 @@ mod_trend_xch4_gosat2 <- lm(
 
 sm <- summary.lm(mod_trend_xch4_gosat2)
 sm
-#> 
-#> Call:
-#> lm(formula = xch4 ~ date, data = mutate(df_gosat2_costeiro_buffer, 
-#>     date = as.numeric(date - min(date))))
-#> 
-#> Residuals:
-#>       Min        1Q    Median        3Q       Max 
-#> -0.042632 -0.005146  0.002191  0.007281  0.028931 
-#> 
-#> Coefficients:
-#>              Estimate Std. Error t value Pr(>|t|)    
-#> (Intercept) 1.828e+00  1.506e-03 1214.22   <2e-16 ***
-#> date        3.526e-05  1.159e-06   30.43   <2e-16 ***
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-#> 
-#> Residual standard error: 0.01188 on 226 degrees of freedom
-#> Multiple R-squared:  0.8039, Adjusted R-squared:  0.803 
-#> F-statistic: 926.3 on 1 and 226 DF,  p-value: < 2.2e-16
 ```
 
 ``` r
@@ -2830,8 +1737,6 @@ df_gosat2_costeiro_buffer |>
     date_labels = "%Y"
   )
 ```
-
-![](README_files/figure-gfm/unnamed-chunk-136-1.png)<!-- -->
 
 ``` r
 ## Retirada de tendência (detrend)
@@ -2893,12 +1798,6 @@ df_gosat2_grupos <- df_gosat2_costeiro_buffer |>
 df_gosat2_grupos |>
   count(grupo) |>
   arrange(grupo)
-#>   grupo   n
-#> 1     1   6
-#> 2     2 205
-#> 3     3  11
-#> 4     4   4
-#> 5     5   2
 ```
 
 ``` r
@@ -2926,15 +1825,6 @@ df_anomalias_ch4_gosat2 |>
     anomalia
   ) |>
   head()
-#> # A tibble: 6 × 7
-#>    year month latitude grupo xch4_detrend mediana_xch4 anomalia
-#>   <dbl> <dbl>    <dbl> <dbl>        <dbl>        <dbl>    <dbl>
-#> 1  2019     3   -33.0      5         1.78         1.78  0      
-#> 2  2019     3   -33.0      5         1.78         1.78  0      
-#> 3  2019     4   -10.0      2         1.79         1.80 -0.00787
-#> 4  2019     4    -4.51     2         1.81         1.80  0.00787
-#> 5  2019     5    -4.53     2         1.81         1.81  0      
-#> 6  2019     6    -2.78     2         1.79         1.79  0
 ```
 
 ``` r
@@ -2952,26 +1842,12 @@ df_anomalias_ch4_gosat2 <- df_anomalias_ch4_gosat2 |>
 
 ``` r
 glimpse(df_anomalias_ch4_gosat2)
-#> Rows: 53
-#> Columns: 4
-#> $ year           <dbl> 2019, 2019, 2019, 2019, 2019, 2019, 2019, 2020, 2020, 2…
-#> $ latitude_media <dbl> -32.8000, -14.8000, -10.0150, -4.5300, -3.2500, -2.9300…
-#> $ grupo          <dbl> 5, 3, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 2, 2…
-#> $ anom           <dbl> 0.000000e+00, 0.000000e+00, -7.866436e-03, 4.765842e-04…
 ```
 
 ``` r
 df_anomalias_ch4_gosat2 |>
   count(grupo) |>
   arrange(grupo)
-#> # A tibble: 5 × 2
-#>   grupo     n
-#>   <dbl> <int>
-#> 1     1     2
-#> 2     2    38
-#> 3     3    10
-#> 4     4     2
-#> 5     5     1
 ```
 
 ``` r

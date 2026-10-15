@@ -371,7 +371,7 @@ st_crs(brasil)
 
 ```{r}
 plot(st_geometry(costeiro_terrestre))
-costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, 0.04)
+costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, dist = 5e3)
 plot(
   st_geometry(costeiro_terrestre_buffer),
   main = "4 km Buffer Applied to the Terrestrial Portion of the Coastal Zone"

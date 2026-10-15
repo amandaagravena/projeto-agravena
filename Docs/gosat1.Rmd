@@ -13,10 +13,23 @@ knitr::opts_chunk$set(
 )
 ```
 
+
+## Carregando os pacotes
+```{r}
+##Carregar pacote para ter funções das diferentes bibliotecas. 
+library(tidyverse) ##coleção de pacotes para ciências de dados. Inclui: dplyr, ggplot2, readr, tibble, string etc.
+library(ggpubr) 
+library(terra)
+library(geobr) ##baixa mapas oficiais do IBGE, não precisando baixar shapefiles manualmente. - sf: Pacote mais importante para os dados espaciais. Permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(vegan)
+library(sf) ##permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(ggplot2) ##construção de gráficos. 
+```
+
 ## Iniciando Gosat 1:
 
 ```{r}
-df_gosat1 <- read_rds("data-raw/df_gosat1_br.rds")
+df_gosat1 <- read_rds("../data-raw/df_gosat1_br.rds")
 glimpse(df_gosat1)
 names(df_gosat1)
 
@@ -33,6 +46,8 @@ df_gosat1 |> distinct(year) |> arrange(year)
 ## Plotar o shape do Brasil e os pontos amostrados de XCH4
 
 ```{r}
+brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
+biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 biomes |>
   ggplot() +
   geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
@@ -131,14 +146,14 @@ df_gosat1_costeiro_buffer |>
 ## Salvar os dados recortados
 
 ```{r}
-write_rds(df_gosat1_costeiro_buffer, "data/xch4-gosat1-costeiro-terrestre-buffer.rds")
+write_rds(df_gosat1_costeiro_buffer, "../data/xch4-gosat1-costeiro-terrestre-buffer.rds")
 ```
 
 ## Volume de dados retido
 
 ```{r}
 df_gosat1_costeiro_buffer <- read_rds(
-  "data/xch4-gosat1-costeiro-terrestre-buffer.rds"
+  "../data/xch4-gosat1-costeiro-terrestre-buffer.rds"
 )
 
 nrow(df_gosat1_costeiro_buffer)
@@ -231,7 +246,7 @@ df_gosat1_costeiro_buffer <- df_gosat1_costeiro_buffer |>
     xch4_detrend = (a_ch4 - delta) - (mean(xch4, na.rm = TRUE) - a_ch4)
   )
 
-write_rds(df_gosat1_costeiro_buffer, "data/xch4-gosat1-costeiro-terrestre-buffer.rds")
+write_rds(df_gosat1_costeiro_buffer, "../data/xch4-gosat1-costeiro-terrestre-buffer.rds")
 ```
 
 ## Criar as faixas de latitude e aplicar os 5 grupos definidos pelo XCO₂
@@ -315,7 +330,7 @@ ggplot(
 ) +
   geom_point(alpha = 0.6) +
   labs(
-    x = "Anomalia de XCH₄",
+    x = "Anomalia de XCH4",
     y = "Latitude",
     colour = "Grupo"
   ) +
@@ -327,3 +342,16 @@ df_anomalias_ch4 |>
   count(grupo) |>
   arrange(grupo)
 ```
+
+## Mapa dos pontos e grupos
+
+```{r}
+biomes |>
+  ggplot() +
+  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
+  geom_point(data=df_gosat1_costeiro_buffer, aes(longitude, latitude),color="gray" )
+```
+
+
+
+

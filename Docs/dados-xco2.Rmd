@@ -15,7 +15,29 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Carregando os pacotes
+```{r}
+##Carregar pacote para ter funções das diferentes bibliotecas. 
+library(tidyverse) ##coleção de pacotes para ciências de dados. Inclui: dplyr, ggplot2, readr, tibble, string etc.
+library(ggpubr) 
+library(terra)
+library(geobr) ##baixa mapas oficiais do IBGE, não precisando baixar shapefiles manualmente. - sf: Pacote mais importante para os dados espaciais. Permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(vegan)
+library(sf) ##permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(ggplot2) ##construção de gráficos. 
+```
 
+## Extrair os shapes da costa brasileira
+
+```{r}
+brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
+biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
+
+## - O geobr baixa automaticamente o limite político do Brasil através do read country. Temos que colocar o ano a partir de agora, devido a uma atualização do R. 
+
+## - através do read biomes, baixamos todos os biomas brasileiros.Eles possuem:nome; geometria;projeção.
+
+```
 ```{r}
 df_costeiro |> 
   st_drop_geometry() |> 

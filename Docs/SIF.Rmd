@@ -13,6 +13,18 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Carregando os pacotes
+```{r}
+##Carregar pacote para ter funções das diferentes bibliotecas. 
+library(tidyverse) ##coleção de pacotes para ciências de dados. Inclui: dplyr, ggplot2, readr, tibble, string etc.
+library(ggpubr) 
+library(terra)
+library(geobr) ##baixa mapas oficiais do IBGE, não precisando baixar shapefiles manualmente. - sf: Pacote mais importante para os dados espaciais. Permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(vegan)
+library(sf) ##permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(ggplot2) ##construção de gráficos. 
+```
+
 # Iniciando a parte do SIF
 
 ```{r}
@@ -106,22 +118,21 @@ knitr::opts_chunk$set(
 # Salvando: 
 
 ```{r}
-# write_rds(df_sif_costeiro, "data/sif-costeiro-terrestre.rds")
+#write_rds(df_sif_costeiro, "../data/sif-costeiro-terrestre.rds")
 ```
 
 # Buffer para SIF
 
 ```{r}
 df_sif_costeiro <- read_rds("../data/sif-costeiro-terrestre.rds")
-df_sif_buffer <- sf::st_buffer(df_sif_costeiro, 0.04)
+
+df_sif_buffer <- df_sif_costeiro |>
+  sf::st_transform(5880) |>
+  sf::st_buffer(dist = 5000)
 ```
 
-# Conferir: 
 
 ```{r}
-plot(st_geometry(df_sif_buffer))
-```
-
 # Analisando SIF para o Buffer: 
 
 ```{r}

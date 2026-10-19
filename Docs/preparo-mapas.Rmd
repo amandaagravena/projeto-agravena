@@ -217,8 +217,6 @@ biomes |>
 
 #Esse trecho responde à pergunta: Os pontos amostrados de XCO₂ realmente estão localizados sobre o território brasileiro e nos biomas esperados?
 
--------
-
 #Como? O código cria um mapa dos biomas brasileiros e, sobre esse mapa, desenha uma amostra de pontos do conjunto de dados df.
 
 #- O objeto biomes contém os limites espaciais dos biomas brasileiros. Ele será utilizado como base para construir o mapa.
@@ -463,8 +461,8 @@ pontos_brasil <- st_as_sf(
 ## Salvando na pasta data
 
 ```{r}
-# write_rds(df_costeiro_terra_buffer,"data/xco2-costeiro-terrestre-buffer.rds")
-# write_rds(df_costeiro_mar,"data/xco2-costeiro-mar.rds")
+write_rds(df_costeiro_terra_buffer,"../data/xco2-costeiro-terrestre-buffer.rds")
+write_rds(df_costeiro_mar,"../data/xco2-costeiro-mar.rds")
 ```
 
 ##A partir daqui, se inicia a parte de análise de dados que iniciamos. 

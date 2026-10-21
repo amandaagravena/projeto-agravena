@@ -111,7 +111,10 @@ costeiro <- biomes |>
 
 costeiro_terrestre <- st_intersection(costeiro, brasil)
 costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
-costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, 0.04)
+costeiro_terrestre_buffer <- sf::st_buffer(
+  costeiro_terrestre,
+  dist = 5000
+)
 
 ##Reaproveitamos a mesma lógica usada no XCO2 — pegamos o polígono "Sistema Costeiro" e cruzamos com o contorno terrestre do Brasil para remover a faixa marítima, depois aplicamos um buffer de 0,04° para suavizar a borda.
 ```
@@ -119,23 +122,29 @@ costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, 0.04)
 ## Filtrar apenas os pontos de XCH4 que caem dentro da faixa costeira terrestre
 
 ```{r}
-pontos_gosat1_costeiro_buffer <- st_join(
+pontos_gosat1_costeiro_buffer <- sf::st_filter(
   df_gosat1_sf,
-  costeiro_terrestre_buffer |>
-    select(geometry),
-  left = FALSE
+  costeiro_terrestre_buffer
 )
 
 pontos_gosat1_costeiro_buffer <- st_join(
   pontos_gosat1_costeiro_buffer,
-  biomes |>
-    select(name_biome, geometry),
-  left = FALSE
+  biomes |> select(name_biome, geometry),
+  left = TRUE
 )
 
 df_gosat1_costeiro_buffer <- pontos_gosat1_costeiro_buffer |>
-  filter(name_biome != "Sistema Costeiro") |>
   st_drop_geometry()
+
+biomes |>
+  ggplot() +
+  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
+  geom_point(
+    data = df_gosat1_costeiro_buffer,
+    aes(x = longitude, y = latitude),
+    color = "gray"
+  ) +
+  theme_minimal()
 ```
 
 ```{r}

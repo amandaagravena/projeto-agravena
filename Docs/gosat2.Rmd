@@ -86,6 +86,7 @@ biomes |>
     color = "gray"
   )
 ```
+
 ```{r}
 df_gosat2_sf <- df_gosat2 |>
   st_as_sf(
@@ -123,15 +124,16 @@ costeiro_terrestre <- st_intersection(
 
 costeiro_terrestre <- st_set_crs(
   costeiro_terrestre,
-  4326
+  5880
 )
 ```
 
 ```{r}
 costeiro_terrestre_buffer <- sf::st_buffer(
   costeiro_terrestre,
-  0.04
+  dist = 5e3
 )
+
 plot(costeiro_terrestre_buffer)
 ```
 

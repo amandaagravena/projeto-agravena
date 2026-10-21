@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -255,7 +255,7 @@ df_sf <- df |>
 
 ## Join espacial: associa cada ponto ao bioma em que ele cai (pontos fora do Brasil recebem NA em name_biome)
 
-```{r, eval=FALSE}
+```{r}
 # Transforma os biomas para o mesmo sistema de referência (CRS) do objeto df_sf (WGS84)
 biomes <- st_transform(biomes, crs = 4326)
 brasil <- st_transform(brasil, crs = 4326)
@@ -368,11 +368,27 @@ st_crs(brasil)
 ## Conferir se a geometria resultante faz sentido (plot rápido)
 
 ```{r}
-plot(st_geometry(costeiro_terrestre))
-costeiro_terrestre_buffer <- sf::st_buffer(costeiro_terrestre, dist = 5e3)
+# Construir buffer de 5 km
+costeiro_terrestre_5880 <- sf::st_transform(
+  costeiro_terrestre,
+  crs = 5880
+)
+
+costeiro_terrestre_buffer_5880 <- sf::st_buffer(
+  costeiro_terrestre_5880,
+  dist = 5000
+)
+
+# Retornar ao CRS original para manter compatibilidade com o restante do script
+costeiro_terrestre_buffer <- sf::st_transform(
+  costeiro_terrestre_buffer_5880,
+  crs = sf::st_crs(costeiro_terrestre)
+)
+
+# Visualizar o buffer
 plot(
-  st_geometry(costeiro_terrestre_buffer),
-  main = "4 km Buffer Applied to the Terrestrial Portion of the Coastal Zone"
+  sf::st_geometry(costeiro_terrestre_buffer),
+  main = "5 km Buffer Applied to the Terrestrial Portion of the Coastal Zone"
 )
 ```
 
@@ -397,72 +413,123 @@ pontos_brasil <- st_as_sf(
 # Esse código cria um novo objeto espacial (sf), denominado pontos_brasil, a partir do conjunto de dados df_brasil, utilizando as colunas de longitude e latitude para representar cada observação como um ponto geográfico.
 ```
 
+```{r}
+## Construir a faixa costeira marítima
+
+costeiro_mar <- sf::st_difference(
+  costeiro,
+  costeiro_terrestre_buffer
+)
+```
+
 
 ## Filtrar apenas os pontos que caem dentro da faixa costeira terrestre e costeira_maritimo
 
 ```{r}
-# costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
-# pontos_costeiro_terra <- st_join(pontos_brasil, 
-#                                  costeiro_terrestre  |>
-#                                    mutate(name_biome = "Costeiro Terrestre") |>
-#                                    select(name_biome, geometry))
+## Pontos na faixa costeira terrestre original
 
-# pontos_costeiro_terra_buffer <- st_join(pontos_brasil,
-#                                         costeiro_terrestre_buffer  |>
-#                                           mutate(name_biome = "Costeiro Terrestre") |>
-#                                           select(name_biome, geometry))
-# 
-# costeiro_maritimo <- st_set_crs(costeiro_maritimo, 4326)
-# 
-# pontos_costeiro_mar <- st_join(pontos_brasil,
-#                                costeiro_maritimo  |>
-#                                  mutate(name_biome = "Costeiro Marítimo") |>
-#   select(name_biome, geometry))
+costeiro_terrestre_4326 <- sf::st_transform(
+  costeiro_terrestre,
+  crs = 4326
+)
 
-#Essa etapa: Quais pontos de XCO₂ estão dentro da faixa costeira terrestre?
+pontos_costeiro_terra <- sf::st_join(
+  pontos_brasil,
+  costeiro_terrestre_4326 |>
+    dplyr::mutate(name_biome = "Costeiro Terrestre") |>
+    dplyr::select(name_biome, geometry),
+  left = FALSE
+)
 
-#- Criou-se um novo objeto, pontos_costeiro_terra, através de uma junção st_join(), que relaciona os pontos_brasil com o polígono costeiro_terrestre, que vem da intersecção st_intersection(costeiro, brasil). 
+## Pontos no buffer costeiro terrestre de 5 km
 
-#Depois, passou a função mutate() para adicionar o name_biome "Costeiro Terrestre" e selecionou com select apenas a coluna name_biome e geometry.
+costeiro_terrestre_buffer_4326 <- sf::st_transform(
+  costeiro_terrestre_buffer,
+  crs = 4326
+)
+
+pontos_costeiro_terra_buffer <- sf::st_join(
+  pontos_brasil,
+  costeiro_terrestre_buffer_4326 |>
+    dplyr::mutate(name_biome = "Costeiro Terrestre") |>
+    dplyr::select(name_biome, geometry),
+  left = FALSE
+)
+
+## Pontos na faixa costeira marítima
+
+costeiro_mar_4326 <- sf::st_transform(
+  costeiro_mar,
+  crs = 4326
+)
+
+pontos_costeiro_mar <- sf::st_join(
+  pontos_brasil,
+  costeiro_mar_4326 |>
+    dplyr::mutate(name_biome = "Costeiro Marítimo") |>
+    dplyr::select(name_biome, geometry),
+  left = FALSE
+)
 ```
 
 
 
 ## Voltar para data.frame puro, se precisar
 ```{r}
-# df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
-# 
-# df_costeiro_terra <- pontos_costeiro_terra |> filter(name_biome.y ==  "Costeiro Terrestre")  |>  st_drop_geometry()
-# 
-# df_costeiro_mar <- pontos_costeiro_mar |> filter(name_biome.y ==  "Costeiro Marítimo")  |>  st_drop_geometry()
+df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |>
+  sf::st_drop_geometry()
 
-# Essa etapa serve para obter apenas os pontos que pertencem à faixa costeira terrestre e transformá-los novamente em uma tabela comum.
+df_costeiro_terra <- pontos_costeiro_terra |>
+  sf::st_drop_geometry()
+
+df_costeiro_mar <- pontos_costeiro_mar |>
+  sf::st_drop_geometry()
+```
+
+```{r}
+nrow(df_costeiro_terra)
+nrow(df_costeiro_terra_buffer)
+nrow(df_costeiro_mar)
 ```
 
 ## Verificar se eles formam a linha literânea
 
 ```{r}
-# df_costeiro_terra |> 
-#   ggplot(aes(longitude, latitude)) +
-#   geom_point()
-# 
-# df_costeiro_terra_buffer |> 
-#   sample_n(1000) |> 
-#   ggplot(aes(longitude, latitude)) +
-#   geom_point()
+## Verificar a distribuição espacial dos pontos costeiros
 
-# df_costeiro_mar |> filter(name_biome.x == "Sistema Costeiro") |>
-#   sample_n(1000) |>
-#   ggplot(aes(longitude, latitude)) +
-#   geom_point(size = .5) +
-#   geom_point(data = df_costeiro_terra_buffer |> sample_n(1000),
-#              aes(longitude, latitude),color = "red",size = .5)
+df_costeiro_terra |>
+  ggplot(aes(longitude, latitude)) +
+  geom_point()
+
+df_costeiro_terra_buffer |>
+  dplyr::slice_sample(n = min(1000, nrow(df_costeiro_terra_buffer))) |>
+  ggplot(aes(longitude, latitude)) +
+  geom_point()
+
+df_costeiro_mar |>
+  dplyr::slice_sample(n = min(1000, nrow(df_costeiro_mar))) |>
+  ggplot(aes(longitude, latitude)) +
+  geom_point(size = 0.5) +
+  geom_point(
+    data = df_costeiro_terra_buffer |>
+      dplyr::slice_sample(n = min(1000, nrow(df_costeiro_terra_buffer))),
+    aes(longitude, latitude),
+    color = "red",
+    size = 0.5
+  )
 ```
 ## Salvando na pasta data
 
 ```{r}
-write_rds(df_costeiro_terra_buffer,"../data/xco2-costeiro-terrestre-buffer.rds")
-write_rds(df_costeiro_mar,"../data/xco2-costeiro-mar.rds")
+write_rds(
+  df_costeiro_terra_buffer,
+  "../data/xco2-costeiro-terrestre-buffer.rds"
+)
+
+write_rds(
+  df_costeiro_mar,
+  "../data/xco2-costeiro-mar.rds"
+)
 ```
 
 ##A partir daqui, se inicia a parte de análise de dados que iniciamos. 
@@ -556,4 +623,3 @@ df_costeiro <- bind_rows(
 df_costeiro |> glimpse()
 
 ```
-

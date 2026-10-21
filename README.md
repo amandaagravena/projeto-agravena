@@ -9,20 +9,20 @@
 
 ### 👨‍🔬 Autores
 
-- **Amanda de Oliveira Gravena**\
-  Mestranda em Agronomia (Ciência do Solo) - FCAV/Unesp\
+- **Amanda de Oliveira Gravena**  
+  Mestranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
   Email: <amanda.gravena@unesp.br>
 
-- **Ms. Witória de Oliveira Araújo**\
-  Doutoranda em Agronomia (Ciência do Solo) - FCAV/Unesp\
+- **Ms. Witória de Oliveira Araújo**  
+  Doutoranda em Agronomia (Ciência do Solo) - FCAV/Unesp  
   Email: <witoria.araujo@unesp.br>
 
-- **Mr. Luís Miguel da Costa**\
-  Doutorando em Agronomia (Ciência do Solo) - FCAV/Unesp\
+- **Mr. Luís Miguel da Costa**  
+  Doutorando em Agronomia (Ciência do Solo) - FCAV/Unesp  
   Email: <lm.costa@unesp.br>
 
-- **Prof. Dr. Alan Rodrigo Panosso**\
-  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp\
+- **Prof. Dr. Alan Rodrigo Panosso**  
+  Coorientador — Departamento de Ciências Exatas - FCAV/Unesp  
   Email: <alan.panosso@unesp.br>
 
 #### 🔗 Links para Download dos dados para processamento:

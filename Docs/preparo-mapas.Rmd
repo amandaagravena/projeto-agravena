@@ -255,7 +255,7 @@ df_sf <- df |>
 
 ## Join espacial: associa cada ponto ao bioma em que ele cai (pontos fora do Brasil recebem NA em name_biome)
 
-```{r, eval=FALSE}
+```{r}
 # Transforma os biomas para o mesmo sistema de referência (CRS) do objeto df_sf (WGS84)
 biomes <- st_transform(biomes, crs = 4326)
 brasil <- st_transform(brasil, crs = 4326)
@@ -623,4 +623,3 @@ df_costeiro <- bind_rows(
 df_costeiro |> glimpse()
 
 ```
-

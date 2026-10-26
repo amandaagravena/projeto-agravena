@@ -633,3 +633,16 @@ df_costeiro <- bind_rows(
 ) |>
   select(-xco2_quality_flag, -path)
 ```
+
+```{r}
+saveRDS(
+  df_costeiro_terra_buffer,
+  "../data/xco2-costeiro-terrestre-buffer.rds"
+)
+
+saveRDS(
+  df_costeiro_mar,
+  "../data/xco2-costeiro-mar.rds"
+)
+```
+

@@ -1,0 +1,303 @@
+---
+title: "gosat2"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  error = FALSE,
+  message = FALSE,
+  eval=TRUE,
+  comment = "#>"
+)
+```
+
+## Carregando os pacotes
+```{r}
+##Carregar pacote para ter funções das diferentes bibliotecas. 
+library(tidyverse) ##coleção de pacotes para ciências de dados. Inclui: dplyr, ggplot2, readr, tibble, string etc.
+library(ggpubr) 
+library(terra)
+library(geobr) ##baixa mapas oficiais do IBGE, não precisando baixar shapefiles manualmente. - sf: Pacote mais importante para os dados espaciais. Permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(vegan)
+library(sf) ##permite: ler shapefiles, transformar coordenadas, fazer recortes espaciais e unir polígonos.
+library(ggplot2) ##construção de gráficos. 
+```
+
+## Extrair os shapes da costa brasileira
+
+```{r}
+brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
+biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
+
+## - O geobr baixa automaticamente o limite político do Brasil através do read country. Temos que colocar o ano a partir de agora, devido a uma atualização do R. 
+
+## - através do read biomes, baixamos todos os biomas brasileiros.Eles possuem:nome; geometria;projeção.
+
+```
+## Carregando as bases
+
+```{r}
+xco2 <- read_rds("../data/xco2-costeiro-terrestre-buffer.rds")
+sif <- read_rds("../data/sif-costeiro-terrestre-buffer.rds") |> 
+  st_drop_geometry()
+xch4_1 <- read_rds("../data/xch4-gosat1-costeiro-terrestre-buffer.rds")
+xch4_2 <- read_rds("../data/xch4-gosat2-costeiro-terrestre-buffer.rds")
+```
+
+## Criar um obejto long
+
+```{r}
+base_longer <- xco2 |> 
+  select(longitude, latitude, year, month, day, xco2) |> 
+  rename(value=xco2) |> mutate(name = "xco2") |> 
+  rbind(
+    sif |> 
+  select(longitude, latitude, year, month, day, daily_sif757, daily_sif771
+) |> pivot_longer(cols = c(daily_sif757, daily_sif771),
+                  values_to = "value")
+  ) |> rbind(
+    xch4_1 |> 
+      select(longitude, latitude, year, month, day, xch4_detrend) |>       rename(value=xch4_detrend) |> mutate(name = "xch4_1")
+  ) |> rbind(
+    xch4_2 |> 
+      select(longitude, latitude, year, month, day, xch4_detrend) |>       rename(value=xch4_detrend) |> mutate(name = "xch4_2")
+  )
+row.names(base_longer) <- NULL
+```
+
+## Observação de pontos no mapa
+```{r}
+base_longer |> 
+  filter(year == 2020,
+    name %in% c("xco2","daily_sif757","xch4_1","xch4_2")) |> 
+  ggplot(aes(longitude, latitude, color=name)) +
+  geom_point(size=2) +
+  ylim(-2.5,0) +
+  xlim(-50,-45) +
+  theme_bw()
+```
+
+## Agregação
+
+```{r}
+brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
+brasil <- st_transform(brasil, crs = 4326)
+brasil_cont <- brasil |>
+  st_cast("POLYGON") |>
+  mutate(x_cent = st_coordinates(st_centroid(geometry))[, 1]) |>
+  filter(x_cent < -34.5) |>
+  select(-x_cent)
+```
+
+
+```{r}
+dist <- 0.05
+lon_min <-min(base_longer[,1])
+lon_max <-max(base_longer[,1])
+lat_min <-min(base_longer[,2])
+lat_max <-max(base_longer[,2]) 
+grid_am <- expand.grid(lon=seq(lon_min,lon_max,dist),
+                       lat=seq(lat_min,lat_max,dist))
+
+buffer <- read_rds("../data/buffer.rds")
+buffer |> 
+  ggplot() +
+  geom_sf(fill="aquamarine4",color="black") +
+  theme_bw() +
+  geom_point(data=grid_am,aes(lon,lat), color="red",size=.1)+
+  ylim(-2.5,0) +
+  xlim(-50,-45)
+
+```
+
+criação da função def_pol
+```{r}
+def_pol <- function(x, y, pol){
+  as.logical(sp::point.in.polygon(point.x = x,
+                                  point.y = y,
+                                  pol.x = pol[,1],
+                                  pol.y = pol[,2]))
+}
+```
+
+filtrando os pontos
+
+```{r}
+mat_coord <- buffer$geometry[[1]] |> as.matrix()
+grid_am_cut <- grid_am |>
+ mutate(
+    flag_am = def_pol(lon,lat,mat_coord),
+    )
+plot(grid_am_cut$lon[grid_am_cut$flag_am],grid_am_cut$lat[grid_am_cut$flag_am])
+```
+
+```{r}
+buffer <- brasil_cont |>
+  st_transform(5880) |>
+  st_buffer(dist = 50000) |>     # ajuste a largura da faixa
+  st_make_valid() |>
+  st_transform(4326)
+
+# pontos da malha
+pts <- st_as_sf(grid_am_cut, coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+
+grid_am_cut$flag_am <- lengths(st_intersects(pts, buffer)) > 0
+
+plot(grid_am_cut$lon[grid_am_cut$flag_am],
+     grid_am_cut$lat[grid_am_cut$flag_am], pch = ".")
+```
+
+```{r}
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(rnaturalearth)   # precisa também do pacote rnaturalearthdata
+
+sf_use_s2(FALSE)
+
+crs_m   <- 5880   # SIRGAS 2000 / Brazil Polyconic (metros)
+dist_km <- 50     # largura da faixa costeira
+
+# 1) Brasil continental (sem ilhas), em metros
+br <- brasil_cont |>
+  st_union() |>
+  st_make_valid() |>
+  st_transform(crs_m)
+
+# 2) Países vizinhos (inclui a Guiana Francesa, que no Natural Earth está em "France")
+vizinhos <- ne_countries(scale = "medium", returnclass = "sf") |>
+  filter(admin != "Brazil") |>
+  st_crop(xmin = -85, xmax = -30, ymin = -60, ymax = 15) |>
+  st_union() |>
+  st_make_valid() |>
+  st_transform(crs_m)
+
+# 3) Linha de costa = contorno do Brasil menos as fronteiras terrestres
+#    (tolerância de 10 km porque os limites do geobr e do Natural Earth não coincidem exatamente)
+costa <- st_boundary(br) |>
+  st_difference(st_buffer(vizinhos, 10000))
+
+# 4) Faixa costeira só do lado continental
+zona_costeira <- costa |>
+  st_buffer(dist_km * 1000) |>
+  st_intersection(br) |>
+  st_make_valid() |>
+  st_transform(4326) |>
+  st_sf()
+
+# Conferência visual
+ggplot() +
+  geom_sf(data = brasil_cont, fill = "grey95", color = "grey50", linewidth = 0.3) +
+  geom_sf(data = zona_costeira, fill = "steelblue", alpha = 0.6, color = NA)
+
+# 5) Flag dos pontos da malha
+pts <- st_as_sf(grid_am_cut, coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+grid_am_cut$flag_am <- lengths(st_intersects(pts, zona_costeira)) > 0
+
+plot(grid_am_cut$lon[grid_am_cut$flag_am],
+     grid_am_cut$lat[grid_am_cut$flag_am],
+     pch=".")
+```
+
+```{r}
+# Criando o arquivo da base agregada
+# base_agregada <- grid_am_cut |>
+#   filter(flag_am) |>
+#   select(-flag_am) |>
+#   group_by(lon, lat) |>
+#   reframe(
+#     year = 2020:2024
+#   ) |>
+#   group_by(lon, lat, year) |>
+#   reframe(month = 1:12) |>
+#   mutate(xco2 = 0,
+#          sif = 0)
+# 
+# # # Definindo a distância máxima de proximidade entre os pontos para agregação
+# dist_max <- 0.25
+# 
+# for(i in 1:nrow(base_agregada)){
+#   # definindo o ano e o mês e coordenadas
+#   year_i <- base_agregada |> slice(i) |> pull(year)
+#   month_i <- base_agregada |> slice(i) |> pull(month)
+#   lon_i <- base_agregada$lon[i]
+#   lat_i <- base_agregada$lat[i]
+# 
+#   # filtrando dados da SIF
+#   sif_aux <- data_set_sif_amazon |>
+#     filter(
+#       year == year_i,
+#       month == month_i)
+#   d_sif <- sqrt((sif_aux$longitude-lon_i)^2+
+#               (sif_aux$latitude-lat_i)^2)
+# 
+#   ## organizando os dados em um data.frame
+#   data_frame_aux_sif <- data.frame(
+#     do=d_sif[order(d_sif)], # distância ordenadas
+#     po=order(d_sif), # posição em relação ao auxiliar
+#     sif=sif_aux$sif[order(d_sif)]) # sif específica
+# 
+#   ## Critério de preenchimento se distância for menor que dist_max, tire a média,
+#   ## caso contrário, faça a média dos 7 mais póximos
+#   nrow_df_sif <- data_frame_aux_sif |> 
+#     filter(do <= dist_max) |> 
+#     nrow()
+# 
+#   if(nrow_df_sif != 0){
+#     base_agregada$sif[i] = data_frame_aux_sif |>
+#       filter(do <= dist_max) |>
+#       pull(sif) |>
+#       mean(na.rm=TRUE)
+#   } else {
+#     base_agregada$sif[i] = data_frame_aux_sif |>
+#       slice(1:7) |>
+#       pull(sif) |>
+#       mean(na.rm=TRUE)
+#   }
+# 
+#   # filtrando dados da Xco2
+#   xco2_aux <- data_set_xco2_anomal_sem_tendencia |>
+#     filter(
+#       year == year_i,
+#       month == month_i)
+#   d_xco2 <- sqrt((xco2_aux$longitude-lon_i)^2+
+#               (xco2_aux$latitude-lat_i)^2)
+# 
+#   ## organizando os dados em um data.frame
+#   data_frame_aux_xco2 <- data.frame(do=d_xco2[order(d_xco2)], # distância ordenadas
+#                                po=order(d_xco2), # posição em relação ao auxiliar
+#                                xco2=xco2_aux$xco2[order(d_xco2)]) # xco2 específica
+# 
+#   ## Critério de preenchimento se distância for menor que dist_max, tire a média,
+#   ## caso contrário, faça a média dos 7 mais póximos
+#   nrow_df_xco2 <- data_frame_aux_xco2 |> filter(do <= dist_max) |> nrow()
+# 
+#   if(nrow_df_xco2 != 0){
+#     base_agregada$xco2[i] = data_frame_aux_xco2 |>
+#       filter(do <= dist_max) |>
+#       pull(xco2) |>
+#       mean(na.rm=TRUE)
+#   } else {
+#     base_agregada$xco2[i] = data_frame_aux_xco2 |>
+#       slice(1:7) |>
+#       pull(xco2) |>
+#       mean(na.rm=TRUE)
+#   }
+# }
+# 
+# # # esperado zero para os dois testes abaixo
+# sum(base_agregada$sif  |> is.na())
+# sum(base_agregada$xco2 |> is.na())
+# nrow(base_agregada)
+# 
+# # Salvando a base agregada
+# write_rds(base_agregada, "data-raw/base-agregada.rds")
+
+# Carregando a base agregada
+base_agregada <- read_rds("data-raw/base-agregada.rds")
+table(base_agregada$year,base_agregada$month)
+
+```
+

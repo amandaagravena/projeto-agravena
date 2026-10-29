@@ -357,10 +357,26 @@ ggplot() +
 ## Calcular a interseção geométrica: só a parte do Sistema Costeiro que também é terra (contorno do Brasil) -> remove a faixa marítima
 
 ```{r}
-costeiro_terrestre <- st_intersection(costeiro, brasil)
+brasil_cont <- st_crop(brasil, xmin = -75, xmax = -34.5, ymin = -35, ymax = 6)
+
+brasil_cont <- brasil |>
+  st_cast("POLYGON") |>
+  mutate(x_cent = st_coordinates(st_centroid(geometry))[, 1]) |>
+  filter(x_cent < -34.5) |>
+  select(-x_cent)
+
+ggplot() +
+  geom_sf(data = brasil_cont, fill = "grey95", color = "grey50", linewidth = 0.3) +
+  xlim(-45,-42) + ylim(-3,-1)
+```
+
+
+```{r}
+costeiro_terrestre <- st_intersection(costeiro, brasil_cont)
 
 st_crs(costeiro)
-st_crs(brasil)
+st_crs(brasil_cont)
+
 
 # A função st_crs() mostra o CRS (Coordinate Reference System) do objeto.
 ```
@@ -390,6 +406,7 @@ plot(
   sf::st_geometry(costeiro_terrestre_buffer),
   main = "5 km Buffer Applied to the Terrestrial Portion of the Coastal Zone"
 )
+write_rds(costeiro_terrestre_buffer,"../data/buffer.rds")
 ```
 
 

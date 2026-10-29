@@ -613,13 +613,36 @@ summary(df_costeiro_mar$xco2)  # ajuste nome da coluna
 
 ## Vamos juntar os arquivos
 ```{r}
-df_costeiro <- bind_rows(
-  df_costeiro_terra_buffer |> mutate(grupo = "Buffer"),
-  df_costeiro_mar          |> mutate(grupo = "Oceano") |> 
-    select(-name_biome.x) |> 
-    rename(name_biome = name_biome.y)
-) |> 
-  select(-xco2_quality_flag , -path)
-df_costeiro |> glimpse()
+df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
+  mutate(name_biome = name_biome.x)
 
+df_costeiro <- bind_rows(
+  df_costeiro_terra_buffer |>
+    mutate(
+      name_biome = name_biome.x,
+      grupo = "Buffer"
+    ) |>
+    select(-name_biome.x, -name_biome.y),
+
+  df_costeiro_mar |>
+    mutate(
+      name_biome = name_biome.y,
+      grupo = "Oceano"
+    ) |>
+    select(-name_biome.x, -name_biome.y)
+) |>
+  select(-xco2_quality_flag, -path)
 ```
+
+```{r}
+saveRDS(
+  df_costeiro_terra_buffer,
+  "../data/xco2-costeiro-terrestre-buffer.rds"
+)
+
+saveRDS(
+  df_costeiro_mar,
+  "../data/xco2-costeiro-mar.rds"
+)
+```
+

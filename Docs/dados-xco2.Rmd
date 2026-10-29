@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -38,6 +38,22 @@ biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 ## - através do read biomes, baixamos todos os biomas brasileiros.Eles possuem:nome; geometria;projeção.
 
 ```
+
+```{r}
+df_costeiro_terra_buffer <- readRDS(
+  "../data/xco2-costeiro-terrestre-buffer.rds"
+)
+
+df_costeiro_mar <- readRDS(
+  "../data/xco2-costeiro-mar.rds"
+)
+
+df_costeiro <- readRDS(
+  "../data/xco2-costeiro.rds"
+)
+```
+
+
 ```{r}
 df_costeiro |> 
   st_drop_geometry() |> 
@@ -270,6 +286,31 @@ df_costeiro |>
 ```
 
 ## Análise de cluster da série temporal
+
+```{r}
+names(df_costeiro_terra_buffer)
+```
+
+## Detrend do buffer
+
+```{r}
+df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
+  mutate(
+    date = make_date(year, month, day),
+    date_modif = as.numeric(date - min(date, na.rm = TRUE))
+  )
+
+mod_trend_buffer <- lm(
+  xco2 ~ date_modif,
+  data = df_costeiro_terra_buffer
+)
+
+df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
+  mutate(
+    xco2_est = predict(mod_trend_buffer),
+    xco2_detrend = xco2 - xco2_est + mean(xco2, na.rm = TRUE)
+  )
+```
 
 ```{r}
 df_cluster <- df_costeiro_terra_buffer |>

@@ -8,7 +8,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -25,10 +25,17 @@ library(sf) ##permite: ler shapefiles, transformar coordenadas, fazer recortes e
 library(ggplot2) ##construção de gráficos. 
 ```
 
+```{r}
+
+brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
+biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
+
+```
+
 # Iniciando a parte do SIF
 
 ```{r}
-# df_sif <- read_rds("data-raw/data-set-sif-br.rds")
+# df_sif <- read_rds("../data-raw/data-set-sif-br.rds")
 # glimpse(df_sif)
 
 #O que encontramos: 46.098.810 observações
@@ -108,9 +115,9 @@ library(ggplot2) ##construção de gráficos.
 
 ```{r}
 # df_sif_costeiro
-```
+# ```
 
-```{r}
+# ```{r}
 # nrow(df_sif_q0)
 # nrow(df_sif_costeiro)
 ```
@@ -118,24 +125,77 @@ library(ggplot2) ##construção de gráficos.
 # Salvando: 
 
 ```{r}
-#write_rds(df_sif_costeiro, "../data/sif-costeiro-terrestre.rds")
+# write_rds(df_sif_costeiro, "../data/sif-costeiro-terrestre.rds")
 ```
 
 # Buffer para SIF
 
 ```{r}
-df_sif_costeiro <- read_rds("../data/sif-costeiro-terrestre.rds")
 
-df_sif_buffer <- df_sif_costeiro |>
-  sf::st_transform(5880) |>
-  sf::st_buffer(dist = 5000)
+# # Carregar a geometria terrestre costeira e seu buffer de 5 km
+# costeiro_terrestre_buffer <- readr::read_rds(
+#   "../data/costeiro-terrestre-buffer-geometria.rds"
+# )
+# 
+# # Garantir que a geometria esteja no CRS das coordenadas dos pontos
+# costeiro_terrestre_buffer <- sf::st_transform(
+#   costeiro_terrestre_buffer,
+#   crs = 4326
+# )
+# 
+# # Carregar os dados originais de SIF
+# df_sif <- readr::read_rds(
+#   "../data-raw/data-set-sif-br.rds"
+# )
+# 
+# # Manter apenas observações com quality_flag igual a zero
+# df_sif_q0 <- df_sif |>
+#   dplyr::filter(quality_flag == 0)
+# 
+# # Converter as observações em pontos espaciais
+# df_sif_q0_sf <- df_sif_q0 |>
+#   sf::st_as_sf(
+#     coords = c("longitude", "latitude"),
+#     crs = 4326,
+#     remove = FALSE
+#   )
+# 
+# # Selecionar os pontos dentro da área terrestre costeira
+# # original ampliada em 5 km
+# df_sif_buffer <- sf::st_filter(
+#   df_sif_q0_sf,
+#   costeiro_terrestre_buffer
+# )
+# 
+# # Salvar a base de SIF com buffer
+# readr::write_rds(
+#   df_sif_buffer,
+#   "../data/sif-costeiro-terrestre-buffer.rds"
+# )
+# 
+# # Conferir o resultado
+# nrow(df_sif_q0_sf)
+# nrow(df_sif_buffer)
+# sf::st_crs(df_sif_buffer)
+
 ```
 
+```{r}
+df_sif_buffer <- readr::read_rds(
+  "../data/sif-costeiro-terrestre-buffer.rds"
+)
+```
+
+```{r}
+# Carregar a base de SIF já filtrada pelo buffer
+df_sif_buffer <- readr::read_rds(
+  "../data/sif-costeiro-terrestre-buffer.rds"
+)
+```
 
 ```{r}
 # Analisando SIF para o Buffer: 
 
-```{r}
 # df_sif_buffer |>
 #   mutate(
 #     class_latitude = cut(latitude, 115),
@@ -263,23 +323,19 @@ df_sif_buffer |>
   ) +
   scale_fill_viridis_d()
 ```
+```{r}
+ls()
+```
 
 
 ```{r}
-df_sif_buffer |> 
-  sample_n(10000) |> 
-  st_drop_geometry() |> 
-    filter(year > 2014) |> 
+df_sif_buffer |>
+  sample_n(10000) |>
+  st_drop_geometry() |>
+  filter(year > 2014) |>
   mutate(
-    class_latitude = cut(
-      latitude, 115 ),
-   year_month = paste(as.character(year), as.character(month), sep="_"),
-    latitude_media = (
-      as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
-      as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
-    ) / 2
-  ) |> 
-  left_join(colunas, by = "latitude_media") |> 
+    year_month = paste(as.character(year), as.character(month), sep = "_")
+  ) |>
   ggplot(aes(longitude, latitude, color = sif_agr)) +
   geom_point()
 ```
@@ -311,6 +367,10 @@ df_cluster_sif <- df_sif_buffer |>
   ))
 ```
 
+```{r}
+df_cluster_sif
+```
+
 
 ## Matriz de correlação entre as latitudes
 ```{r}
@@ -318,6 +378,7 @@ mc_sif <- cor(df_cluster_sif |> select(-latitude_media))
 corrplot::corrplot(mc_sif)
 ```
 
+## Por que os mapas ficaram com várias falhas?
 
 ```{r}
 da_pad<-decostand(df_cluster_sif |> select(-latitude_media), 
@@ -401,6 +462,9 @@ df_sif_buffer |>
 ```
 
 ```{r}
+
+## ESTÁ ERRADO, VER COM O PROFESSOR
+
 df_sif_buffer |>
   filter(year > 2014) |> 
   mutate(

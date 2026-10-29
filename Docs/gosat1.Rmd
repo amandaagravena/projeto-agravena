@@ -8,7 +8,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -26,16 +26,20 @@ library(sf) ##permite: ler shapefiles, transformar coordenadas, fazer recortes e
 library(ggplot2) ##construção de gráficos. 
 ```
 
+```{r}
+
+brasil <- geobr::read_country(showProgress = FALSE, year = 2020)
+biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
+
+```
+
+
 ## Iniciando Gosat 1:
 
 ```{r}
 df_gosat1 <- read_rds("../data-raw/df_gosat1_br.rds")
 glimpse(df_gosat1)
 names(df_gosat1)
-
-#Essa etapa replica, para o XCH~4~ (metano) medido pelo GOSAT-1 (e, na sequência, GOSAT-2), o mesmo pipeline de análise construído para o XCO~2~/OCO-2-3 no `README.Rmd`. A lógica é idêntica: recorte da faixa costeira terrestre, remoção de tendência regional, agrupamento das latitudes por comportamento temporal e cálculo de anomalias. Trocamos apenas a variável de interesse (`xco2` -> `xch4`) e a fonte de dados.
-
-## Diferente do XCO2, que partiu de um arquivo bruto global e precisou ser recortado para o Brasil, o `df_gosat1_br.rds` já parece vir pronto (nome sugere "br" = Brasil). Ainda assim, vamos conferir a estrutura antes de seguir.
 ```
 ## Conferir os anos e a cobertura temporal disponíveis
 
@@ -106,46 +110,58 @@ glimpse(df_gosat1_brasil)
 ## Faixa costeira terrestre (Sistema Costeiro ∩ Brasil)
 
 ```{r}
-costeiro <- biomes |>
-  filter(name_biome == "Sistema Costeiro")
 
-costeiro_terrestre <- st_intersection(costeiro, brasil)
-costeiro_terrestre <- st_set_crs(costeiro_terrestre, 4326)
-costeiro_terrestre_buffer <- sf::st_buffer(
-  costeiro_terrestre,
-  dist = 5000
+## Carregar a geometria costeira e o buffer de 5 km
+costeiro_terrestre <- readr::read_rds(
+  "../data/costeiro-terrestre-geometria.rds"
 )
 
-##Reaproveitamos a mesma lógica usada no XCO2 — pegamos o polígono "Sistema Costeiro" e cruzamos com o contorno terrestre do Brasil para remover a faixa marítima, depois aplicamos um buffer de 0,04° para suavizar a borda.
-```
+costeiro_terrestre_buffer <- readr::read_rds(
+  "../data/costeiro-terrestre-buffer-geometria.rds"
+)
 
-## Filtrar apenas os pontos de XCH4 que caem dentro da faixa costeira terrestre
+## Garantir que as geometrias estejam no CRS dos pontos
+costeiro_terrestre_buffer <- sf::st_transform(
+  costeiro_terrestre_buffer,
+  crs = 4326
+)
 
-```{r}
+## Converter as observações do GOSAT-1 em pontos
+df_gosat1_sf <- df_gosat1 |>
+  sf::st_as_sf(
+    coords = c("longitude", "latitude"),
+    crs = 4326,
+    remove = FALSE
+  )
+
+## Selecionar os pontos dentro do buffer costeiro de 5 km
 pontos_gosat1_costeiro_buffer <- sf::st_filter(
   df_gosat1_sf,
   costeiro_terrestre_buffer
 )
 
-pontos_gosat1_costeiro_buffer <- st_join(
+## Associar os pontos aos biomas
+biomes <- sf::st_transform(biomes, crs = 4326)
+
+pontos_gosat1_costeiro_buffer <- sf::st_join(
   pontos_gosat1_costeiro_buffer,
-  biomes |> select(name_biome, geometry),
+  biomes |> dplyr::select(name_biome, geometry),
   left = TRUE
 )
 
+## Remover a geometria para manter a base tabular
 df_gosat1_costeiro_buffer <- pontos_gosat1_costeiro_buffer |>
-  st_drop_geometry()
+  sf::st_drop_geometry()
 
-biomes |>
-  ggplot() +
-  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
-  geom_point(
-    data = df_gosat1_costeiro_buffer,
-    aes(x = longitude, y = latitude),
-    color = "gray"
-  ) +
-  theme_minimal()
+## Conferir quantos pontos foram mantidos
+nrow(df_gosat1_sf)
+nrow(df_gosat1_costeiro_buffer)
+
+df_gosat1_costeiro_buffer |>
+  dplyr::count(name_biome)
+
 ```
+
 
 ```{r}
 df_gosat1_costeiro_buffer |>
@@ -355,10 +371,66 @@ df_anomalias_ch4 |>
 ## Mapa dos pontos e grupos
 
 ```{r}
+
+## Mapa dos pontos e grupos — cores acessíveis a daltônicos
+
+cores_biomas <- c(
+  "Amazônia"         = "#009E73",
+  "Cerrado"          = "#E69F00",
+  "Mata Atlântica"   = "#56B4E9",
+  "Caatinga"         = "#D55E00",
+  "Pampa"            = "#CC79A7",
+  "Pantanal"         = "#F0E442",
+  "Sistema Costeiro" = "#999999"
+)
+
+cores_grupos <- c(
+  "1" = "#0072B2",
+  "2" = "#E69F00",
+  "3" = "#009E73",
+  "4" = "#CC79A7",
+  "5" = "#D55E00"
+)
+
 biomes |>
   ggplot() +
-  geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
-  geom_point(data=df_gosat1_costeiro_buffer, aes(longitude, latitude),color="gray" )
+  geom_sf(
+    aes(fill = name_biome),
+    color = "grey35",
+    linewidth = 0.3
+  ) +
+  scale_fill_manual(
+    values = cores_biomas,
+    name = "Bioma"
+  ) +
+  geom_point(
+    data = df_gosat1_grupos,
+    aes(
+      x = longitude,
+      y = latitude,
+      color = factor(grupo)
+    ),
+    size = 1.5,
+    alpha = 0.85
+  ) +
+  scale_color_manual(
+    values = cores_grupos,
+    name = "Grupo de latitude",
+    breaks = as.character(1:5),
+    drop = FALSE
+  ) +
+  labs(
+    title = "Distribuição dos grupos de XCH4 na faixa costeira",
+    x = "Longitude",
+    y = "Latitude"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  )
+
 ```
 
 

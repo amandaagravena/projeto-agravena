@@ -281,6 +281,13 @@ df_sif_buffer <- df_sif_buffer |>
     sif_agr = daily_sif757 + 1.5 * daily_sif771
   )
 
+
+
+df_sif_buffer |>
+  mutate(lon = st_coordinates(geometry)[, 1],
+         lat = st_coordinates(geometry)[, 2]) |>
+  st_drop_geometry() |> 
+  write_rds("../data/df-sif-buffer.rds")
 ```
 
 # Conferir: coluna nova: sif_agr

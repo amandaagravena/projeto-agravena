@@ -202,98 +202,106 @@ plot(grid_am_cut$lon[grid_am_cut$flag_am],
 ```
 
 ```{r}
+sif_costeiro_buffer <- read_rds("../data/df-sif-buffer.rds")
+sif_costeiro_buffer 
+```
+
+
+```{r}
 # Criando o arquivo da base agregada
-# base_agregada <- grid_am_cut |>
-#   filter(flag_am) |>
-#   select(-flag_am) |>
-#   group_by(lon, lat) |>
-#   reframe(
-#     year = 2020:2024
-#   ) |>
-#   group_by(lon, lat, year) |>
-#   reframe(month = 1:12) |>
-#   mutate(xco2 = 0,
-#          sif = 0)
-# 
-# # # Definindo a distância máxima de proximidade entre os pontos para agregação
-# dist_max <- 0.25
-# 
-# for(i in 1:nrow(base_agregada)){
-#   # definindo o ano e o mês e coordenadas
-#   year_i <- base_agregada |> slice(i) |> pull(year)
-#   month_i <- base_agregada |> slice(i) |> pull(month)
-#   lon_i <- base_agregada$lon[i]
-#   lat_i <- base_agregada$lat[i]
-# 
-#   # filtrando dados da SIF
-#   sif_aux <- data_set_sif_amazon |>
-#     filter(
-#       year == year_i,
-#       month == month_i)
-#   d_sif <- sqrt((sif_aux$longitude-lon_i)^2+
-#               (sif_aux$latitude-lat_i)^2)
-# 
-#   ## organizando os dados em um data.frame
-#   data_frame_aux_sif <- data.frame(
-#     do=d_sif[order(d_sif)], # distância ordenadas
-#     po=order(d_sif), # posição em relação ao auxiliar
-#     sif=sif_aux$sif[order(d_sif)]) # sif específica
-# 
-#   ## Critério de preenchimento se distância for menor que dist_max, tire a média,
-#   ## caso contrário, faça a média dos 7 mais póximos
-#   nrow_df_sif <- data_frame_aux_sif |> 
-#     filter(do <= dist_max) |> 
-#     nrow()
-# 
-#   if(nrow_df_sif != 0){
-#     base_agregada$sif[i] = data_frame_aux_sif |>
-#       filter(do <= dist_max) |>
-#       pull(sif) |>
-#       mean(na.rm=TRUE)
-#   } else {
-#     base_agregada$sif[i] = data_frame_aux_sif |>
-#       slice(1:7) |>
-#       pull(sif) |>
-#       mean(na.rm=TRUE)
-#   }
-# 
-#   # filtrando dados da Xco2
-#   xco2_aux <- data_set_xco2_anomal_sem_tendencia |>
-#     filter(
-#       year == year_i,
-#       month == month_i)
-#   d_xco2 <- sqrt((xco2_aux$longitude-lon_i)^2+
-#               (xco2_aux$latitude-lat_i)^2)
-# 
-#   ## organizando os dados em um data.frame
-#   data_frame_aux_xco2 <- data.frame(do=d_xco2[order(d_xco2)], # distância ordenadas
-#                                po=order(d_xco2), # posição em relação ao auxiliar
-#                                xco2=xco2_aux$xco2[order(d_xco2)]) # xco2 específica
-# 
-#   ## Critério de preenchimento se distância for menor que dist_max, tire a média,
-#   ## caso contrário, faça a média dos 7 mais póximos
-#   nrow_df_xco2 <- data_frame_aux_xco2 |> filter(do <= dist_max) |> nrow()
-# 
-#   if(nrow_df_xco2 != 0){
-#     base_agregada$xco2[i] = data_frame_aux_xco2 |>
-#       filter(do <= dist_max) |>
-#       pull(xco2) |>
-#       mean(na.rm=TRUE)
-#   } else {
-#     base_agregada$xco2[i] = data_frame_aux_xco2 |>
-#       slice(1:7) |>
-#       pull(xco2) |>
-#       mean(na.rm=TRUE)
-#   }
-# }
-# 
-# # # esperado zero para os dois testes abaixo
-# sum(base_agregada$sif  |> is.na())
-# sum(base_agregada$xco2 |> is.na())
-# nrow(base_agregada)
-# 
-# # Salvando a base agregada
-# write_rds(base_agregada, "data-raw/base-agregada.rds")
+base_agregada <- grid_am_cut |>
+  filter(flag_am) |>
+  select(-flag_am) |>
+  group_by(lon, lat) |>
+  reframe(
+    year = 2020:2024
+  ) |>
+  group_by(lon, lat, year) |>
+  reframe(month = 1:12) |>
+  mutate(xco2 = 0,
+         sif = 0,
+         ch4 = 0)
+
+# # Definindo a distância máxima de proximidade entre os pontos para agregação
+dist_max <- 0.25
+
+for(i in 1:nrow(base_agregada)){
+  # definindo o ano e o mês e coordenadas
+  year_i <- base_agregada |> slice(i) |> pull(year)
+  month_i <- base_agregada |> slice(i) |> pull(month)
+  lon_i <- base_agregada$lon[i]
+  lat_i <- base_agregada$lat[i]
+
+  # filtrando dados da SIF
+  sif_aux <- sif_costeiro_buffer |>
+    filter(
+      year == year_i,
+      month == month_i)
+  d_sif <- sqrt((sif_aux$longitude-lon_i)^2+
+              (sif_aux$latitude-lat_i)^2)
+
+  ## organizando os dados em um data.frame
+  data_frame_aux_sif <- data.frame(
+    do=d_sif[order(d_sif)], # distância ordenadas
+    po=order(d_sif), # posição em relação ao auxiliar
+    sif=sif_aux$sif_agr[order(d_sif)] # sif específica
+  )
+
+  ## Critério de preenchimento se distância for menor que dist_max, tire a média,
+  ## caso contrário, faça a média dos 7 mais póximos
+  nrow_df_sif <- data_frame_aux_sif |>
+    filter(do <= dist_max) |>
+    nrow()
+
+  if(nrow_df_sif != 0){
+    base_agregada$sif[i] = data_frame_aux_sif |>
+      filter(do <= dist_max) |>
+      pull(sif) |>
+      mean(na.rm=TRUE)
+  } else {
+    base_agregada$sif[i] = data_frame_aux_sif |>
+      slice(1:7) |>
+      pull(sif) |>
+      mean(na.rm=TRUE)
+  }
+
+  # filtrando dados da Xco2
+  xco2_aux <- data_set_xco2_anomal_sem_tendencia |>
+    filter(
+      year == year_i,
+      month == month_i)
+  d_xco2 <- sqrt((xco2_aux$longitude-lon_i)^2+
+              (xco2_aux$latitude-lat_i)^2)
+
+  ## organizando os dados em um data.frame
+  data_frame_aux_xco2 <- data.frame(do=d_xco2[order(d_xco2)], # distância ordenadas
+                               po=order(d_xco2), # posição em relação ao auxiliar
+                               xco2=xco2_aux$xco2[order(d_xco2)]) # xco2 específica
+
+  ## Critério de preenchimento se distância for menor que dist_max, tire a média,
+  ## caso contrário, faça a média dos 7 mais póximos
+  nrow_df_xco2 <- data_frame_aux_xco2 |> filter(do <= dist_max) |> nrow()
+
+  if(nrow_df_xco2 != 0){
+    base_agregada$xco2[i] = data_frame_aux_xco2 |>
+      filter(do <= dist_max) |>
+      pull(xco2) |>
+      mean(na.rm=TRUE)
+  } else {
+    base_agregada$xco2[i] = data_frame_aux_xco2 |>
+      slice(1:7) |>
+      pull(xco2) |>
+      mean(na.rm=TRUE)
+  }
+}
+
+# # esperado zero para os dois testes abaixo
+sum(base_agregada$sif  |> is.na())
+sum(base_agregada$xco2 |> is.na())
+nrow(base_agregada)
+
+# Salvando a base agregada
+write_rds(base_agregada, "data-raw/base-agregada.rds")
 
 # Carregando a base agregada
 base_agregada <- read_rds("data-raw/base-agregada.rds")

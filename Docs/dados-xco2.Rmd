@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=TRUE,
+  eval=FALSE,
   comment = "#>"
 )
 ```
@@ -168,20 +168,47 @@ df_costeiro |>
 ## Retirada de tendência Propriamente dita
 
 ```{r}
+
+## Retirada de tendência dos dados de XCO2
+
+# Obter os coeficientes da regressão regional
 a_co2 <- mod_trend_xco2$coefficients[[1]]
 b_co2 <- mod_trend_xco2$coefficients[[2]]
 
+# Aplicar a retirada de tendência
 df_costeiro <- df_costeiro |>
   mutate(
-    date= make_date(year, month, day),
-    date_modif = as.numeric(date - min(date)),
-    xco2_est = a_co2+b_co2*date_modif, ## estima o xco2 pela reta de regressão no dia específico
-    delta = xco2_est-xco2, ## estimado menos o observado real
-    xco2_detrend = (a_co2-delta) - (mean(xco2) - a_co2)
+    date = make_date(year, month, day),
+    date_modif = as.numeric(date - min(date, na.rm = TRUE)),
+    xco2_est = a_co2 + b_co2 * date_modif,
+    xco2_detrend = xco2 - xco2_est + mean(xco2, na.rm = TRUE)
   )
-write_rds(df_costeiro, "../data/xco2-costeiro.rds")
 
-#Esse bloco realiza a retirada da tendência temporal do XCO₂. Primeiro, são obtidos os coeficientes da regressão (`a_co2` e `b_co2`). Em seguida, calcula-se o XCO₂ estimado pela reta de regressão para cada data (`xco2_est`) e a diferença entre o valor estimado e o observado (`delta`). Por fim, é calculado o `xco2_detrend`, que representa o XCO₂ após a remoção da tendência regional.
+## Separar novamente os dados
+
+df_costeiro_terra_buffer <- df_costeiro |>
+  filter(grupo == "Buffer")
+
+df_costeiro_mar <- df_costeiro |>
+  filter(grupo == "Oceano")
+
+## Salvar os três arquivos já com a tendência retirada
+
+write_rds(
+  df_costeiro,
+  "../data/xco2-costeiro.rds"
+)
+
+write_rds(
+  df_costeiro_terra_buffer,
+  "../data/xco2-costeiro-terrestre-buffer.rds"
+)
+
+write_rds(
+  df_costeiro_mar,
+  "../data/xco2-costeiro-mar.rds"
+)
+
 ```
 
 ## Agrupamento em latitude
@@ -289,27 +316,6 @@ df_costeiro |>
 
 ```{r}
 names(df_costeiro_terra_buffer)
-```
-
-## Detrend do buffer
-
-```{r}
-df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
-  mutate(
-    date = make_date(year, month, day),
-    date_modif = as.numeric(date - min(date, na.rm = TRUE))
-  )
-
-mod_trend_buffer <- lm(
-  xco2 ~ date_modif,
-  data = df_costeiro_terra_buffer
-)
-
-df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
-  mutate(
-    xco2_est = predict(mod_trend_buffer),
-    xco2_detrend = xco2 - xco2_est + mean(xco2, na.rm = TRUE)
-  )
 ```
 
 ```{r}

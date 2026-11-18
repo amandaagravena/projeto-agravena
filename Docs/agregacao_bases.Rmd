@@ -1,5 +1,5 @@
 ---
-title: "gosat2"
+title: "agregação de bases"
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -8,7 +8,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=TRUE,
+  eval=FALSE,
   comment = "#>"
 )
 ```
@@ -39,7 +39,8 @@ biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 ## Carregando as bases
 
 ```{r}
-xco2 <- read_rds("../data/xco2-costeiro-terrestre-buffer.rds")
+xco2 <- read_rds("../data/xco2-costeiro-terrestre-buffer.rds") |>
+  select(longitude, latitude, year, month, xco2_detrend)
 sif <- read_rds("../data/sif-costeiro-terrestre-buffer.rds") |> 
   st_drop_geometry()
 xch4_1 <- read_rds("../data/xch4-gosat1-costeiro-terrestre-buffer.rds")
@@ -49,21 +50,32 @@ xch4_2 <- read_rds("../data/xch4-gosat2-costeiro-terrestre-buffer.rds")
 ## Criar um obejto long
 
 ```{r}
-base_longer <- xco2 |> 
-  select(longitude, latitude, year, month, day, xco2) |> 
-  rename(value=xco2) |> mutate(name = "xco2") |> 
+base_longer <- xco2 |>
+  select(longitude, latitude, year, month, day, xco2_detrend) |>
+  rename(value = xco2_detrend) |>
+  mutate(name = "xco2") |>
   rbind(
-    sif |> 
-  select(longitude, latitude, year, month, day, daily_sif757, daily_sif771
-) |> pivot_longer(cols = c(daily_sif757, daily_sif771),
-                  values_to = "value")
-  ) |> rbind(
-    xch4_1 |> 
-      select(longitude, latitude, year, month, day, xch4_detrend) |>       rename(value=xch4_detrend) |> mutate(name = "xch4_1")
-  ) |> rbind(
-    xch4_2 |> 
-      select(longitude, latitude, year, month, day, xch4_detrend) |>       rename(value=xch4_detrend) |> mutate(name = "xch4_2")
+    sif |>
+      select(longitude, latitude, year, month, day,
+             daily_sif757, daily_sif771) |>
+      pivot_longer(
+        cols = c(daily_sif757, daily_sif771),
+        values_to = "value"
+      )
+  ) |>
+  rbind(
+    xch4_1 |>
+      select(longitude, latitude, year, month, day, xch4_detrend) |>
+      rename(value = xch4_detrend) |>
+      mutate(name = "xch4_1")
+  ) |>
+  rbind(
+    xch4_2 |>
+      select(longitude, latitude, year, month, day, xch4_detrend) |>
+      rename(value = xch4_detrend) |>
+      mutate(name = "xch4_2")
   )
+
 row.names(base_longer) <- NULL
 ```
 
@@ -266,17 +278,24 @@ for(i in 1:nrow(base_agregada)){
   }
 
   # filtrando dados da Xco2
-  xco2_aux <- data_set_xco2_anomal_sem_tendencia |>
-    filter(
-      year == year_i,
-      month == month_i)
-  d_xco2 <- sqrt((xco2_aux$longitude-lon_i)^2+
-              (xco2_aux$latitude-lat_i)^2)
+# filtrando dados do XCO2
+xco2_aux <- xco2 |>
+  filter(
+    year == year_i,
+    month == month_i
+  )
 
-  ## organizando os dados em um data.frame
-  data_frame_aux_xco2 <- data.frame(do=d_xco2[order(d_xco2)], # distância ordenadas
-                               po=order(d_xco2), # posição em relação ao auxiliar
-                               xco2=xco2_aux$xco2[order(d_xco2)]) # xco2 específica
+d_xco2 <- sqrt(
+  (xco2_aux$longitude - lon_i)^2 +
+  (xco2_aux$latitude - lat_i)^2
+)
+
+## organizando os dados em um data.frame
+data_frame_aux_xco2 <- data.frame(
+  do = d_xco2[order(d_xco2)],
+  po = order(d_xco2),
+  xco2 = xco2_aux$xco2_detrend[order(d_xco2)]
+)
 
   ## Critério de preenchimento se distância for menor que dist_max, tire a média,
   ## caso contrário, faça a média dos 7 mais póximos

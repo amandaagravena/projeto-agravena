@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -42,12 +42,13 @@ biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 ## Resumo do objeto  `biomes`
 
 ```{r}
-biomes##Esse comando serve para mostrar o resumo do objeto biomes. 
+biomes ##Esse comando serve para mostrar o resumo do objeto biomes. 
 ```
 
 ## Listando os biomas individuais (distintos)
 ```{r}
-biomes |> distinct(name_biome) ##Esse comando lista apenas os nomes distindos dos biomas, sem repetições.
+biomes |> 
+  distinct(name_biome) ##Esse comando lista apenas os nomes distindos dos biomas, sem repetições.
 ```
 
 ## Visualização dos mapas, Brasil e Biomas
@@ -150,7 +151,7 @@ print(map_biomes)
 
 ## Ler e interpretar os dados em "data-raw"
 
-```{r}
+```{r, eval=FALSE}
 df <- read_rds("../data-raw/data-set-xco2-br-002.rds") |> 
   mutate(year = year - 20)
 
@@ -162,9 +163,9 @@ df <- read_rds("../data-raw/data-set-xco2-br-002.rds") |>
 ```
 
 ## Resumo do data-set
-```{r}
-# glimpse(df |> 
-#           filter(xco2_quality_flag == 0))
+```{r, eval=FALSE}
+glimpse(df |>
+          filter(xco2_quality_flag == 0))
 
 #Aqui ocorre a inspeção da estrutura do conjunto ed dados antes de continuar a análise (glimpse: olhadela). 
 
@@ -175,15 +176,15 @@ df <- read_rds("../data-raw/data-set-xco2-br-002.rds") |>
 ```
 
 ## Listando os anos individuais (distintos)
-```{r}
-# df |> distinct(year)
+```{r, eval=FALSE}
+df |> distinct(year)
 
 # "Utilize a tabela df na função seguinte." → distinct() seleciona apenas os valores únicos de uma variável, removendo as repetições. Ou seja, cada ano aparece apenas uma vez. Esse comando é uma forma rápida de verificar quais anos estão presentes na base de dados depois da correção anterior. 
 ```
 
 ## Plotar o shape do brasil e as coordenadas de pontos amostrados dentro do objeto df
-```{r}
-biomes |> 
+```{r, eval=FALSE}
+biomes |>
   ggplot() +
   geom_sf(aes(fill = name_biome), color = "#1a1a2e", linewidth = 0.4) +
   scale_fill_manual(
@@ -210,8 +211,8 @@ biomes |>
     legend.position  = "right",
     plot.margin      = margin(20, 20, 10, 20)
   ) +
-  geom_point( data = df |> 
-          filter(xco2_quality_flag == 0) |> 
+  geom_point( data = df |>
+          filter(xco2_quality_flag == 0) |>
             slice_sample(n = 1000)
               , aes(longitude, latitude), color="gray")
 
@@ -235,7 +236,7 @@ biomes |>
 
 ## Transformar o df de XCO2 em objeto espacial (sf)
 
-```{r}
+```{r, eval=FALSE}
 df_sf <- df |>
   filter(xco2_quality_flag == 0) |>
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = FALSE)
@@ -280,11 +281,11 @@ brasil <- st_transform(brasil, crs = 4326)
 
 ## Filtrar apenas pontos do Brasil
 
-```{r}
-# df_brasil <- df_biomas |> 
-#   filter(!is.na(name_biome))
-# 
-# glimpse(df_brasil)
+```{r, eval=FALSE}
+df_brasil <- df_biomas |>
+  filter(!is.na(name_biome))
+
+glimpse(df_brasil)
 
 #- df_brasil <- cria um novo objeto chamado **df_brasil**, onde será armazenado o resultado do filtro.
 #- df_biomas é o conjunto de dados que contém os pontos de XCO₂ e o bioma associado a cada ponto.
@@ -294,24 +295,24 @@ brasil <- st_transform(brasil, crs = 4326)
 
 ## Salvar os dados na pasta data
 
-``` {r}
-# write_rds(
-#   df_brasil,
-#   "data/xco2-brasil-biomas.rds"
-# )
+``` {r, eval=FALSE}
+write_rds(
+  df_brasil,
+  "data/xco2-brasil-biomas.rds"
+)
 ```
 
 ##Lendo o arquivo salvo até aqui
-```{r}
+```{r, eval=FALSE}
 df_brasil <- read_rds("../data/xco2-brasil-biomas.rds")
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 ##Conferir quantos pontos por bioma
-# df_brasil |> 
-#   st_drop_geometry() |> 
-#   count(name_biome, sort = TRUE)
+df_brasil |>
+  st_drop_geometry() |>
+  count(name_biome, sort = TRUE)
 
 # st_drop_geometry() temporariamente remove a coluna geometry, transformando o objeto espacial (sf) em uma tabela comum, pois queremos contar observações. Para contar, usamos a função count(), que contabilizará quantos linhas possuem para cada valor da coluna name_biome.O sort = TRUE faz com que o resultado seja ordenado do maior para o menor.
 
@@ -371,7 +372,7 @@ ggplot() +
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 costeiro_terrestre <- st_intersection(costeiro, brasil_cont)
 
 st_crs(costeiro)
@@ -383,7 +384,7 @@ st_crs(brasil_cont)
 
 ## Conferir se a geometria resultante faz sentido (plot rápido)
 
-```{r}
+```{r, eval=FALSE}
 # Construir buffer de 5 km
 costeiro_terrestre_5880 <- sf::st_transform(
   costeiro_terrestre,
@@ -410,7 +411,7 @@ write_rds(costeiro_terrestre_buffer,"../data/buffer.rds")
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 costeiro_maritimo <- sf::st_difference(costeiro,costeiro_terrestre_buffer)
 plot(st_geometry(costeiro_terrestre_buffer), col = "lightyellow")
 plot(st_geometry(costeiro), col = "lightgreen")
@@ -419,7 +420,7 @@ plot(st_geometry(costeiro_maritimo), col = "lightblue")
 
 ## Converter df_brasil em objeto sf de pontos (ajuste nomes de colunas)
 
-```{r}
+```{r, eval=FALSE}
 pontos_brasil <- st_as_sf(
   df_brasil,
   coords = c("longitude", "latitude"),
@@ -430,7 +431,7 @@ pontos_brasil <- st_as_sf(
 # Esse código cria um novo objeto espacial (sf), denominado pontos_brasil, a partir do conjunto de dados df_brasil, utilizando as colunas de longitude e latitude para representar cada observação como um ponto geográfico.
 ```
 
-```{r}
+```{r, eval=FALSE}
 ## Construir a faixa costeira marítima
 
 costeiro_mar <- sf::st_difference(
@@ -442,7 +443,7 @@ costeiro_mar <- sf::st_difference(
 
 ## Filtrar apenas os pontos que caem dentro da faixa costeira terrestre e costeira_maritimo
 
-```{r}
+```{r, eval=FALSE}
 ## Pontos na faixa costeira terrestre original
 
 costeiro_terrestre_4326 <- sf::st_transform(
@@ -492,7 +493,7 @@ pontos_costeiro_mar <- sf::st_join(
 
 
 ## Voltar para data.frame puro, se precisar
-```{r}
+```{r, eval=FALSE}
 df_costeiro_terra_buffer <- pontos_costeiro_terra_buffer |>
   sf::st_drop_geometry()
 
@@ -503,7 +504,7 @@ df_costeiro_mar <- pontos_costeiro_mar |>
   sf::st_drop_geometry()
 ```
 
-```{r}
+```{r, eval=FALSE}
 nrow(df_costeiro_terra)
 nrow(df_costeiro_terra_buffer)
 nrow(df_costeiro_mar)
@@ -511,7 +512,7 @@ nrow(df_costeiro_mar)
 
 ## Verificar se eles formam a linha literânea
 
-```{r}
+```{r, eval=FALSE}
 ## Verificar a distribuição espacial dos pontos costeiros
 
 df_costeiro_terra |>
@@ -537,7 +538,7 @@ df_costeiro_mar |>
 ```
 ## Salvando na pasta data
 
-```{r}
+```{r, eval=FALSE}
 write_rds(
   df_costeiro_terra_buffer,
   "../data/xco2-costeiro-terrestre-buffer.rds"
@@ -553,7 +554,7 @@ write_rds(
 
 ## Volume de dados retido
 
-```{r}
+```{r, eval=FALSE}
 df_costeiro_terra_buffer <- read_rds("../data/xco2-costeiro-terrestre-buffer.rds")
 nrow(df_costeiro_terra_buffer)
 
@@ -562,7 +563,7 @@ nrow(df_costeiro_mar)
 ```
 ## Verificando se há sobreposição de pontos
 
-```{r}
+```{r, eval=FALSE}
 chave <- c("year", "longitude", "latitude")
 
 sobreposicao <- inner_join(
@@ -577,7 +578,7 @@ nrow(sobreposicao) # 0 = nenhum ponto em comum
 
 # Cobertura temporal — quantos pontos por ano/mês
 
-```{r}
+```{r, eval=FALSE}
 df_costeiro_terra_buffer |> 
   st_drop_geometry() |> 
   count(year) |>   # ajuste nome da coluna de data
@@ -591,7 +592,7 @@ df_costeiro_mar |>
 #Verificar quantas observações existem em cada ano e organiza em ordem crescente, para verificar se algum ano possui poucos dados ou se há anos ausentes. 
 ```
 
-```{r}
+```{r, eval=FALSE}
 # Estatística descritiva do XCO2 nessa faixa
 summary(df_costeiro_terra_buffer$xco2)  # ajuste nome da coluna
 
@@ -629,7 +630,7 @@ summary(df_costeiro_mar$xco2)  # ajuste nome da coluna
 
 
 ## Vamos juntar os arquivos
-```{r}
+```{r, eval=FALSE}
 df_costeiro_terra_buffer <- df_costeiro_terra_buffer |>
   mutate(name_biome = name_biome.x)
 
@@ -651,7 +652,7 @@ df_costeiro <- bind_rows(
   select(-xco2_quality_flag, -path)
 ```
 
-```{r}
+```{r, eval=FALSE}
 saveRDS(
   df_costeiro_terra_buffer,
   "../data/xco2-costeiro-terrestre-buffer.rds"

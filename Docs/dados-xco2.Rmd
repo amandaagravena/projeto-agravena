@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -233,7 +233,7 @@ df_costeiro |>
   # filter(year > 2022) |> 
   ggplot(aes(x=latitude_media, y = xco2, fill=as_factor(year))) +
   geom_col(color="black", position = "dodge") +
-  coord_flip(ylim = c(380, 386)) +
+  coord_flip(ylim = c(409, 413)) +
   labs(
     x = "Latitude (°)",
     y = "Concentração média de XCO2 (ppm)",
@@ -266,7 +266,7 @@ df_costeiro |>
   # geom_col(color="black", position = "dodge") +
   geom_line() +
   # geom_point() +
-  coord_flip(ylim = c(380, 384)) +
+  coord_flip(ylim = c(409, 413)) +
   labs(
     x = "Latitude (°)",
     y = "Concentração média de XCO2 (ppm)",
@@ -297,7 +297,7 @@ df_costeiro |>
   # filter(year > 2022) |> 
   ggplot(aes(x=factor(latitude_media), y = xco2, fill = factor(latitude_media))) +
   geom_boxplot() + 
-  coord_flip(ylim = c(380, 386)) +
+  coord_flip(ylim = c(409, 413)) +
   labs(
     x = "Latitude (°)",
     y = "Mean XCO2 Concentration (ppm)",
@@ -395,13 +395,15 @@ df_costeiro_terra_buffer |>
       as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
       as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
     ) / 2
-  ) |> 
+  ) |> rename(group=grupo) |> 
   left_join(colunas, by = "latitude_media") |> 
   ggplot(aes(longitude, latitude, color = as_factor(grupo))) +
   geom_point()
 
 #Após a definição dos grupos pelo agrupamento hierárquico, a classificação obtida para cada faixa de latitude foi associada às observações originais. A distribuição espacial dos grupos foi então visualizada para verificar como as regiões com comportamento temporal semelhante estavam distribuídas ao longo da faixa costeira.
 ```
+
+
 
 ## Basemap do Brasil (uma vez só, fora do pipe principal)
 ```{r}
@@ -424,8 +426,9 @@ df_costeiro_terra_buffer |>
       latitude_media > 0.37 ~ 1,
       latitude_media > -5.5 & latitude_media < 0.37 ~ 2,
       latitude_media <= -5.5 & latitude_media > -20 ~ 3,
-      latitude_media < -20 & latitude_media > -28.6 ~ 4,
-      latitude_media <= -28.6 ~ 5
+      latitude_media <= -20 & latitude_media > -23.25 ~ 4,
+      latitude_media <= -23.25 & latitude_media > -28.6 ~ 5,
+      latitude_media <= -28.6 ~ 6
     )
   ) |> 
   ggplot() +
@@ -494,8 +497,9 @@ df_costeiro_terra_buffer |>
       latitude_media > 0.37 ~ 1,
       latitude_media > -5.5 & latitude_media < 0.37 ~ 2,
       latitude_media <= -5.5 & latitude_media > -20 ~ 3,
-      latitude_media < -20 & latitude_media > -28.6 ~ 4,
-      latitude_media <= -28.6 ~ 5
+      latitude_media <= -20 & latitude_media > -23.25 ~ 4,
+      latitude_media <= -23.25 & latitude_media > -28.6 ~ 5,
+      latitude_media <= -28.6 ~ 6
     )
   ) |> 
   ggplot() +
@@ -524,7 +528,8 @@ df_costeiro_terra_buffer |>
       "2" = "#4daf4a",
       "3" = "#984ea3",
       "4" = "#e41a1c",
-      "5" = "#377eb8"
+      "5" = "#377eb8",
+      "6" = "orange4"
     ),
     name = "Group"
   ) +
@@ -552,7 +557,8 @@ df_costeiro_terra_buffer |>
 ```
 
 ```{r}
-df_grupos <- df_costeiro_terra_buffer |>
+df_grupos <- df_costeiro_terra_buffer |>  
+  rename(group=grupo)|>
   filter(year > 2014) |> 
   mutate(
     class_latitude = cut(latitude, 115),
@@ -566,11 +572,12 @@ df_grupos <- df_costeiro_terra_buffer |>
   arrange(latitude_media) |> 
   mutate(
     grupo = case_when(
-      latitude_media > 0.37 ~ 5,
-      latitude_media <= -28.6 ~2,
-      latitude_media < -20 & latitude_media > -28.6 ~1,
-      latitude_media > -5.5 & latitude_media <0.37 ~3,
-      .default=4
+      latitude_media > 0.37 ~ 1,
+      latitude_media > -5.5 & latitude_media < 0.37 ~ 2,
+      latitude_media <= -5.5 & latitude_media > -20 ~ 3,
+      latitude_media <= -20 & latitude_media > -23.25 ~ 4,
+      latitude_media <= -23.25 & latitude_media > -28.6 ~ 5,
+      latitude_media <= -28.6 ~ 6
     )
   ) 
 ```
@@ -580,17 +587,23 @@ df_grupos <- df_costeiro_terra_buffer |>
 
 ```{r}
 df_grupos <- bind_rows(
-  df_grupos |> mutate(local = "Buffer"),
+  df_grupos,
   df_costeiro_mar |> 
     mutate(
       grupo = 9,
-      local = "Oceano") |> 
-    select(-name_biome.x) |> 
-    rename(name_biome = name_biome.y)
-) |> 
-  select(-xco2_quality_flag , -path)
-df_grupos$grupo |>  unique()
+      group = "Oceano",
+      class_latitude = cut(latitude, 115),
+      year_month = paste(as.character(year), as.character(month), sep = "_"),
+      latitude_media = (
+        as.numeric(sub("\\(([-0-9.]+),.*", "\\1", class_latitude)) +
+          as.numeric(sub(".*[,]([-0-9.]+)\\]", "\\1", class_latitude))
+      ) / 2) #|> 
+  # select(-name_biome.x) |> 
+  # rename(name_biome = name_biome.y)
+) 
+  df_grupos$grupo |>  unique()
 #Com os limites dos grupos definidos, a classificação foi incorporada à base de dados original, mantendo as informações espaciais e temporais de cada observação. Dessa forma, foi criada a base que seria utilizada no cálculo das anomalias de XCO₂ dentro de cada grupo.
+
 ```
 
 ```{r}

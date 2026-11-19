@@ -8,7 +8,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   error = FALSE,
   message = FALSE,
-  eval=FALSE,
+  eval=TRUE,
   comment = "#>"
 )
 ```
@@ -40,7 +40,7 @@ biomes <- geobr::read_biomes(showProgress = FALSE, year = 2019)
 
 ```{r}
 xco2 <- read_rds("../data/xco2-costeiro-terrestre-buffer.rds") |>
-  select(longitude, latitude, year, month, xco2_detrend)
+  select(longitude, latitude, year, month, day, xco2_detrend)
 sif <- read_rds("../data/sif-costeiro-terrestre-buffer.rds") |> 
   st_drop_geometry()
 xch4_1 <- read_rds("../data/xch4-gosat1-costeiro-terrestre-buffer.rds")
@@ -215,11 +215,11 @@ plot(grid_am_cut$lon[grid_am_cut$flag_am],
 
 ```{r}
 sif_costeiro_buffer <- read_rds("../data/df-sif-buffer.rds")
-sif_costeiro_buffer 
+sif_costeiro_buffer |> glimpse()
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 # Criando o arquivo da base agregada
 base_agregada <- grid_am_cut |>
   filter(flag_am) |>
@@ -320,11 +320,10 @@ sum(base_agregada$xco2 |> is.na())
 nrow(base_agregada)
 
 # Salvando a base agregada
-write_rds(base_agregada, "data-raw/base-agregada.rds")
+write_rds(base_agregada, "../data-raw/base-agregada.rds")
 
 # Carregando a base agregada
-base_agregada <- read_rds("data-raw/base-agregada.rds")
+base_agregada <- read_rds("../data-raw/base-agregada.rds")
 table(base_agregada$year,base_agregada$month)
-
 ```
 
